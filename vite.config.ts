@@ -1,0 +1,57 @@
+import { fileURLToPath } from 'node:url';
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      manifest: {
+        name: 'Dinner Ideas',
+        short_name: 'Dinner Ideas',
+        description: 'Weekly dinner planning, shopping list, and cooking view for the household.',
+        theme_color: '#2c7a7b',
+        background_color: '#ffffff',
+        display: 'standalone',
+        start_url: '/',
+        icons: [
+          { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
+      },
+      workbox: {
+        // Precaches the built app shell (JS/CSS/HTML/icons) automatically. On top of that,
+        // this one rule keeps Supabase data available offline: fresh whenever there's a
+        // connection, falling back to the last successful response (e.g. the current plan's
+        // shopping list) when there isn't — see implementation-plan.md's Technical Approach.
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.hostname.endsWith('.supabase.co') && url.pathname.startsWith('/rest/v1/'),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'supabase-rest-cache',
+              networkTimeoutSeconds: 10,
+              cacheableResponse: { statuses: [0, 200] },
+              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 7 },
+            },
+          },
+        ],
+      },
+    }),
+  ],
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/test/setup.ts'],
+  },
+});
