@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PlanPage } from '@/features/weekly-plan/components/PlanPage';
-import { fetchCurrentPlan, removeSelection } from '@/features/weekly-plan/api';
+import { fetchCurrentPlan, fetchPlanByStartDate, removeSelection } from '@/features/weekly-plan/api';
 import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/types';
 
 vi.mock('@/features/weekly-plan/api');
@@ -41,6 +41,7 @@ function plan(overrides: Partial<CurrentPlan>): CurrentPlan {
 
 describe('PlanPage', () => {
   const mockedFetchCurrentPlan = vi.mocked(fetchCurrentPlan);
+  const mockedFetchPlanByStartDate = vi.mocked(fetchPlanByStartDate);
   const mockedRemoveSelection = vi.mocked(removeSelection);
 
   function renderPage() {
@@ -115,5 +116,54 @@ describe('PlanPage', () => {
     expect(screen.getByText(/this plan is locked/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /remove/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/selected$/)).not.toBeInTheDocument();
+  });
+
+  it('shows the current week as a date range, with ▶ disabled', async () => {
+    mockedFetchCurrentPlan.mockResolvedValue(plan({ start_date: '2026-08-24' }));
+    renderPage();
+
+    expect(await screen.findByText('8/24 – 8/30')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /next week/i })).toBeDisabled();
+  });
+
+  it('navigates to the previous week on ◀, read-only, and re-enables ▶', async () => {
+    const user = userEvent.setup();
+    mockedFetchCurrentPlan.mockResolvedValue(plan({ start_date: '2026-08-24' }));
+    mockedFetchPlanByStartDate.mockResolvedValue(
+      plan({
+        start_date: '2026-08-17',
+        locked_at: '2026-08-20T12:00:00Z',
+        weekly_plan_selections: [
+          selection({
+            id: 'sel-1',
+            dinner_id: 'tacos',
+            dinners: { ...selection({}).dinners, name: 'Tacos' },
+          }),
+        ],
+      }),
+    );
+    renderPage();
+
+    await screen.findByText('8/24 – 8/30');
+    await user.click(screen.getByRole('button', { name: /previous week/i }));
+
+    expect(mockedFetchPlanByStartDate).toHaveBeenCalledWith('2026-08-17');
+    expect(await screen.findByText('8/17 – 8/23')).toBeInTheDocument();
+    expect(screen.getByText('Tacos')).toBeInTheDocument();
+    expect(screen.getByText('Eaten')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /remove/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /next week/i })).toBeEnabled();
+  });
+
+  it('shows a clear empty state for a skipped week with no plan', async () => {
+    const user = userEvent.setup();
+    mockedFetchCurrentPlan.mockResolvedValue(plan({ start_date: '2026-08-24' }));
+    mockedFetchPlanByStartDate.mockResolvedValue(null);
+    renderPage();
+
+    await screen.findByText('8/24 – 8/30');
+    await user.click(screen.getByRole('button', { name: /previous week/i }));
+
+    expect(await screen.findByText('No plan this week.')).toBeInTheDocument();
   });
 });

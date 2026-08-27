@@ -2,7 +2,7 @@
 intent: 001-weekly-dinner-planner
 created: 2026-08-26T17:20:36Z
 completed: 2026-08-26T17:31:13Z
-updated: 2026-08-27T01:00:00Z
+updated: 2026-08-27T08:15:00Z
 status: complete
 ---
 
@@ -90,3 +90,15 @@ status: complete
 ## Dependencies
 
 Execution order: 001-dinner-catalog → 002-weekly-planning → 003-weekly-dinner-planner-ui (bolts 003→004→005→006), with 007-dinner-catalog and 008-weekly-dinner-planner-ui added later — 007 depends only on 001-dinner-catalog (can run any time after it), and 008 depends on both 004-weekly-dinner-planner-ui and 007-dinner-catalog.
+
+## Enhancement Round Complete (2026-08-27)
+
+All 5 bolts from the post-deployment enhancement round (FR-9–FR-12) are complete: `009-dinner-catalog` (tags schema), `010-weekly-planning` (meal_history schema, via `ADR-002`), `011-grocery-store-config` (new unit — schema + reorder RPC), `012-weekly-dinner-planner-ui` (card details + tag UI), `013-weekly-dinner-planner-ui` (week navigation + store config page). 98/98 tests passing, `npx tsc -b`/`eslint`/`vite build` all clean. Intent status confirmed `complete` with zero inconsistencies via `status-integrity.cjs`.
+
+Also fixed two pieces of tooling discovered along the way: a CRLF-line-ending bug in `bolt-complete.cjs`/`status-integrity.cjs`/`artifact-validator.cjs` that silently broke frontmatter parsing on Windows-saved files, and their intent-status cascade trusting a stale `unit-brief.status` field instead of cross-referencing actual bolt completion.
+
+Remaining open items (see `requirements.md` Open Questions), not part of this round:
+
+- Real-time/optimistic redesign of the pick-3 flow — explicitly deferred to a future, dedicated UX-focused Inception pass.
+- Recipe-URL import (FR-6) — logged as future work, not started.
+- Whether `004-grocery-store-config`'s category-level granularity needs a per-ingredient override — open only if it proves insufficient in practice.

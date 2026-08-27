@@ -10,8 +10,8 @@ interface LayoutProps {
 
 /**
  * App shell: a small top nav plus the routed page content.
- * All four pages — Catalog, This Week, Shopping List, Cooking — link to
- * real routes, one per concern, per `requirements.md`'s navigation constraint.
+ * Every page — Catalog, This Week, Shopping List, Cooking, Store Setup — links to
+ * a real route, one per concern, per `requirements.md`'s navigation constraint.
  */
 export function Layout({ children }: LayoutProps) {
   const { signOut } = useAuth();
@@ -39,6 +39,9 @@ export function Layout({ children }: LayoutProps) {
           </ChakraLink>
           <ChakraLink as={RouterLink} to="/cooking">
             Cooking
+          </ChakraLink>
+          <ChakraLink as={RouterLink} to="/store-config">
+            Store Setup
           </ChakraLink>
           <ChakraLink as="button" onClick={() => void signOut()}>
             Log out

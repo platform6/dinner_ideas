@@ -157,3 +157,20 @@ export async function removeTagFromDinner(dinnerId: string, tagId: string): Prom
   const { error } = await supabase.from('dinner_tags').delete().eq('dinner_id', dinnerId).eq('tag_id', tagId);
   if (error) throw error;
 }
+
+/**
+ * Every distinct, non-blank grocery category currently used across all ingredients (FR-12) —
+ * for the store-config page's category-assignment list. Deduped/sorted client-side, same
+ * pattern `CatalogPage.tsx` already uses to derive its cuisine filter list.
+ */
+export async function fetchDistinctIngredientCategories(): Promise<string[]> {
+  const { data, error } = await supabase.from('dinner_ingredients').select('category');
+  if (error) throw error;
+
+  const categories = new Set<string>();
+  for (const row of data) {
+    const category = row.category.trim();
+    if (category) categories.add(category);
+  }
+  return [...categories].sort();
+}

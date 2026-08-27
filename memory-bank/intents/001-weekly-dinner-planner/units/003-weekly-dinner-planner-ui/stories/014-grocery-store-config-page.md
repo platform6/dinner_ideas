@@ -2,11 +2,11 @@
 id: 014-grocery-store-config-page
 unit: 003-weekly-dinner-planner-ui
 intent: 001-weekly-dinner-planner
-status: planned
+status: complete
 priority: must
 created: '2026-08-27T01:00:00Z'
 assigned_bolt: 013-weekly-dinner-planner-ui
-implemented: false
+implemented: true
 ---
 
 # Story: 014-grocery-store-config-page

@@ -3,8 +3,8 @@
 ## Overview
 
 - **Total stories**: 24
-- **Completed**: 21
-- **Planned**: 3
+- **Completed**: 24
+- **Planned**: 0
 - **Last updated**: 2026-08-27
 
 ---
@@ -41,8 +41,8 @@
 - [x] **010-cooking-view** (weekly-dinner-planner-ui): Cooking view - Must - ✅ COMPLETE
 - [x] **011-catalog-card-expandable-details** (weekly-dinner-planner-ui): Catalog card expandable details - Must - ✅ COMPLETE
 - [x] **012-tag-management-ui** (weekly-dinner-planner-ui): Tag management UI - Must - ✅ COMPLETE
-- [ ] **013-week-navigation-view** (weekly-dinner-planner-ui): Week navigation view - Should - 📋 PLANNED
-- [ ] **014-grocery-store-config-page** (weekly-dinner-planner-ui): Grocery store config page - Must - 📋 PLANNED
+- [x] **013-week-navigation-view** (weekly-dinner-planner-ui): Week navigation view - Should - ✅ COMPLETE
+- [x] **014-grocery-store-config-page** (weekly-dinner-planner-ui): Grocery store config page - Must - ✅ COMPLETE
 
 **Unit: 004-grocery-store-config**
 

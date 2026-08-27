@@ -4,7 +4,7 @@ intent: 001-weekly-dinner-planner
 phase: inception
 status: complete
 created: '2026-08-26T17:26:14Z'
-updated: '2026-08-27T01:00:00Z'
+updated: '2026-08-27T08:15:00Z'
 unit_type: frontend
 default_bolt_type: simple-construction-bolt
 ---
@@ -102,8 +102,8 @@ _Consumes entities owned by `001-dinner-catalog`, `002-weekly-planning`, and `00
 | 010-cooking-view                    | Cooking view                    | Must     | Complete |
 | 011-catalog-card-expandable-details | Catalog card expandable details | Must     | Planned  |
 | 012-tag-management-ui               | Tag management UI               | Must     | Planned  |
-| 013-week-navigation-view            | Week navigation view            | Should   | Planned  |
-| 014-grocery-store-config-page       | Grocery store config page       | Must     | Planned  |
+| 013-week-navigation-view            | Week navigation view            | Should   | Complete |
+| 014-grocery-store-config-page       | Grocery store config page       | Must     | Complete |
 
 ---
 

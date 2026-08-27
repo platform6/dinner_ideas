@@ -19,7 +19,9 @@ import {
 import { useCurrentPlan, useLockPlan } from '@/features/weekly-plan/hooks';
 import { useShoppingListDinners } from '@/features/shopping-list/hooks';
 import { buildShoppingList } from '@/features/shopping-list/aggregate';
+import { reorderGroupsByRows } from '@/features/shopping-list/reorder';
 import { formatShoppingListText } from '@/features/shopping-list/format';
+import { useAssignments, useRows } from '@/features/store-config/hooks';
 
 export function ShoppingListPage() {
   const currentPlan = useCurrentPlan();
@@ -29,6 +31,8 @@ export function ShoppingListPage() {
 
   const dinners = useShoppingListDinners(dinnerIds);
   const lockPlan = useLockPlan();
+  const rows = useRows();
+  const assignments = useAssignments();
 
   const isAlreadyLocked = plan?.locked_at != null;
   const [lockChecked, setLockChecked] = useState(true);
@@ -38,7 +42,10 @@ export function ShoppingListPage() {
   const [copyOutcome, setCopyOutcome] = useState<{ clipboardOk: boolean } | null>(null);
   const [lockErrorMessage, setLockErrorMessage] = useState<string | null>(null);
 
-  const groups = useMemo(() => buildShoppingList(dinners.data ?? []), [dinners.data]);
+  const groups = useMemo(() => {
+    const built = buildShoppingList(dinners.data ?? []);
+    return reorderGroupsByRows(built, rows.data ?? [], assignments.data ?? []);
+  }, [dinners.data, rows.data, assignments.data]);
   const text = useMemo(() => formatShoppingListText(groups), [groups]);
 
   if (currentPlan.isLoading) {
@@ -134,7 +141,11 @@ export function ShoppingListPage() {
           </Stack>
 
           <HStack>
-            <Checkbox isChecked={shouldLock} isDisabled={isAlreadyLocked} onChange={(e) => setLockChecked(e.target.checked)}>
+            <Checkbox
+              isChecked={shouldLock}
+              isDisabled={isAlreadyLocked}
+              onChange={(e) => setLockChecked(e.target.checked)}
+            >
               Also lock this week’s plan
             </Checkbox>
           </HStack>
@@ -155,7 +166,7 @@ export function ShoppingListPage() {
           {!lockErrorMessage && copyOutcome?.clipboardOk && (
             <Alert status="success" borderRadius="md">
               <AlertIcon />
-              {shouldLock ? "Copied! This week’s plan is locked in." : 'Copied!'}
+              {shouldLock ? 'Copied! This week’s plan is locked in.' : 'Copied!'}
             </Alert>
           )}
 
@@ -163,7 +174,7 @@ export function ShoppingListPage() {
             <Stack gap={2}>
               <Text fontSize="sm" color="gray.600">
                 Couldn’t copy automatically — select the text below to copy manually.
-                {shouldLock ? " This week’s plan is locked in." : ''}
+                {shouldLock ? ' This week’s plan is locked in.' : ''}
               </Text>
               <Textarea
                 readOnly

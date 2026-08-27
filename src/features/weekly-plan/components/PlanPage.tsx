@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Alert,
   AlertIcon,
+  Badge,
   Box,
   Button,
   Center,
@@ -13,13 +15,23 @@ import {
   Text,
 } from '@chakra-ui/react';
 
-import { useCurrentPlan, useToggleSelection } from '@/features/weekly-plan/hooks';
+import { useCurrentPlan, useToggleSelection, useWeekByOffset } from '@/features/weekly-plan/hooks';
+import { formatWeekRange } from '@/features/weekly-plan/date';
 
 export function PlanPage() {
-  const currentPlan = useCurrentPlan();
+  const [offset, setOffset] = useState(0);
+  const week = useWeekByOffset(offset);
   const toggleSelection = useToggleSelection();
+  // Only needed for the current week's pick/remove actions, which read the live plan snapshot
+  // fresh each toggle (see `toggle-selection.ts`) rather than the possibly-stale `week.data`.
+  const currentPlan = useCurrentPlan();
 
-  if (currentPlan.isLoading) {
+  const isCurrentWeek = offset === 0;
+  const plan = week.data;
+  const isLocked = plan?.locked_at != null;
+  const selections = plan?.weekly_plan_selections ?? [];
+
+  if (week.isLoading) {
     return (
       <Center py={12}>
         <Spinner size="lg" />
@@ -27,7 +39,7 @@ export function PlanPage() {
     );
   }
 
-  if (currentPlan.isError) {
+  if (week.isError) {
     return (
       <Alert status="error" borderRadius="md">
         <AlertIcon />
@@ -36,18 +48,36 @@ export function PlanPage() {
     );
   }
 
-  const plan = currentPlan.data;
-  const isLocked = plan?.locked_at != null;
-  const selections = plan?.weekly_plan_selections ?? [];
-
   return (
     <Stack gap={4}>
       <HStack justify="space-between" flexWrap="wrap" gap={3}>
-        <Heading size="lg">This week’s plan</Heading>
-        {!isLocked && <Text color="gray.600">{selections.length}/3 selected</Text>}
+        <HStack gap={2}>
+          <Button
+            size="sm"
+            variant="outline"
+            aria-label="Previous week"
+            onClick={() => setOffset((o) => o - 1)}
+          >
+            ◀
+          </Button>
+          <Heading size="lg">{formatWeekRange(week.weekStartDate)}</Heading>
+          <Button
+            size="sm"
+            variant="outline"
+            aria-label="Next week"
+            isDisabled={isCurrentWeek}
+            onClick={() => setOffset((o) => o + 1)}
+          >
+            ▶
+          </Button>
+        </HStack>
+        <HStack gap={3}>
+          {!isCurrentWeek && isLocked && <Badge colorScheme="green">Eaten</Badge>}
+          {isCurrentWeek && !isLocked && <Text color="gray.600">{selections.length}/3 selected</Text>}
+        </HStack>
       </HStack>
 
-      {toggleSelection.isError && (
+      {isCurrentWeek && toggleSelection.isError && (
         <Alert status="error" borderRadius="md">
           <AlertIcon />
           Couldn’t save that change, try again.
@@ -56,15 +86,21 @@ export function PlanPage() {
 
       {!plan && (
         <Text color="gray.600">
-          No plan yet.{' '}
-          <ChakraLink as={RouterLink} to="/">
-            Pick dinners from the catalog
-          </ChakraLink>{' '}
-          to start this week’s plan.
+          {isCurrentWeek ? (
+            <>
+              No plan yet.{' '}
+              <ChakraLink as={RouterLink} to="/">
+                Pick dinners from the catalog
+              </ChakraLink>{' '}
+              to start this week’s plan.
+            </>
+          ) : (
+            'No plan this week.'
+          )}
         </Text>
       )}
 
-      {plan && selections.length === 0 && (
+      {plan && selections.length === 0 && isCurrentWeek && (
         <Text color="gray.600">
           No dinners picked yet.{' '}
           <ChakraLink as={RouterLink} to="/">
@@ -74,7 +110,7 @@ export function PlanPage() {
         </Text>
       )}
 
-      {isLocked && selections.length > 0 && (
+      {isCurrentWeek && isLocked && selections.length > 0 && (
         <Text color="gray.600" fontSize="sm">
           This plan is locked — its shopping list has already been sent. Pick a dinner from the catalog to
           start next week’s plan.
@@ -91,13 +127,18 @@ export function PlanPage() {
                   {selection.dinners.cuisine_type} · {selection.dinners.cook_time_minutes} min
                 </Text>
               </Box>
-              {!isLocked && (
+              {isCurrentWeek && !isLocked && (
                 <Button
                   size="sm"
                   variant="outline"
-                  isLoading={toggleSelection.isPending && toggleSelection.variables?.dinnerId === selection.dinner_id}
+                  isLoading={
+                    toggleSelection.isPending && toggleSelection.variables?.dinnerId === selection.dinner_id
+                  }
                   onClick={() =>
-                    toggleSelection.mutate({ dinnerId: selection.dinner_id, currentPlan: plan ?? null })
+                    toggleSelection.mutate({
+                      dinnerId: selection.dinner_id,
+                      currentPlan: currentPlan.data ?? null,
+                    })
                   }
                 >
                   Remove

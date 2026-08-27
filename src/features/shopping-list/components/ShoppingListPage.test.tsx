@@ -7,11 +7,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ShoppingListPage } from '@/features/shopping-list/components/ShoppingListPage';
 import { fetchDinnersByIds } from '@/features/dinners/api';
 import { fetchCurrentPlan, lockPlan } from '@/features/weekly-plan/api';
+import { fetchAssignments, fetchRows } from '@/features/store-config/api';
 import type { DinnerWithIngredients } from '@/features/dinners/types';
 import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/types';
 
 vi.mock('@/features/dinners/api');
 vi.mock('@/features/weekly-plan/api');
+vi.mock('@/features/store-config/api');
 
 function selection(overrides: Partial<SelectionWithDinner>): SelectionWithDinner {
   return {
@@ -73,6 +75,8 @@ describe('ShoppingListPage', () => {
   const mockedFetchCurrentPlan = vi.mocked(fetchCurrentPlan);
   const mockedFetchDinnersByIds = vi.mocked(fetchDinnersByIds);
   const mockedLockPlan = vi.mocked(lockPlan);
+  const mockedFetchRows = vi.mocked(fetchRows);
+  const mockedFetchAssignments = vi.mocked(fetchAssignments);
   const mockedWriteText = vi.fn();
 
   function renderPage() {
@@ -102,6 +106,8 @@ describe('ShoppingListPage', () => {
     vi.clearAllMocks();
     mockedFetchDinnersByIds.mockResolvedValue(threeDinners);
     mockedLockPlan.mockResolvedValue(plan({ locked_at: '2026-08-27T12:00:00Z' }));
+    mockedFetchRows.mockResolvedValue([]);
+    mockedFetchAssignments.mockResolvedValue([]);
     mockedWriteText.mockResolvedValue(undefined);
   });
 
