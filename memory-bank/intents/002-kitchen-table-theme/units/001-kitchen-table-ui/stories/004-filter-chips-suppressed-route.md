@@ -2,11 +2,11 @@
 id: 004-filter-chips-suppressed-route
 unit: 001-kitchen-table-ui
 intent: 002-kitchen-table-theme
-status: planned
+status: complete
 priority: must
 created: '2026-08-27T09:20:00Z'
 assigned_bolt: null
-implemented: false
+implemented: true
 ---
 
 # Story: 004-filter-chips-suppressed-route

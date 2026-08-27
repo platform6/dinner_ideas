@@ -3,12 +3,25 @@ id: 015-kitchen-table-ui
 unit: 001-kitchen-table-ui
 intent: 002-kitchen-table-theme
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 003-bottom-tab-bar-navigation
   - 004-filter-chips-suppressed-route
   - 005-suppress-off-card-face
+  - 011-suppressed-view-restyle
 created: '2026-08-27T09:30:00Z'
+started: '2026-08-27T10:20:00Z'
+current_stage: null
+stages_completed:
+  - name: plan
+    completed: '2026-08-27T10:30:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-08-27T11:00:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-08-27T11:10:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 014-kitchen-table-ui
 enables_bolts:
@@ -21,6 +34,7 @@ complexity:
   avg_uncertainty: 1
   max_dependencies: 1
   testing_scope: 2
+completed: '2026-08-27T22:47:17Z'
 ---
 
 # Bolt: 015-kitchen-table-ui
@@ -38,6 +52,7 @@ Land the phone-first navigation restructure the handoff calls out as a cohesive 
 - **003-bottom-tab-bar-navigation**: Bottom tab bar navigation (Must)
 - **004-filter-chips-suppressed-route**: Filter chips & suppressed route (Must)
 - **005-suppress-off-card-face**: Suppress off card face (Must)
+- **011-suppressed-view-restyle**: Suppressed view restyle (Must) — pulled forward from bolt `018` at Stage 1 Plan (see `implementation-plan.md`'s "Scope note"): building a throwaway stub for the new route and replacing it later would waste effort since the real content is small and fully specified.
 
 ## Bolt Type
 

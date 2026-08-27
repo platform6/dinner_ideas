@@ -6,35 +6,34 @@ type: simple-construction-bolt
 status: planned
 stories:
   - 010-cooking-view-restyle
-  - 011-suppressed-view-restyle
 created: '2026-08-27T09:30:00Z'
 requires_bolts:
   - 014-kitchen-table-ui
-  - 015-kitchen-table-ui
 enables_bolts: []
 requires_units: []
 blocks: true
 complexity:
-  avg_complexity: 2
+  avg_complexity: 1
   avg_uncertainty: 1
-  max_dependencies: 2
-  testing_scope: 2
+  max_dependencies: 1
+  testing_scope: 1
 ---
 
 # Bolt: 018-kitchen-table-ui
 
 ## Overview
 
-Restyles Cooking View, and fills in the Suppressed route (created in bolt `015`) with its own restyled content.
+Restyles Cooking View — the last of the original 6 documented screens.
+
+**Replanned 2026-08-27** (during bolt `015`'s Stage 1 Plan): story `011` (Suppressed view) was pulled forward into bolt `015`, since it landed alongside the route `015` creates rather than as a separate stub-then-replace step. This bolt now only carries `010`.
 
 ## Objective
 
-Land the last two of the original 6 documented screens.
+Land the last of the original 6 documented screens.
 
 ## Stories Included
 
 - **010-cooking-view-restyle**: Cooking view restyle (Must)
-- **011-suppressed-view-restyle**: Suppressed view restyle (Must)
 
 ## Bolt Type
 
@@ -52,7 +51,6 @@ Land the last two of the original 6 documented screens.
 ### Requires
 
 - **014-kitchen-table-ui** (Required): Theme/icons
-- **015-kitchen-table-ui** (Required): Story `011` fills in the route story `004` created
 
 ### Enables
 

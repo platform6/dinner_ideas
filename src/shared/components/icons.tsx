@@ -24,8 +24,10 @@ import {
   Info,
   Leaf,
   Lock,
+  LogOut,
   Mail,
   Milk,
+  MoreVertical,
   Package,
   Plus,
   RotateCcw,
@@ -35,6 +37,7 @@ import {
   SlidersHorizontal,
   Soup,
   Sparkles,
+  Store,
   Utensils,
   UtensilsCrossed,
   Wheat,
@@ -146,6 +149,10 @@ export const uiIcons = {
   password: Lock,
   reveal: Eye,
   allCuisines: Utensils,
+  // Added in 002-kitchen-table-theme bolt 015 (structural nav — not in the original handoff).
+  storeConfig: Store,
+  logOut: LogOut,
+  overflowMenu: MoreVertical,
 } as const;
 
 export type { LucideIcon };

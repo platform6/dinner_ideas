@@ -33,16 +33,20 @@ const details: DinnerFullDetails = {
   tags: [{ id: 't1', name: 'kid-friendly' }],
 };
 
-function renderCard() {
+function renderCard(onSuppress = vi.fn()) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
       <DinnerCard
         dinner={dinner}
-        variant="active"
-        onSuppress={vi.fn()}
-        onUnsuppress={vi.fn()}
+        onSuppress={onSuppress}
         isMutating={false}
+        selection={{
+          isSelected: false,
+          selectionDisabled: false,
+          isTogglingSelection: false,
+          onToggleSelect: vi.fn(),
+        }}
       />
     </QueryClientProvider>,
   );
@@ -107,5 +111,28 @@ describe('DinnerCard details section', () => {
     await user.click(screen.getByRole('button', { name: 'Remove tag kid-friendly' }));
 
     expect(mockedRemoveTag).toHaveBeenCalledWith('d1', 't1');
+  });
+});
+
+describe('DinnerCard overflow menu', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedFetchDetails.mockResolvedValue(details);
+  });
+
+  it('is not a persistent button on the card face', () => {
+    renderCard();
+    expect(screen.queryByRole('button', { name: /not interested/i })).not.toBeInTheDocument();
+  });
+
+  it('suppresses the dinner via the overflow menu (FR-5)', async () => {
+    const user = userEvent.setup();
+    const onSuppress = vi.fn();
+    renderCard(onSuppress);
+
+    await user.click(screen.getByRole('button', { name: `More actions for ${dinner.name}` }));
+    await user.click(screen.getByRole('menuitem', { name: /not interested/i }));
+
+    expect(onSuppress).toHaveBeenCalledWith('d1');
   });
 });

@@ -12,6 +12,10 @@ import {
   Heading,
   Input,
   ListItem,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
   OrderedList,
   Spinner,
   Stack,
@@ -24,6 +28,7 @@ import {
 
 import { useAddTag, useDinnerFullDetails, useRemoveTag } from '@/features/dinners/hooks';
 import type { CatalogDinner } from '@/features/dinners/types';
+import { uiIcons } from '@/shared/components/icons';
 
 interface SelectionProps {
   isSelected: boolean;
@@ -35,13 +40,12 @@ interface SelectionProps {
 
 interface DinnerCardProps {
   dinner: CatalogDinner;
-  /** "active" shows a Not-interested action; "suppressed" shows Un-suppress. */
-  variant: 'active' | 'suppressed';
+  /** Suppress ("Not interested") lives in this card's overflow menu, per FR-5 — not a persistent
+   * button. Suppressed dinners no longer render through this component at all; they get their
+   * own row layout on `SuppressedPage`. */
   onSuppress: (id: string) => void;
-  onUnsuppress: (id: string) => void;
   isMutating: boolean;
-  /** Omitted for the Suppressed view — you un-suppress before picking, not from there directly. */
-  selection?: SelectionProps;
+  selection: SelectionProps;
   /** "Last made 2 weeks ago" / "Never made" — see `last-chosen.ts#formatLastChosen`. */
   lastChosenText?: string;
 }
@@ -167,21 +171,29 @@ function DinnerCardDetails({ dinnerId }: { dinnerId: string }) {
   );
 }
 
-export function DinnerCard({
-  dinner,
-  variant,
-  onSuppress,
-  onUnsuppress,
-  isMutating,
-  selection,
-  lastChosenText,
-}: DinnerCardProps) {
+export function DinnerCard({ dinner, onSuppress, isMutating, selection, lastChosenText }: DinnerCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
     <Box borderWidth="1px" borderRadius="md" p={4}>
       <HStack justify="space-between" align="start" mb={2}>
         <Heading size="sm">{dinner.name}</Heading>
+        {/* FR-5: "Not interested" lives here, not as a persistent button on the card face —
+            a rare, destructive-feeling action shouldn't sit next to the primary pick action. */}
+        <Menu placement="bottom-end">
+          <MenuButton
+            as={Button}
+            variant="ghost"
+            size="sm"
+            aria-label={`More actions for ${dinner.name}`}
+            isLoading={isMutating}
+          >
+            <uiIcons.overflowMenu size={17} strokeWidth={2} />
+          </MenuButton>
+          <MenuList>
+            <MenuItem onClick={() => onSuppress(dinner.id)}>Not interested</MenuItem>
+          </MenuList>
+        </Menu>
       </HStack>
       <Text fontSize="sm" color="gray.600" mb={1}>
         {dinner.cuisine_type} · {dinner.cook_time_minutes} min
@@ -201,27 +213,16 @@ export function DinnerCard({
         </Text>
       )}
       <Stack gap={2} align="start">
-        {selection && (
-          <Tooltip label="Already have 3 picked — remove one first" isDisabled={!selection.selectionDisabled}>
-            <Checkbox
-              isChecked={selection.isSelected}
-              isDisabled={selection.selectionDisabled || selection.isTogglingSelection}
-              onChange={() => selection.onToggleSelect(dinner.id)}
-              aria-label={`Pick ${dinner.name} for this week`}
-            >
-              Pick for this week
-            </Checkbox>
-          </Tooltip>
-        )}
-        {variant === 'active' ? (
-          <Button size="sm" variant="outline" isLoading={isMutating} onClick={() => onSuppress(dinner.id)}>
-            Not interested
-          </Button>
-        ) : (
-          <Button size="sm" colorScheme="teal" isLoading={isMutating} onClick={() => onUnsuppress(dinner.id)}>
-            Un-suppress
-          </Button>
-        )}
+        <Tooltip label="Already have 3 picked — remove one first" isDisabled={!selection.selectionDisabled}>
+          <Checkbox
+            isChecked={selection.isSelected}
+            isDisabled={selection.selectionDisabled || selection.isTogglingSelection}
+            onChange={() => selection.onToggleSelect(dinner.id)}
+            aria-label={`Pick ${dinner.name} for this week`}
+          >
+            Pick for this week
+          </Checkbox>
+        </Tooltip>
         <Button size="sm" variant="ghost" onClick={() => setIsExpanded((prev) => !prev)}>
           Details {isExpanded ? '▴' : '▾'}
         </Button>

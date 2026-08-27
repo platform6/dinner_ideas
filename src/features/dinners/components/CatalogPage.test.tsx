@@ -3,12 +3,13 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { MemoryRouter } from 'react-router-dom';
+
 import { CatalogPage } from '@/features/dinners/components/CatalogPage';
 import {
   fetchActiveDinners,
   fetchAllTags,
   fetchLastChosenDates,
-  fetchSuppressedDinners,
   setDinnerActive,
 } from '@/features/dinners/api';
 import { addSelection, createPlan, fetchCurrentPlan } from '@/features/weekly-plan/api';
@@ -35,7 +36,6 @@ function dinner(overrides: Partial<CatalogDinner>): CatalogDinner {
 
 describe('CatalogPage (suppress flow)', () => {
   const mockedFetchActive = vi.mocked(fetchActiveDinners);
-  const mockedFetchSuppressed = vi.mocked(fetchSuppressedDinners);
   const mockedSetActive = vi.mocked(setDinnerActive);
   const mockedFetchCurrentPlan = vi.mocked(fetchCurrentPlan);
   const mockedFetchLastChosenDates = vi.mocked(fetchLastChosenDates);
@@ -45,7 +45,9 @@ describe('CatalogPage (suppress flow)', () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
       <QueryClientProvider client={queryClient}>
-        <CatalogPage />
+        <MemoryRouter>
+          <CatalogPage />
+        </MemoryRouter>
       </QueryClientProvider>,
     );
   }
@@ -53,34 +55,32 @@ describe('CatalogPage (suppress flow)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockedFetchActive.mockResolvedValue([dinner({ id: '1', name: 'Tacos' })]);
-    mockedFetchSuppressed.mockResolvedValue([dinner({ id: '2', name: 'Old Casserole', is_active: false })]);
     mockedSetActive.mockResolvedValue(undefined);
     mockedFetchCurrentPlan.mockResolvedValue(null);
     mockedFetchLastChosenDates.mockResolvedValue(new Map());
     mockedFetchAllTags.mockResolvedValue([]);
   });
 
-  it('suppresses a dinner via "Not interested"', async () => {
+  it('suppresses a dinner via the card overflow menu\'s "Not interested" (FR-5)', async () => {
     const user = userEvent.setup();
     renderPage();
 
     expect(await screen.findByText('Tacos')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /not interested/i }));
+    await user.click(screen.getByRole('button', { name: 'More actions for Tacos' }));
+    await user.click(screen.getByRole('menuitem', { name: /not interested/i }));
 
     await waitFor(() => expect(mockedSetActive).toHaveBeenCalledWith('1', false));
   });
 
-  it('shows the Suppressed view with an Un-suppress action when toggled', async () => {
-    const user = userEvent.setup();
+  it('links to the dedicated Suppressed page instead of a toggle', async () => {
     renderPage();
 
-    await screen.findByText('Tacos');
-    await user.click(screen.getByRole('checkbox', { name: /show suppressed/i }));
-
-    expect(await screen.findByText('Old Casserole')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /un-suppress/i }));
-
-    await waitFor(() => expect(mockedSetActive).toHaveBeenCalledWith('2', true));
+    expect(await screen.findByText('Tacos')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /not interested dinners/i })).toHaveAttribute(
+      'href',
+      '/suppressed',
+    );
+    expect(screen.queryByRole('checkbox', { name: /show suppressed/i })).not.toBeInTheDocument();
   });
 
   it('shows an empty state message when the catalog has no matches', async () => {
@@ -127,7 +127,6 @@ function plan(overrides: Partial<CurrentPlan>): CurrentPlan {
 
 describe('CatalogPage (pick-3 flow)', () => {
   const mockedFetchActive = vi.mocked(fetchActiveDinners);
-  const mockedFetchSuppressed = vi.mocked(fetchSuppressedDinners);
   const mockedFetchCurrentPlan = vi.mocked(fetchCurrentPlan);
   const mockedCreatePlan = vi.mocked(createPlan);
   const mockedAddSelection = vi.mocked(addSelection);
@@ -138,14 +137,15 @@ describe('CatalogPage (pick-3 flow)', () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
       <QueryClientProvider client={queryClient}>
-        <CatalogPage />
+        <MemoryRouter>
+          <CatalogPage />
+        </MemoryRouter>
       </QueryClientProvider>,
     );
   }
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedFetchSuppressed.mockResolvedValue([]);
     mockedCreatePlan.mockResolvedValue(plan({ id: 'new-plan' }));
     mockedAddSelection.mockResolvedValue(undefined);
     mockedFetchLastChosenDates.mockResolvedValue(new Map());

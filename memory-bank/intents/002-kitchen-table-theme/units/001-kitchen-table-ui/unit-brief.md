@@ -169,14 +169,14 @@ _None owned._
 
 ## Bolt Suggestions
 
-| Bolt                    | Type   | Stories                                                                                      | Objective                                                  |
-| ----------------------- | ------ | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| bolt-kitchen-table-ui-1 | Simple | 001-design-token-foundation, 002-icon-vocabulary                                             | Foundation: theme + icons, blocks every other bolt         |
-| bolt-kitchen-table-ui-2 | Simple | 003-bottom-tab-bar-navigation, 004-filter-chips-suppressed-route, 005-suppress-off-card-face | Structural navigation changes                              |
-| bolt-kitchen-table-ui-3 | Simple | 006-login-restyle, 007-catalog-dinner-card-restyle                                           | Login + Catalog/DinnerCard restyle                         |
-| bolt-kitchen-table-ui-4 | Simple | 008-this-week-restyle-week-nav, 009-shopping-list-restyle                                    | This Week + Shopping List restyle                          |
-| bolt-kitchen-table-ui-5 | Simple | 010-cooking-view-restyle, 011-suppressed-view-restyle                                        | Cooking + Suppressed restyle                               |
-| bolt-kitchen-table-ui-6 | Simple | 012-store-config-restyle                                                                     | Store Config restyle (lowest priority, no pixel reference) |
+| Bolt                    | Type   | Stories                                                                                                                   | Objective                                                  |
+| ----------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| bolt-kitchen-table-ui-1 | Simple | 001-design-token-foundation, 002-icon-vocabulary                                                                          | Foundation: theme + icons, blocks every other bolt         |
+| bolt-kitchen-table-ui-2 | Simple | 003-bottom-tab-bar-navigation, 004-filter-chips-suppressed-route, 005-suppress-off-card-face, 011-suppressed-view-restyle | Structural navigation changes (011 pulled forward)         |
+| bolt-kitchen-table-ui-3 | Simple | 006-login-restyle, 007-catalog-dinner-card-restyle                                                                        | Login + Catalog/DinnerCard restyle                         |
+| bolt-kitchen-table-ui-4 | Simple | 008-this-week-restyle-week-nav, 009-shopping-list-restyle                                                                 | This Week + Shopping List restyle                          |
+| bolt-kitchen-table-ui-5 | Simple | 010-cooking-view-restyle                                                                                                  | Cooking restyle (011 moved to bolt 015)                    |
+| bolt-kitchen-table-ui-6 | Simple | 012-store-config-restyle                                                                                                  | Store Config restyle (lowest priority, no pixel reference) |
 
 ---
 

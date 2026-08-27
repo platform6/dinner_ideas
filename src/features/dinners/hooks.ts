@@ -26,9 +26,9 @@ export function useLastChosenDates() {
   return useQuery({ queryKey: lastChosenDatesKey, queryFn: fetchLastChosenDates });
 }
 
-/** Only fetched when the Suppressed view is actually opened. */
-export function useSuppressedDinners(enabled: boolean) {
-  return useQuery({ queryKey: suppressedDinnersKey, queryFn: fetchSuppressedDinners, enabled });
+/** Suppressed dinners — now their own route (`/suppressed`), not conditionally rendered. */
+export function useSuppressedDinners() {
+  return useQuery({ queryKey: suppressedDinnersKey, queryFn: fetchSuppressedDinners });
 }
 
 export function useSetDinnerActive() {
