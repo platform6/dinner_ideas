@@ -1,7 +1,22 @@
 import { useMemo, useState } from 'react';
-import { Alert, AlertIcon, Center, Heading, HStack, SimpleGrid, Spinner, Switch, Text } from '@chakra-ui/react';
+import {
+  Alert,
+  AlertIcon,
+  Center,
+  Heading,
+  HStack,
+  SimpleGrid,
+  Spinner,
+  Switch,
+  Text,
+} from '@chakra-ui/react';
 
-import { useDinners, useLastChosenDates, useSetDinnerActive, useSuppressedDinners } from '@/features/dinners/hooks';
+import {
+  useDinners,
+  useLastChosenDates,
+  useSetDinnerActive,
+  useSuppressedDinners,
+} from '@/features/dinners/hooks';
 import { DinnerCard } from '@/features/dinners/components/DinnerCard';
 import { CatalogFilters, type CatalogFilterState } from '@/features/dinners/components/CatalogFilters';
 import { applyFilters } from '@/features/dinners/filters';
@@ -65,6 +80,13 @@ export function CatalogPage() {
         <Alert status="error" borderRadius="md" mb={4}>
           <AlertIcon />
           Couldn’t save that change, try again.
+        </Alert>
+      )}
+
+      {setDinnerActive.isError && (
+        <Alert status="error" borderRadius="md" mb={4}>
+          <AlertIcon />
+          Couldn’t update that dinner, try again.
         </Alert>
       )}
 

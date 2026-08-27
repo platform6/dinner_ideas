@@ -59,4 +59,15 @@ describe('decideToggleAction', () => {
     const action = decideToggleAction('curry', currentPlan);
     expect(action.type).toBe('add');
   });
+
+  it('creates a new plan rather than removing when the dinner is in a locked plan', () => {
+    // Regression: a dinner from last week's now-locked plan must be re-pickable, not
+    // misread as "already selected" (which would try to delete a locked selection and
+    // get rejected by the DB).
+    const lockedPlan = plan({
+      locked_at: '2026-08-25T12:00:00Z',
+      weekly_plan_selections: [selection({ id: 'sel-1', dinner_id: 'tacos' })],
+    });
+    expect(decideToggleAction('tacos', lockedPlan)).toEqual({ type: 'create-and-add' });
+  });
 });

@@ -1,6 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { addSelection, createPlan, fetchCurrentPlan, lockPlan, removeSelection } from '@/features/weekly-plan/api';
+import {
+  addSelection,
+  createPlan,
+  fetchCurrentPlan,
+  lockPlan,
+  removeSelection,
+} from '@/features/weekly-plan/api';
 import { decideToggleAction } from '@/features/weekly-plan/toggle-selection';
 import type { CurrentPlan } from '@/features/weekly-plan/types';
 
@@ -10,9 +16,17 @@ export function useCurrentPlan() {
   return useQuery({ queryKey: currentPlanKey, queryFn: fetchCurrentPlan });
 }
 
-/** Today's date as `YYYY-MM-DD`, for a new plan's `start_date`. */
+/**
+ * Today's date as `YYYY-MM-DD` in the browser's local timezone, for a new plan's
+ * `start_date`. Deliberately not `toISOString().slice(0, 10)`, which gives the UTC date —
+ * wrong for any household west of UTC once local time has passed midnight UTC.
+ */
 function todayIsoDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 interface ToggleSelectionArgs {

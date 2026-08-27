@@ -26,9 +26,9 @@ select throws_ok(
     insert into public.weekly_plan_selections (weekly_plan_id, dinner_id)
     select p.id, d.id from p, d
   $$,
-  '23505',
+  'P0001',
   null,
-  'a 4th selection for the same plan is rejected (either by the max-3 trigger or the unique constraint, depending on dinner overlap)'
+  'a 4th distinct-dinner selection for the same plan is rejected by fn_weekly_plan_selections_guard (the max-3 trigger, SQLSTATE P0001) — the unique constraint on (weekly_plan_id, dinner_id) is a separate guard that only fires on a duplicate dinner_id, not exercised by this test'
 );
 
 -- Exactly-3-to-lock enforcement
