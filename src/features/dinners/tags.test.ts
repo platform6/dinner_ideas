@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { normalizeTagName } from '@/features/dinners/tags';
+import { isRosieApproved, normalizeTagName } from '@/features/dinners/tags';
 
 describe('normalizeTagName', () => {
   it('lowercases the name', () => {
@@ -21,5 +21,28 @@ describe('normalizeTagName', () => {
 
   it('leaves an already-normalized name unchanged', () => {
     expect(normalizeTagName('kid-friendly')).toBe('kid-friendly');
+  });
+});
+
+describe('isRosieApproved', () => {
+  it('is true when the tag list includes rosie-approved', () => {
+    expect(isRosieApproved(['kid-friendly', 'rosie-approved'])).toBe(true);
+  });
+
+  it('is false when the tag list has other tags but not rosie-approved', () => {
+    expect(isRosieApproved(['kid-friendly', 'spicy'])).toBe(false);
+  });
+
+  it('is false for an empty tag list', () => {
+    expect(isRosieApproved([])).toBe(false);
+  });
+
+  it('is false for null/undefined tags', () => {
+    expect(isRosieApproved(null)).toBe(false);
+    expect(isRosieApproved(undefined)).toBe(false);
+  });
+
+  it('does not match a similarly-named tag', () => {
+    expect(isRosieApproved(['rosie-approved-ish'])).toBe(false);
   });
 });

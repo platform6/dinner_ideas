@@ -58,8 +58,8 @@
 - [x] **003-bottom-tab-bar-navigation** (kitchen-table-ui): Bottom tab bar navigation - Must - ✅ COMPLETE
 - [x] **004-filter-chips-suppressed-route** (kitchen-table-ui): Filter chips & suppressed route - Must - ✅ COMPLETE
 - [x] **005-suppress-off-card-face** (kitchen-table-ui): Suppress off card face - Must - ✅ COMPLETE
-- [ ] **006-login-restyle** (kitchen-table-ui): Login restyle - Must - 📋 PLANNED
-- [ ] **007-catalog-dinner-card-restyle** (kitchen-table-ui): Catalog & dinner card restyle - Must - 📋 PLANNED
+- [x] **006-login-restyle** (kitchen-table-ui): Login restyle - Must - ✅ COMPLETE
+- [x] **007-catalog-dinner-card-restyle** (kitchen-table-ui): Catalog & dinner card restyle - Must - ✅ COMPLETE
 - [ ] **008-this-week-restyle-week-nav** (kitchen-table-ui): This week restyle + week nav - Must - 📋 PLANNED
 - [ ] **009-shopping-list-restyle** (kitchen-table-ui): Shopping list restyle - Must - 📋 PLANNED
 - [ ] **010-cooking-view-restyle** (kitchen-table-ui): Cooking view restyle - Must - 📋 PLANNED

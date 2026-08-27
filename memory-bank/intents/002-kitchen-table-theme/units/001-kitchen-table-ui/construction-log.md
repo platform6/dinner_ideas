@@ -2,7 +2,7 @@
 unit: 001-kitchen-table-ui
 intent: 002-kitchen-table-theme
 created: 2026-08-27T09:40:00Z
-last_updated: 2026-08-27T11:15:00Z
+last_updated: 2026-08-27T23:02:50Z
 ---
 
 # Construction Log: kitchen-table-ui
@@ -33,7 +33,7 @@ last_updated: 2026-08-27T11:15:00Z
 | -------------------- | -------------------------------------------------------------------------------------------- | ------------ | --------------- |
 | 014-kitchen-table-ui | 001-design-token-foundation, 002-icon-vocabulary                                             | ✅ completed | -               |
 | 015-kitchen-table-ui | 003-bottom-tab-bar-navigation, 004-filter-chips-suppressed-route, 005-suppress-off-card-face | ✅ completed | Story 011 added |
-| 016-kitchen-table-ui | 006-login-restyle, 007-catalog-dinner-card-restyle                                           | [ ] planned  | -               |
+| 016-kitchen-table-ui | 006-login-restyle, 007-catalog-dinner-card-restyle                                           | ✅ completed | -               |
 | 017-kitchen-table-ui | 008-this-week-restyle-week-nav, 009-shopping-list-restyle                                    | [ ] planned  | -               |
 | 018-kitchen-table-ui | 010-cooking-view-restyle, 011-suppressed-view-restyle                                        | [ ] planned  | -               |
 | 019-kitchen-table-ui | 012-store-config-restyle                                                                     | [ ] planned  | -               |
@@ -52,6 +52,11 @@ last_updated: 2026-08-27T11:15:00Z
 | 2026-08-27T11:00:00Z | 015-kitchen-table-ui | stage-complete         | Implement (tsc/eslint/vitest 117/117/vite build clean) → Test                                             |
 | 2026-08-27T11:10:00Z | 015-kitchen-table-ui | stage-artifact-drafted | Test (117/117 tests; no live browser check — behind auth login) → awaiting human checkpoint (final stage) |
 | 2026-08-27T11:15:00Z | 015-kitchen-table-ui | completed              | All 3 stages done (via bolt-complete.cjs)                                                                 |
+| 2026-08-27T11:20:00Z | 016-kitchen-table-ui | started                | Stage 1: Plan                                                                                             |
+| 2026-08-27T11:30:00Z | 016-kitchen-table-ui | stage-complete         | Plan → Implement                                                                                          |
+| 2026-08-27T12:15:00Z | 016-kitchen-table-ui | stage-complete         | Implement (tsc/eslint/vitest 122/122/vite build clean; Login live-verified in browser) → Test             |
+| 2026-08-27T12:30:00Z | 016-kitchen-table-ui | stage-artifact-drafted | Test (122/122 tests; Login live-verified, Catalog behind auth) → awaiting human checkpoint (final stage)  |
+| 2026-08-27T23:02:50Z | 016-kitchen-table-ui | completed              | All 3 stages done (via bolt-complete.cjs)                                                                 |
 
 ## Execution Summary
 
@@ -59,9 +64,9 @@ last_updated: 2026-08-27T11:15:00Z
 | ---------------------- | ----- |
 | Original bolts planned | 6     |
 | Current bolt count     | 6     |
-| Bolts completed        | 2     |
+| Bolts completed        | 3     |
 | Bolts in progress      | 0     |
-| Bolts remaining        | 4     |
+| Bolts remaining        | 3     |
 | Replanning events      | 1     |
 
 ## Notes

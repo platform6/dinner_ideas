@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import {
   Alert,
   AlertIcon,
+  Badge,
+  Box,
   Center,
   Heading,
   HStack,
@@ -54,11 +56,19 @@ export function CatalogPage() {
   return (
     <>
       <HStack justify="space-between" mb={4} flexWrap="wrap" gap={3}>
-        <Heading textStyle="pageTitle" as="h1">
-          Dinner catalog
-        </Heading>
+        <Box>
+          <Text textStyle="eyebrow">This week</Text>
+          <Heading textStyle="pageTitle" as="h1">
+            Dinner catalog
+          </Heading>
+        </Box>
         <HStack gap={2}>
-          {selectedDinnerIds.size > 0 && <Text color="ink.500">{selectedDinnerIds.size}/3 selected</Text>}
+          <Badge variant={selectedDinnerIds.size >= 3 ? 'countFull' : 'count'}>
+            <HStack gap={1}>
+              <uiIcons.checkAll size={13} strokeWidth={2} />
+              <Text as="span">{selectedDinnerIds.size} of 3</Text>
+            </HStack>
+          </Badge>
           <IconButton
             as={RouterLink}
             to="/suppressed"

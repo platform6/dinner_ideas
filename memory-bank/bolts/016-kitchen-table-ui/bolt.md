@@ -3,11 +3,23 @@ id: 016-kitchen-table-ui
 unit: 001-kitchen-table-ui
 intent: 002-kitchen-table-theme
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 006-login-restyle
   - 007-catalog-dinner-card-restyle
 created: '2026-08-27T09:30:00Z'
+started: '2026-08-27T11:20:00Z'
+current_stage: null
+stages_completed:
+  - name: plan
+    completed: '2026-08-27T11:30:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-08-27T12:15:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-08-27T12:30:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 014-kitchen-table-ui
   - 015-kitchen-table-ui
@@ -19,6 +31,7 @@ complexity:
   avg_uncertainty: 1
   max_dependencies: 2
   testing_scope: 2
+completed: '2026-08-27T23:02:50Z'
 ---
 
 # Bolt: 016-kitchen-table-ui
@@ -43,9 +56,9 @@ Land the first two fully-restyled screens — Login (self-contained) and Catalog
 
 ## Stages
 
-- [ ] **1. Plan**
-- [ ] **2. Implement**
-- [ ] **3. Test**
+- [x] **1. Plan**
+- [x] **2. Implement**
+- [x] **3. Test**
 
 ## Dependencies
 

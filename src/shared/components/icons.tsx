@@ -148,6 +148,8 @@ export const uiIcons = {
   email: Mail,
   password: Lock,
   reveal: Eye,
+  hidePassword: EyeOff,
+  logo: CookingPot,
   allCuisines: Utensils,
   // Added in 002-kitchen-table-theme bolt 015 (structural nav — not in the original handoff).
   storeConfig: Store,

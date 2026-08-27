@@ -45,3 +45,14 @@
 | intents/001-weekly-dinner-planner/requirements.md                                  | inception-complete | construction | Unit 003-weekly-dinner-planner-ui is in-progress; intent has moved into Construction |
 
 ---
+
+## 2026-08-27T23:03:25.752Z - Status Sync
+
+**Triggered by**: status-integrity script
+
+| Artifact                                                                             | Old Status         | New Status      | Reason                            |
+| ------------------------------------------------------------------------------------ | ------------------ | --------------- | --------------------------------- |
+| memory-bank\intents\002-kitchen-table-theme\units\001-kitchen-table-ui\unit-brief.md | draft              | stories-defined | Unit has 6 bolts (3/6 complete)   |
+| memory-bank\intents\002-kitchen-table-theme\requirements.md                          | inception-complete | units-defined   | Intent has 1 units (0/1 complete) |
+
+---

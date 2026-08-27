@@ -20,15 +20,15 @@ import {
   Spinner,
   Stack,
   Text,
-  Tooltip,
   UnorderedList,
   Wrap,
   WrapItem,
 } from '@chakra-ui/react';
 
 import { useAddTag, useDinnerFullDetails, useRemoveTag } from '@/features/dinners/hooks';
+import { isRosieApproved } from '@/features/dinners/tags';
 import type { CatalogDinner } from '@/features/dinners/types';
-import { uiIcons } from '@/shared/components/icons';
+import { categoryIcon, cuisineIcon, metaIcons, stepIcon, uiIcons } from '@/shared/components/icons';
 
 interface SelectionProps {
   isSelected: boolean;
@@ -74,7 +74,7 @@ function DinnerCardDetails({ dinnerId }: { dinnerId: string }) {
 
   if (details.isError || !details.data) {
     return (
-      <Alert status="error" borderRadius="md" fontSize="sm">
+      <Alert status="error" borderRadius="field" fontSize="sm">
         <AlertIcon />
         Couldn’t load details for this dinner.
       </Alert>
@@ -84,51 +84,68 @@ function DinnerCardDetails({ dinnerId }: { dinnerId: string }) {
   const { dinner_steps, dinner_ingredients, tags } = details.data;
 
   return (
-    <Stack gap={3} pt={2} borderTopWidth="1px" mt={2}>
+    <Stack gap={3} pt={3} borderTopWidth="1px" borderColor="line.subtle" mt={2}>
       <Box>
-        <Text fontWeight="medium" fontSize="sm" mb={1}>
+        <Text textStyle="sectionLabel" mb={1.5}>
           Ingredients
         </Text>
         {dinner_ingredients.length === 0 ? (
-          <Text fontSize="sm" color="gray.600">
-            No ingredients recorded.
-          </Text>
+          <Text textStyle="faint">No ingredients recorded.</Text>
         ) : (
-          <UnorderedList fontSize="sm" spacing={0.5}>
-            {dinner_ingredients.map((ingredient) => (
-              <ListItem key={ingredient.id}>
-                {ingredient.quantity} {ingredient.unit} {ingredient.name}
-              </ListItem>
-            ))}
+          <UnorderedList styleType="none" ms={0} spacing={1}>
+            {dinner_ingredients.map((ingredient) => {
+              const CategoryIcon = categoryIcon(ingredient.category);
+              return (
+                <ListItem key={ingredient.id}>
+                  <HStack gap={2} fontSize="0.8125rem" color="ink.700">
+                    <CategoryIcon size={14} strokeWidth={1.8} color="var(--chakra-colors-ink-400)" />
+                    <Text as="span">
+                      {ingredient.quantity} {ingredient.unit} {ingredient.name}
+                    </Text>
+                  </HStack>
+                </ListItem>
+              );
+            })}
           </UnorderedList>
         )}
       </Box>
 
       <Box>
-        <Text fontWeight="medium" fontSize="sm" mb={1}>
+        <Text textStyle="sectionLabel" mb={1.5}>
           Steps
         </Text>
         {dinner_steps.length === 0 ? (
-          <Text fontSize="sm" color="gray.600">
-            No steps recorded.
-          </Text>
+          <Text textStyle="faint">No steps recorded.</Text>
         ) : (
-          <OrderedList fontSize="sm" spacing={0.5}>
-            {dinner_steps.map((step) => (
-              <ListItem key={step.id}>{step.instruction}</ListItem>
-            ))}
+          <OrderedList styleType="none" ms={0} spacing={1.5}>
+            {dinner_steps.map((step) => {
+              const StepIcon = stepIcon(step.instruction);
+              return (
+                <ListItem key={step.id}>
+                  <HStack align="start" gap={2} fontSize="0.8125rem" color="ink.700">
+                    <StepIcon
+                      size={14}
+                      strokeWidth={1.8}
+                      color="var(--chakra-colors-brand-500)"
+                      style={{ marginTop: '2px', flexShrink: 0 }}
+                    />
+                    <Text as="span">{step.instruction}</Text>
+                  </HStack>
+                </ListItem>
+              );
+            })}
           </OrderedList>
         )}
       </Box>
 
       <Box>
-        <Text fontWeight="medium" fontSize="sm" mb={1}>
+        <Text textStyle="sectionLabel" mb={1.5}>
           Tags
         </Text>
         <Wrap mb={2}>
           {tags.map((tag) => (
             <WrapItem key={tag.id}>
-              <Badge display="flex" alignItems="center" gap={1}>
+              <Badge variant="muted" display="flex" alignItems="center" gap={1}>
                 {tag.name}
                 <CloseButton
                   size="sm"
@@ -154,6 +171,7 @@ function DinnerCardDetails({ dinnerId }: { dinnerId: string }) {
           />
           <Button
             size="sm"
+            variant="outline"
             onClick={handleAddTag}
             isLoading={addTag.isPending}
             isDisabled={!newTagName.trim()}
@@ -162,7 +180,7 @@ function DinnerCardDetails({ dinnerId }: { dinnerId: string }) {
           </Button>
         </HStack>
         {addTag.isError && (
-          <Text fontSize="xs" color="red.500" mt={1}>
+          <Text textStyle="faint" color="heart.500" mt={1}>
             Couldn’t add that tag, try again.
           </Text>
         )}
@@ -171,62 +189,140 @@ function DinnerCardDetails({ dinnerId }: { dinnerId: string }) {
   );
 }
 
-export function DinnerCard({ dinner, onSuppress, isMutating, selection, lastChosenText }: DinnerCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+/**
+ * The pick control (FR-2/FR-3): a 3-state pill — outline "Pick" -> solid "Picked" -> locked
+ * "Full" once 3 are already chosen — backed by a real `Checkbox` so the existing
+ * `getByRole('checkbox', { name: 'Pick X for this week' })` test contract (and the underlying
+ * accessibility semantics) keep working unchanged. The pill visual replaces the checkbox's
+ * default control/label rendering via `sx`, not the input itself.
+ */
+function PickPill({ dinner, selection }: { dinner: CatalogDinner; selection: SelectionProps }) {
+  const isLocked = selection.selectionDisabled && !selection.isSelected;
+  const Icon = selection.isSelected ? uiIcons.check : isLocked ? uiIcons.locked : uiIcons.add;
+  const label = selection.isSelected ? 'Picked' : isLocked ? 'Full' : 'Pick';
 
   return (
-    <Box borderWidth="1px" borderRadius="md" p={4}>
-      <HStack justify="space-between" align="start" mb={2}>
-        <Heading size="sm">{dinner.name}</Heading>
-        {/* FR-5: "Not interested" lives here, not as a persistent button on the card face —
-            a rare, destructive-feeling action shouldn't sit next to the primary pick action. */}
-        <Menu placement="bottom-end">
-          <MenuButton
-            as={Button}
-            variant="ghost"
-            size="sm"
-            aria-label={`More actions for ${dinner.name}`}
-            isLoading={isMutating}
-          >
-            <uiIcons.overflowMenu size={17} strokeWidth={2} />
-          </MenuButton>
-          <MenuList>
-            <MenuItem onClick={() => onSuppress(dinner.id)}>Not interested</MenuItem>
-          </MenuList>
-        </Menu>
+    <Checkbox
+      isChecked={selection.isSelected}
+      isDisabled={selection.selectionDisabled || selection.isTogglingSelection}
+      onChange={() => selection.onToggleSelect(dinner.id)}
+      aria-label={`Pick ${dinner.name} for this week`}
+      sx={{ '.chakra-checkbox__control': { display: 'none' } }}
+    >
+      <HStack
+        as="span"
+        gap={1.5}
+        px={3}
+        h="34px"
+        borderRadius="chip"
+        borderWidth="1px"
+        fontSize="0.75rem"
+        fontWeight={600}
+        borderColor={selection.isSelected ? 'brand.500' : isLocked ? 'paper.sunken' : 'line.brand'}
+        bg={selection.isSelected ? 'brand.500' : isLocked ? 'paper.sunken' : 'transparent'}
+        color={selection.isSelected ? 'paper.base' : isLocked ? 'ink.300' : 'brand.500'}
+      >
+        <Icon size={14} strokeWidth={2.2} />
+        <Text as="span">{label}</Text>
       </HStack>
-      <Text fontSize="sm" color="gray.600" mb={1}>
-        {dinner.cuisine_type} · {dinner.cook_time_minutes} min
-      </Text>
-      {dinner.tags.length > 0 && (
-        <Wrap mb={1}>
-          {dinner.tags.map((tag) => (
+    </Checkbox>
+  );
+}
+
+export function DinnerCard({ dinner, onSuppress, isMutating, selection, lastChosenText }: DinnerCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const CuisineIcon = cuisineIcon(dinner.cuisine_type);
+  const isLocked = selection.selectionDisabled && !selection.isSelected;
+  const visibleTags = dinner.tags.filter((tag) => tag !== 'rosie-approved');
+
+  return (
+    <Box
+      layerStyle={selection.isSelected ? 'cardSelected' : 'card'}
+      opacity={isLocked ? 0.55 : 1}
+      transition="opacity 0.15s ease"
+    >
+      <HStack justify="space-between" align="start" mb={2} gap={2}>
+        <HStack align="start" gap={3}>
+          <Center w="76px" h="76px" borderRadius="control" bg="paper.sunken" color="ink.300" flexShrink={0}>
+            <CuisineIcon size={30} strokeWidth={1.5} />
+          </Center>
+          <Box>
+            <Heading textStyle="cardTitle">{dinner.name}</Heading>
+            <HStack gap={2} mt={1} textStyle="meta">
+              <HStack gap={1}>
+                <CuisineIcon size={13} strokeWidth={1.8} />
+                <Text as="span">{dinner.cuisine_type}</Text>
+              </HStack>
+              <HStack gap={1}>
+                <metaIcons.cookTime size={13} strokeWidth={1.8} />
+                <Text as="span">{dinner.cook_time_minutes} min</Text>
+              </HStack>
+            </HStack>
+          </Box>
+        </HStack>
+        <HStack gap={1} flexShrink={0}>
+          {isRosieApproved(dinner.tags) && (
+            <Box color="heart.500" aria-label="Rosie approved" title="Rosie approved">
+              <metaIcons.rosieApproved size={17} strokeWidth={1.8} fill="currentColor" />
+            </Box>
+          )}
+          {/* FR-5: "Not interested" lives here, not as a persistent button on the card face —
+              a rare, destructive-feeling action shouldn't sit next to the primary pick action. */}
+          <Menu placement="bottom-end">
+            <MenuButton
+              as={Button}
+              variant="ghost"
+              size="sm"
+              aria-label={`More actions for ${dinner.name}`}
+              isLoading={isMutating}
+            >
+              <uiIcons.overflowMenu size={17} strokeWidth={2} />
+            </MenuButton>
+            <MenuList>
+              <MenuItem onClick={() => onSuppress(dinner.id)}>Not interested</MenuItem>
+            </MenuList>
+          </Menu>
+        </HStack>
+      </HStack>
+
+      {visibleTags.length > 0 && (
+        <Wrap mb={2}>
+          {visibleTags.map((tag) => (
             <WrapItem key={tag}>
-              <Badge colorScheme="purple">{tag}</Badge>
+              <Badge variant="muted">{tag}</Badge>
             </WrapItem>
           ))}
         </Wrap>
       )}
+
       {lastChosenText && (
-        <Text fontSize="xs" color="gray.500" mb={3}>
-          {lastChosenText}
-        </Text>
+        <HStack textStyle="faint" gap={1} mb={3}>
+          {lastChosenText.toLowerCase().includes('never') ? (
+            <metaIcons.neverMade size={13} strokeWidth={1.8} />
+          ) : (
+            <metaIcons.lastMade size={13} strokeWidth={1.8} />
+          )}
+          <Text as="span">{lastChosenText}</Text>
+        </HStack>
       )}
-      <Stack gap={2} align="start">
-        <Tooltip label="Already have 3 picked — remove one first" isDisabled={!selection.selectionDisabled}>
-          <Checkbox
-            isChecked={selection.isSelected}
-            isDisabled={selection.selectionDisabled || selection.isTogglingSelection}
-            onChange={() => selection.onToggleSelect(dinner.id)}
-            aria-label={`Pick ${dinner.name} for this week`}
-          >
-            Pick for this week
-          </Checkbox>
-        </Tooltip>
-        <Button size="sm" variant="ghost" onClick={() => setIsExpanded((prev) => !prev)}>
-          Details {isExpanded ? '▴' : '▾'}
+
+      {isLocked && (
+        <Box layerStyle="notice" mb={3} fontSize="0.78125rem">
+          Already have 3 picked — remove one first.
+        </Box>
+      )}
+
+      <HStack justify="space-between" align="center">
+        <PickPill dinner={dinner} selection={selection} />
+        <Button
+          size="sm"
+          variant="ghost"
+          rightIcon={isExpanded ? <uiIcons.collapse size={14} /> : <uiIcons.expand size={14} />}
+          onClick={() => setIsExpanded((prev) => !prev)}
+        >
+          Details
         </Button>
-      </Stack>
+      </HStack>
       {isExpanded && <DinnerCardDetails dinnerId={dinner.id} />}
     </Box>
   );

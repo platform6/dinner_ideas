@@ -183,7 +183,7 @@ describe('CatalogPage (pick-3 flow)', () => {
     );
     renderPage();
 
-    expect(await screen.findByText('3/3 selected')).toBeInTheDocument();
+    expect(await screen.findByText('3 of 3')).toBeInTheDocument();
 
     // Tacos, Pasta, Curry are selected (enabled, to allow deselecting); Enchiladas is not (disabled).
     expect(screen.getByRole('checkbox', { name: 'Pick Tacos for this week' })).toBeChecked();

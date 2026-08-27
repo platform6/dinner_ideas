@@ -7,3 +7,16 @@
 export function normalizeTagName(name: string): string {
   return name.trim().toLowerCase();
 }
+
+/**
+ * The "rosie-approved" heart (002-kitchen-table-theme, story 007) is presentation-only: it
+ * checks for a tag literally named `rosie-approved`, reconciling the original design handoff
+ * (which modeled this as a boolean column) with the generic tag system built in
+ * 001-weekly-dinner-planner. Tag names are already lowercase-normalized at write time, so an
+ * exact match is sufficient here.
+ */
+export const ROSIE_APPROVED_TAG = 'rosie-approved';
+
+export function isRosieApproved(tags: readonly string[] | null | undefined): boolean {
+  return (tags ?? []).includes(ROSIE_APPROVED_TAG);
+}
