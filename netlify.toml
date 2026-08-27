@@ -1,0 +1,16 @@
+[build]
+  command = "pnpm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  PNPM_VERSION = "11.1.3"
+  # husky's `prepare` script is dev-only; skip it during CI installs.
+  HUSKY = "0"
+
+# SPA fallback: react-router handles /plan, /shopping-list, /cooking client-side,
+# so every unmatched path must serve index.html rather than 404.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -1,2 +1,8 @@
+# esbuild (pulled in by vite) needs its install script to run so its platform
+# binary is linked; otherwise `vite build` fails on a clean CI install.
+# pnpm >= 11 reads `allowBuilds`; pnpm 9/10 read `onlyBuiltDependencies`.
+# Both are set so the build works regardless of which pnpm the CI image uses.
 allowBuilds:
   esbuild: true
+onlyBuiltDependencies:
+  - esbuild
