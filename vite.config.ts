@@ -13,7 +13,7 @@ export default defineConfig({
         name: 'Dinner Ideas',
         short_name: 'Dinner Ideas',
         description: 'Weekly dinner planning, shopping list, and cooking view for the household.',
-        theme_color: '#2c7a7b',
+        theme_color: '#4A6741',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',
@@ -31,7 +31,8 @@ export default defineConfig({
         // shopping list) when there isn't — see implementation-plan.md's Technical Approach.
         runtimeCaching: [
           {
-            urlPattern: ({ url }) => url.hostname.endsWith('.supabase.co') && url.pathname.startsWith('/rest/v1/'),
+            urlPattern: ({ url }) =>
+              url.hostname.endsWith('.supabase.co') && url.pathname.startsWith('/rest/v1/'),
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase-rest-cache',

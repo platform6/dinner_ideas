@@ -1,0 +1,63 @@
+---
+unit: 001-kitchen-table-ui
+intent: 002-kitchen-table-theme
+created: 2026-08-27T09:40:00Z
+last_updated: 2026-08-27T09:40:00Z
+---
+
+# Construction Log: kitchen-table-ui
+
+## Original Plan
+
+**From Inception**: 6 bolts planned
+**Planned Date**: 2026-08-27
+
+| Bolt ID              | Stories                                                                                      | Type                     |
+| -------------------- | -------------------------------------------------------------------------------------------- | ------------------------ |
+| 014-kitchen-table-ui | 001-design-token-foundation, 002-icon-vocabulary                                             | simple-construction-bolt |
+| 015-kitchen-table-ui | 003-bottom-tab-bar-navigation, 004-filter-chips-suppressed-route, 005-suppress-off-card-face | simple-construction-bolt |
+| 016-kitchen-table-ui | 006-login-restyle, 007-catalog-dinner-card-restyle                                           | simple-construction-bolt |
+| 017-kitchen-table-ui | 008-this-week-restyle-week-nav, 009-shopping-list-restyle                                    | simple-construction-bolt |
+| 018-kitchen-table-ui | 010-cooking-view-restyle, 011-suppressed-view-restyle                                        | simple-construction-bolt |
+| 019-kitchen-table-ui | 012-store-config-restyle                                                                     | simple-construction-bolt |
+
+## Replanning History
+
+| Date | Action | Change | Reason | Approved |
+| ---- | ------ | ------ | ------ | -------- |
+
+## Current Bolt Structure
+
+| Bolt ID              | Stories                                                                                      | Status       | Changed |
+| -------------------- | -------------------------------------------------------------------------------------------- | ------------ | ------- |
+| 014-kitchen-table-ui | 001-design-token-foundation, 002-icon-vocabulary                                             | ✅ completed | -       |
+| 015-kitchen-table-ui | 003-bottom-tab-bar-navigation, 004-filter-chips-suppressed-route, 005-suppress-off-card-face | [ ] planned  | -       |
+| 016-kitchen-table-ui | 006-login-restyle, 007-catalog-dinner-card-restyle                                           | [ ] planned  | -       |
+| 017-kitchen-table-ui | 008-this-week-restyle-week-nav, 009-shopping-list-restyle                                    | [ ] planned  | -       |
+| 018-kitchen-table-ui | 010-cooking-view-restyle, 011-suppressed-view-restyle                                        | [ ] planned  | -       |
+| 019-kitchen-table-ui | 012-store-config-restyle                                                                     | [ ] planned  | -       |
+
+## Execution History
+
+| Date                 | Bolt                 | Event                  | Details                                                                                             |
+| -------------------- | -------------------- | ---------------------- | --------------------------------------------------------------------------------------------------- |
+| 2026-08-27T09:40:00Z | 014-kitchen-table-ui | started                | Stage 1: Plan                                                                                       |
+| 2026-08-27T09:45:00Z | 014-kitchen-table-ui | stage-complete         | Plan → Implement                                                                                    |
+| 2026-08-27T10:00:00Z | 014-kitchen-table-ui | stage-complete         | Implement (tsc/eslint/vitest 107/107/vite build clean; live-verified in browser) → Test             |
+| 2026-08-27T10:10:00Z | 014-kitchen-table-ui | stage-artifact-drafted | Test (107/107 tests, live browser + network verification) → awaiting human checkpoint (final stage) |
+| 2026-08-27T10:15:00Z | 014-kitchen-table-ui | completed              | All 3 stages done (via bolt-complete.cjs)                                                           |
+
+## Execution Summary
+
+| Metric                 | Value |
+| ---------------------- | ----- |
+| Original bolts planned | 6     |
+| Current bolt count     | 6     |
+| Bolts completed        | 1     |
+| Bolts in progress      | 0     |
+| Bolts remaining        | 5     |
+| Replanning events      | 0     |
+
+## Notes
+
+First unit/bolt for intent `002-kitchen-table-theme`. Depends on `001-weekly-dinner-planner` (all 4 units, complete) for the existing frontend this unit restyles — no new backend/schema work anywhere in this unit.

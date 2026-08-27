@@ -2,9 +2,9 @@
 
 ## Overview
 
-- **Total stories**: 24
-- **Completed**: 24
-- **Planned**: 0
+- **Total stories**: 36
+- **Completed**: 26
+- **Planned**: 10
 - **Last updated**: 2026-08-27
 
 ---
@@ -49,11 +49,28 @@
 - [x] **001-store-rows-schema** (grocery-store-config): Store rows schema - Must - ✅ COMPLETE
 - [x] **002-reorder-shopping-list-by-rows** (grocery-store-config): Reorder shopping list by rows - Must - ✅ COMPLETE
 
+### 002-kitchen-table-theme
+
+**Unit: 001-kitchen-table-ui**
+
+- [x] **001-design-token-foundation** (kitchen-table-ui): Design token foundation - Must - ✅ COMPLETE
+- [x] **002-icon-vocabulary** (kitchen-table-ui): Icon vocabulary - Must - ✅ COMPLETE
+- [ ] **003-bottom-tab-bar-navigation** (kitchen-table-ui): Bottom tab bar navigation - Must - 📋 PLANNED
+- [ ] **004-filter-chips-suppressed-route** (kitchen-table-ui): Filter chips & suppressed route - Must - 📋 PLANNED
+- [ ] **005-suppress-off-card-face** (kitchen-table-ui): Suppress off card face - Must - 📋 PLANNED
+- [ ] **006-login-restyle** (kitchen-table-ui): Login restyle - Must - 📋 PLANNED
+- [ ] **007-catalog-dinner-card-restyle** (kitchen-table-ui): Catalog & dinner card restyle - Must - 📋 PLANNED
+- [ ] **008-this-week-restyle-week-nav** (kitchen-table-ui): This week restyle + week nav - Must - 📋 PLANNED
+- [ ] **009-shopping-list-restyle** (kitchen-table-ui): Shopping list restyle - Must - 📋 PLANNED
+- [ ] **010-cooking-view-restyle** (kitchen-table-ui): Cooking view restyle - Must - 📋 PLANNED
+- [ ] **011-suppressed-view-restyle** (kitchen-table-ui): Suppressed view restyle - Must - 📋 PLANNED
+- [ ] **012-store-config-restyle** (kitchen-table-ui): Store config restyle - Should - 📋 PLANNED
+
 ---
 
 ## Stories by Status
 
-- **Planned**: 5
+- **Planned**: 10
 - **Generated**: 0
 - **In Progress**: 0
-- **Completed**: 19
+- **Completed**: 26
