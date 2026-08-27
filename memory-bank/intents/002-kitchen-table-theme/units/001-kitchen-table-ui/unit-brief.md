@@ -2,7 +2,7 @@
 unit: 001-kitchen-table-ui
 intent: 002-kitchen-table-theme
 phase: inception
-status: stories-defined
+status: complete
 created: '2026-08-27T09:15:00Z'
 updated: '2026-08-27T09:15:00Z'
 unit_type: frontend

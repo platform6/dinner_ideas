@@ -1,7 +1,7 @@
 ---
 intent: 002-kitchen-table-theme
 phase: inception
-status: units-defined
+status: complete
 created: '2026-08-27T09:00:00Z'
 updated: '2026-08-27T09:35:00Z'
 ---

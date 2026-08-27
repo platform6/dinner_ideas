@@ -7,6 +7,7 @@ import {
   Center,
   Heading,
   HStack,
+  IconButton,
   Input,
   Select,
   Spinner,
@@ -23,6 +24,7 @@ import {
   useReorderRow,
   useRows,
 } from '@/features/store-config/hooks';
+import { uiIcons } from '@/shared/components/icons';
 
 /**
  * Lets the wife define her store's row order and assign ingredient categories to rows (FR-12),
@@ -50,7 +52,7 @@ export function StoreConfigPage() {
 
   if (rows.isError || assignments.isError || categories.isError) {
     return (
-      <Alert status="error" borderRadius="md">
+      <Alert status="error" borderRadius="field">
         <AlertIcon />
         Couldn’t load your store configuration. Try refreshing the page.
       </Alert>
@@ -69,57 +71,74 @@ export function StoreConfigPage() {
 
   return (
     <Stack gap={6}>
-      <Heading size="lg">Grocery Store Setup</Heading>
+      <Heading textStyle="pageTitle" as="h1">
+        Grocery store setup
+      </Heading>
 
       <Box>
-        <Heading size="md" mb={3}>
+        <Text textStyle="sectionLabel" mb={1.5}>
           Rows
-        </Heading>
-        <Text fontSize="sm" color="gray.600" mb={3}>
+        </Text>
+        <Text textStyle="faint" mb={3}>
           List your store's sections in the order you walk them — first row is where you start shopping.
         </Text>
 
         {rowList.length === 0 ? (
-          <Text color="gray.600" mb={3}>
-            No rows configured yet — the shopping list will use alphabetical order until you add some.
-          </Text>
+          <Box layerStyle="cardDashed" mb={3}>
+            <Text textStyle="faint">
+              No rows configured yet — the shopping list will use alphabetical order until you add some.
+            </Text>
+          </Box>
         ) : (
           <Stack gap={2} mb={3}>
             {rowList.map((row, index) => (
-              <HStack key={row.id} justify="space-between" borderWidth="1px" borderRadius="md" p={3}>
-                <Text>{row.name}</Text>
-                <HStack>
-                  <Button
+              <HStack key={row.id} justify="space-between" layerStyle="card">
+                <HStack gap={3}>
+                  <Center
+                    w="30px"
+                    h="30px"
+                    borderRadius="full"
+                    bg="paper.sunken"
+                    color="ink.500"
+                    fontWeight={600}
+                    fontSize="0.8125rem"
+                    flexShrink={0}
+                  >
+                    {index + 1}
+                  </Center>
+                  <Text fontWeight={500} color="ink.900">
+                    {row.name}
+                  </Text>
+                </HStack>
+                <HStack gap={1.5}>
+                  <IconButton
                     size="sm"
                     variant="outline"
                     aria-label={`Move ${row.name} up`}
+                    icon={<uiIcons.rowUp size={15} strokeWidth={2} />}
                     isDisabled={index === 0 || reorderRow.isPending}
                     onClick={() =>
                       reorderRow.mutate({ rowId: row.id, newPosition: rowList[index - 1].position })
                     }
-                  >
-                    ↑
-                  </Button>
-                  <Button
+                  />
+                  <IconButton
                     size="sm"
                     variant="outline"
                     aria-label={`Move ${row.name} down`}
+                    icon={<uiIcons.rowDown size={15} strokeWidth={2} />}
                     isDisabled={index === rowList.length - 1 || reorderRow.isPending}
                     onClick={() =>
                       reorderRow.mutate({ rowId: row.id, newPosition: rowList[index + 1].position })
                     }
-                  >
-                    ↓
-                  </Button>
-                  <Button
+                  />
+                  <IconButton
                     size="sm"
-                    variant="outline"
-                    colorScheme="red"
+                    variant="quiet"
+                    aria-label="Delete"
+                    icon={<uiIcons.deleteRow size={15} strokeWidth={2} />}
                     isLoading={deleteRow.isPending && deleteRow.variables === row.id}
                     onClick={() => deleteRow.mutate(row.id)}
-                  >
-                    Delete
-                  </Button>
+                  />
                 </HStack>
               </HStack>
             ))}
@@ -128,7 +147,6 @@ export function StoreConfigPage() {
 
         <HStack>
           <Input
-            size="sm"
             maxW="14rem"
             placeholder="New row name"
             aria-label="New row name"
@@ -138,35 +156,29 @@ export function StoreConfigPage() {
               if (event.key === 'Enter') handleAddRow();
             }}
           />
-          <Button
-            size="sm"
-            onClick={handleAddRow}
-            isLoading={addRow.isPending}
-            isDisabled={!newRowName.trim()}
-          >
+          <Button onClick={handleAddRow} isLoading={addRow.isPending} isDisabled={!newRowName.trim()}>
             Add row
           </Button>
         </HStack>
       </Box>
 
       <Box>
-        <Heading size="md" mb={3}>
-          Category Assignments
-        </Heading>
-        <Text fontSize="sm" color="gray.600" mb={3}>
+        <Text textStyle="sectionLabel" mb={1.5}>
+          Category assignments
+        </Text>
+        <Text textStyle="faint" mb={3}>
           Assign each ingredient category to a row. Unassigned categories appear after your rows,
           alphabetically.
         </Text>
 
         {(categories.data ?? []).length === 0 ? (
-          <Text color="gray.600">No ingredient categories found yet.</Text>
+          <Text textStyle="faint">No ingredient categories found yet.</Text>
         ) : (
           <Stack gap={2}>
             {(categories.data ?? []).map((category) => (
               <HStack key={category} justify="space-between">
-                <Text>{category}</Text>
+                <Text color="ink.700">{category}</Text>
                 <Select
-                  size="sm"
                   maxW="12rem"
                   aria-label={`Row for ${category}`}
                   placeholder="Unassigned"

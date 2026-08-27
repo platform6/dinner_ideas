@@ -1,5 +1,7 @@
 import {
+  ArrowDown,
   ArrowRight,
+  ArrowUp,
   Beef,
   BookOpen,
   CalendarCheck,
@@ -39,6 +41,7 @@ import {
   Soup,
   Sparkles,
   Store,
+  Trash2,
   Utensils,
   UtensilsCrossed,
   Wheat,
@@ -156,6 +159,9 @@ export const uiIcons = {
   shoppingList: ShoppingBasket,
   allDone: Sparkles,
   eaten: CalendarCheck,
+  rowUp: ArrowUp,
+  rowDown: ArrowDown,
+  deleteRow: Trash2,
   // Added in 002-kitchen-table-theme bolt 015 (structural nav — not in the original handoff).
   storeConfig: Store,
   logOut: LogOut,
