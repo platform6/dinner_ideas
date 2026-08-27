@@ -23,7 +23,6 @@ function dinner(id: string, ingredients: DinnerIngredient[]): DinnerWithIngredie
     name: `Dinner ${id}`,
     cuisine_type: 'Italian',
     cook_time_minutes: 30,
-    rosie_approved: false,
     is_active: true,
     instructions: '',
     created_at: '2026-01-01T00:00:00Z',
@@ -39,7 +38,9 @@ describe('buildShoppingList', () => {
     ];
 
     const groups = buildShoppingList(dinners);
-    expect(groups).toEqual([{ category: 'Produce', items: [{ name: 'onion', unit: 'each', quantity: 3, category: 'Produce' }] }]);
+    expect(groups).toEqual([
+      { category: 'Produce', items: [{ name: 'onion', unit: 'each', quantity: 3, category: 'Produce' }] },
+    ]);
   });
 
   it('keeps the same ingredient name with mismatched units as separate lines', () => {

@@ -35,7 +35,7 @@ function chunk(type, data) {
   return Buffer.concat([length, typeBytes, data, crc]);
 }
 
-// Simple two-tone "plate" icon: teal background, white circle, darker teal ring —
+// Simple two-tone "plate" icon: olive background, warm-white circle, darker olive ring —
 // legible at small sizes and safe within a maskable icon's center "safe zone".
 function pixelAt(x, y, size) {
   const cx = size / 2;
@@ -46,13 +46,13 @@ function pixelAt(x, y, size) {
   const plateRadius = size * 0.32;
   const ringRadius = size * 0.36;
 
-  const teal = [44, 122, 123, 255]; // Chakra teal.600
-  const darkTeal = [35, 96, 97, 255];
-  const white = [255, 255, 255, 255];
+  const olive = [74, 103, 65, 255]; // brand.500, "Kitchen Table" theme
+  const darkOlive = [62, 86, 54, 255]; // brand.600
+  const paperBase = [255, 253, 250, 255]; // paper.base
 
-  if (dist <= plateRadius) return white;
-  if (dist <= ringRadius) return darkTeal;
-  return teal;
+  if (dist <= plateRadius) return paperBase;
+  if (dist <= ringRadius) return darkOlive;
+  return olive;
 }
 
 function buildPng(size) {

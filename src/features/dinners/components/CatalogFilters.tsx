@@ -1,48 +1,118 @@
-import { Checkbox, HStack, Select } from '@chakra-ui/react';
+import { useState } from 'react';
+import { Button, Checkbox, CheckboxGroup, Menu, MenuButton, MenuList, Wrap } from '@chakra-ui/react';
+
+import { metaIcons, uiIcons } from '@/shared/components/icons';
 
 export interface CatalogFilterState {
   cuisine: string | null;
-  rosieApprovedOnly: boolean;
+  /** OR semantics: a dinner matches if it has any of these tags (see `filters.ts`). */
+  tags: string[];
   sortByCookTime: boolean;
 }
 
 interface CatalogFiltersProps {
   cuisines: string[];
+  /** Full tag vocabulary (from `useAllTags`), for the tag filter — not just tags on visible dinners. */
+  availableTags: string[];
   filters: CatalogFilterState;
   onChange: (filters: CatalogFilterState) => void;
 }
 
-export function CatalogFilters({ cuisines, filters, onChange }: CatalogFiltersProps) {
+/**
+ * Filter row as chips (FR-4): "All" + "Quickest" are always inline; the full cuisine list and
+ * tag filter live behind a `SlidersHorizontal` overflow menu. The theme's `Button` baseStyle
+ * already sets `borderRadius: 'chip'`, so a plain solid/outline Button is the chip itself.
+ */
+export function CatalogFilters({ cuisines, availableTags, filters, onChange }: CatalogFiltersProps) {
+  const [isOverflowOpen, setIsOverflowOpen] = useState(false);
+
   return (
-    <HStack gap={4} mb={4} flexWrap="wrap">
-      <Select
-        maxW="14rem"
-        placeholder="All cuisines"
-        value={filters.cuisine ?? ''}
-        onChange={(event) =>
-          onChange({ ...filters, cuisine: event.target.value === '' ? null : event.target.value })
-        }
+    <Wrap gap={2} mb={4} align="center">
+      <Button
+        size="sm"
+        variant={filters.cuisine === null ? 'solid' : 'outline'}
+        leftIcon={<uiIcons.allCuisines size={14} strokeWidth={2} />}
+        onClick={() => onChange({ ...filters, cuisine: null })}
       >
-        {cuisines.map((cuisine) => (
-          <option key={cuisine} value={cuisine}>
-            {cuisine}
-          </option>
-        ))}
-      </Select>
+        All
+      </Button>
 
-      <Checkbox
-        isChecked={filters.rosieApprovedOnly}
-        onChange={(event) => onChange({ ...filters, rosieApprovedOnly: event.target.checked })}
+      <Button
+        size="sm"
+        variant={filters.sortByCookTime ? 'solid' : 'outline'}
+        leftIcon={<metaIcons.cookTime size={14} strokeWidth={2} />}
+        onClick={() => onChange({ ...filters, sortByCookTime: !filters.sortByCookTime })}
       >
-        Rosie-approved only
-      </Checkbox>
+        Quickest
+      </Button>
 
-      <Checkbox
-        isChecked={filters.sortByCookTime}
-        onChange={(event) => onChange({ ...filters, sortByCookTime: event.target.checked })}
-      >
-        Sort by cook time
-      </Checkbox>
-    </HStack>
+      {filters.cuisine !== null && (
+        <Button size="sm" variant="solid" onClick={() => onChange({ ...filters, cuisine: null })}>
+          {filters.cuisine} ✕
+        </Button>
+      )}
+
+      {filters.tags.map((tag) => (
+        <Button
+          key={tag}
+          size="sm"
+          variant="solid"
+          onClick={() => onChange({ ...filters, tags: filters.tags.filter((t) => t !== tag) })}
+        >
+          {tag} ✕
+        </Button>
+      ))}
+
+      {(cuisines.length > 0 || availableTags.length > 0) && (
+        <Menu
+          isOpen={isOverflowOpen}
+          onOpen={() => setIsOverflowOpen(true)}
+          onClose={() => setIsOverflowOpen(false)}
+        >
+          <MenuButton
+            as={Button}
+            size="sm"
+            variant="outline"
+            leftIcon={<uiIcons.filters size={14} strokeWidth={2} />}
+            aria-label="More filters"
+          >
+            More
+          </MenuButton>
+          <MenuList p={3} minW="14rem">
+            {cuisines.length > 0 && (
+              <CheckboxGroup
+                value={filters.cuisine ? [filters.cuisine] : []}
+                onChange={(values) =>
+                  onChange({ ...filters, cuisine: (values[values.length - 1] as string) ?? null })
+                }
+              >
+                <Wrap direction="column" mb={availableTags.length > 0 ? 3 : 0}>
+                  {cuisines.map((cuisine) => (
+                    <Checkbox key={cuisine} value={cuisine}>
+                      {cuisine}
+                    </Checkbox>
+                  ))}
+                </Wrap>
+              </CheckboxGroup>
+            )}
+
+            {availableTags.length > 0 && (
+              <CheckboxGroup
+                value={filters.tags}
+                onChange={(tags) => onChange({ ...filters, tags: tags as string[] })}
+              >
+                <Wrap direction="column">
+                  {availableTags.map((tag) => (
+                    <Checkbox key={tag} value={tag}>
+                      {tag}
+                    </Checkbox>
+                  ))}
+                </Wrap>
+              </CheckboxGroup>
+            )}
+          </MenuList>
+        </Menu>
+      )}
+    </Wrap>
   );
 }

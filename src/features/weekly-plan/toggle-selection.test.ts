@@ -13,7 +13,6 @@ function selection(overrides: Partial<SelectionWithDinner>): SelectionWithDinner
       name: 'Dinner',
       cuisine_type: 'Italian',
       cook_time_minutes: 30,
-      rosie_approved: false,
       is_active: true,
       instructions: '',
       created_at: '2026-01-01T00:00:00Z',

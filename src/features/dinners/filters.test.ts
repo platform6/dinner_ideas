@@ -2,30 +2,42 @@ import { describe, expect, it } from 'vitest';
 
 import { applyFilters } from '@/features/dinners/filters';
 import type { CatalogFilterState } from '@/features/dinners/components/CatalogFilters';
-import type { DinnerWithIngredients } from '@/features/dinners/types';
+import type { CatalogDinner } from '@/features/dinners/types';
 
-const noFilters: CatalogFilterState = { cuisine: null, rosieApprovedOnly: false, sortByCookTime: false };
+const noFilters: CatalogFilterState = { cuisine: null, tags: [], sortByCookTime: false };
 
-function dinner(overrides: Partial<DinnerWithIngredients>): DinnerWithIngredients {
+function dinner(overrides: Partial<CatalogDinner>): CatalogDinner {
   return {
     id: 'id',
     name: 'Dinner',
     cuisine_type: 'Italian',
     cook_time_minutes: 30,
-    rosie_approved: false,
     is_active: true,
     instructions: '',
     created_at: '2026-01-01T00:00:00Z',
     dinner_ingredients: [],
+    tags: [],
     ...overrides,
   };
 }
 
 describe('applyFilters', () => {
-  const dinners: DinnerWithIngredients[] = [
-    dinner({ id: '1', name: 'Tacos', cuisine_type: 'Mexican', cook_time_minutes: 25, rosie_approved: true }),
-    dinner({ id: '2', name: 'Pasta', cuisine_type: 'Italian', cook_time_minutes: 40, rosie_approved: false }),
-    dinner({ id: '3', name: 'Curry', cuisine_type: 'Indian', cook_time_minutes: 15, rosie_approved: true }),
+  const dinners: CatalogDinner[] = [
+    dinner({
+      id: '1',
+      name: 'Tacos',
+      cuisine_type: 'Mexican',
+      cook_time_minutes: 25,
+      tags: ['kid-friendly'],
+    }),
+    dinner({ id: '2', name: 'Pasta', cuisine_type: 'Italian', cook_time_minutes: 40, tags: [] }),
+    dinner({
+      id: '3',
+      name: 'Curry',
+      cuisine_type: 'Indian',
+      cook_time_minutes: 15,
+      tags: ['kid-friendly', 'spicy'],
+    }),
   ];
 
   it('returns all dinners when no filters are set', () => {
@@ -37,8 +49,13 @@ describe('applyFilters', () => {
     expect(result.map((d) => d.id)).toEqual(['1']);
   });
 
-  it('filters by Rosie-approved only', () => {
-    const result = applyFilters(dinners, { ...noFilters, rosieApprovedOnly: true });
+  it('filters by a single tag', () => {
+    const result = applyFilters(dinners, { ...noFilters, tags: ['spicy'] });
+    expect(result.map((d) => d.id)).toEqual(['3']);
+  });
+
+  it('matches a dinner with ANY of the selected tags (OR, not AND)', () => {
+    const result = applyFilters(dinners, { ...noFilters, tags: ['kid-friendly', 'spicy'] });
     expect(result.map((d) => d.id).sort()).toEqual(['1', '3']);
   });
 
@@ -48,12 +65,22 @@ describe('applyFilters', () => {
     expect(dinners.map((d) => d.id)).toEqual(['1', '2', '3']);
   });
 
-  it('combines cuisine + Rosie-approved + sort', () => {
-    const combined: DinnerWithIngredients[] = [
+  it('combines cuisine + tag + sort', () => {
+    const combined: CatalogDinner[] = [
       ...dinners,
-      dinner({ id: '4', name: 'Enchiladas', cuisine_type: 'Mexican', cook_time_minutes: 10, rosie_approved: true }),
+      dinner({
+        id: '4',
+        name: 'Enchiladas',
+        cuisine_type: 'Mexican',
+        cook_time_minutes: 10,
+        tags: ['kid-friendly'],
+      }),
     ];
-    const result = applyFilters(combined, { cuisine: 'Mexican', rosieApprovedOnly: true, sortByCookTime: true });
+    const result = applyFilters(combined, {
+      cuisine: 'Mexican',
+      tags: ['kid-friendly'],
+      sortByCookTime: true,
+    });
     expect(result.map((d) => d.id)).toEqual(['4', '1']);
   });
 

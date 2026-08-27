@@ -29,7 +29,7 @@ describe('LoginForm', () => {
 
     render(<LoginForm />);
     await user.type(screen.getByLabelText(/email/i), 'wrong@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'wrong-password');
+    await user.type(screen.getByLabelText(/^password/i), 'wrong-password');
     await user.click(screen.getByRole('button', { name: /log in/i }));
 
     expect(await screen.findByText(/couldn.t log in/i)).toBeInTheDocument();
@@ -41,7 +41,7 @@ describe('LoginForm', () => {
 
     render(<LoginForm />);
     await user.type(screen.getByLabelText(/email/i), 'household@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'correct-password');
+    await user.type(screen.getByLabelText(/^password/i), 'correct-password');
     await user.click(screen.getByRole('button', { name: /log in/i }));
 
     expect(mockedUseAuth().signIn).toHaveBeenCalledWith('household@example.com', 'correct-password');
@@ -61,7 +61,7 @@ describe('LoginForm', () => {
 
     render(<LoginForm />);
     await user.type(screen.getByLabelText(/email/i), 'household@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'correct-password');
+    await user.type(screen.getByLabelText(/^password/i), 'correct-password');
     await user.click(screen.getByRole('button', { name: /log in/i }));
 
     expect(await screen.findByText(/couldn.t log in/i)).toBeInTheDocument();

@@ -7,11 +7,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ShoppingListPage } from '@/features/shopping-list/components/ShoppingListPage';
 import { fetchDinnersByIds } from '@/features/dinners/api';
 import { fetchCurrentPlan, lockPlan } from '@/features/weekly-plan/api';
+import { fetchAssignments, fetchRows } from '@/features/store-config/api';
 import type { DinnerWithIngredients } from '@/features/dinners/types';
 import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/types';
 
 vi.mock('@/features/dinners/api');
 vi.mock('@/features/weekly-plan/api');
+vi.mock('@/features/store-config/api');
 
 function selection(overrides: Partial<SelectionWithDinner>): SelectionWithDinner {
   return {
@@ -23,7 +25,6 @@ function selection(overrides: Partial<SelectionWithDinner>): SelectionWithDinner
       name: 'Dinner',
       cuisine_type: 'Italian',
       cook_time_minutes: 30,
-      rosie_approved: false,
       is_active: true,
       instructions: '',
       created_at: '2026-01-01T00:00:00Z',
@@ -49,7 +50,6 @@ function dinnerWithIngredients(id: string, name: string): DinnerWithIngredients 
     name,
     cuisine_type: 'Italian',
     cook_time_minutes: 30,
-    rosie_approved: false,
     is_active: true,
     instructions: '',
     created_at: '2026-01-01T00:00:00Z',
@@ -75,6 +75,8 @@ describe('ShoppingListPage', () => {
   const mockedFetchCurrentPlan = vi.mocked(fetchCurrentPlan);
   const mockedFetchDinnersByIds = vi.mocked(fetchDinnersByIds);
   const mockedLockPlan = vi.mocked(lockPlan);
+  const mockedFetchRows = vi.mocked(fetchRows);
+  const mockedFetchAssignments = vi.mocked(fetchAssignments);
   const mockedWriteText = vi.fn();
 
   function renderPage() {
@@ -84,7 +86,7 @@ describe('ShoppingListPage', () => {
         <MemoryRouter>
           <ShoppingListPage />
         </MemoryRouter>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
   }
 
@@ -104,6 +106,8 @@ describe('ShoppingListPage', () => {
     vi.clearAllMocks();
     mockedFetchDinnersByIds.mockResolvedValue(threeDinners);
     mockedLockPlan.mockResolvedValue(plan({ locked_at: '2026-08-27T12:00:00Z' }));
+    mockedFetchRows.mockResolvedValue([]);
+    mockedFetchAssignments.mockResolvedValue([]);
     mockedWriteText.mockResolvedValue(undefined);
   });
 
@@ -119,7 +123,8 @@ describe('ShoppingListPage', () => {
     renderPage();
 
     expect(await screen.findByText('Produce')).toBeInTheDocument();
-    expect(screen.getByText(/3 each onion/)).toBeInTheDocument();
+    expect(screen.getByText('3 each')).toBeInTheDocument();
+    expect(screen.getByText('onion')).toBeInTheDocument();
   });
 
   it('copies and locks by default when Copy is tapped', async () => {
@@ -178,7 +183,7 @@ describe('ShoppingListPage', () => {
 
   it('disables the lock checkbox (checked) once the plan is already locked', async () => {
     mockedFetchCurrentPlan.mockResolvedValue(
-      plan({ locked_at: '2026-08-27T12:00:00Z', weekly_plan_selections: threeSelections })
+      plan({ locked_at: '2026-08-27T12:00:00Z', weekly_plan_selections: threeSelections }),
     );
     const user = setupUser();
     renderPage();

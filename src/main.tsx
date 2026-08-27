@@ -5,6 +5,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 
 import { queryClient } from '@/shared/lib/queryClient';
+import { theme } from '@/shared/theme';
 import { App } from '@/App';
 
 const rootElement = document.getElementById('root');
@@ -14,12 +15,12 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <ChakraProvider>
+    <ChakraProvider theme={theme}>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <App />
         </BrowserRouter>
       </QueryClientProvider>
     </ChakraProvider>
-  </StrictMode>
+  </StrictMode>,
 );

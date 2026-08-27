@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -22,7 +23,6 @@ function selection(overrides: Partial<SelectionWithDinner>): SelectionWithDinner
       name: 'Dinner',
       cuisine_type: 'Italian',
       cook_time_minutes: 30,
-      rosie_approved: false,
       is_active: true,
       instructions: '',
       created_at: '2026-01-01T00:00:00Z',
@@ -48,7 +48,6 @@ function dinnerWithSteps(overrides: Partial<DinnerWithSteps>): DinnerWithSteps {
     name: 'Dinner',
     cuisine_type: 'Italian',
     cook_time_minutes: 30,
-    rosie_approved: false,
     is_active: true,
     instructions: '',
     created_at: '2026-01-01T00:00:00Z',
@@ -74,7 +73,7 @@ describe('CookingViewPage', () => {
         <MemoryRouter>
           <CookingViewPage />
         </MemoryRouter>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
   }
 
@@ -97,12 +96,13 @@ describe('CookingViewPage', () => {
     expect(await screen.findByText(/pick 3 dinners/i)).toBeInTheDocument();
   });
 
-  it('shows all 3 dinners with their steps as an ordered, numbered list', async () => {
+  it('shows each dinner collapsed with cook-time and step-count, steps hidden until expanded', async () => {
     mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: threeSelections }));
     mockedFetchDinnersWithStepsByIds.mockResolvedValue([
       dinnerWithSteps({
         id: '1',
         name: 'Tacos',
+        cook_time_minutes: 25,
         dinner_steps: [
           { id: 's1', dinner_id: '1', step_number: 1, instruction: 'Brown the turkey.' },
           { id: 's2', dinner_id: '1', step_number: 2, instruction: 'Serve in tortillas.' },
@@ -114,13 +114,54 @@ describe('CookingViewPage', () => {
     renderPage();
 
     expect(await screen.findByText('Tacos')).toBeInTheDocument();
-    expect(screen.getByRole('list')).toBeInTheDocument();
-    const items = screen.getAllByRole('listitem');
-    expect(items[0]).toHaveTextContent('Brown the turkey.');
-    expect(items[1]).toHaveTextContent('Serve in tortillas.');
+    expect(screen.getByText(/25 min · 2 steps/)).toBeInTheDocument();
+    expect(screen.queryByText('Brown the turkey.')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Expand Tacos' })).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it('shows a fallback note for a dinner with zero steps', async () => {
+  it('expands only the tapped card, independently of the others', async () => {
+    const user = userEvent.setup();
+    mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: threeSelections }));
+    mockedFetchDinnersWithStepsByIds.mockResolvedValue([
+      dinnerWithSteps({
+        id: '1',
+        name: 'Tacos',
+        dinner_steps: [
+          { id: 's1', dinner_id: '1', step_number: 1, instruction: 'Brown the turkey.' },
+          { id: 's2', dinner_id: '1', step_number: 2, instruction: 'Serve in tortillas.' },
+        ],
+      }),
+      dinnerWithSteps({
+        id: '2',
+        name: 'Pasta',
+        dinner_steps: [{ id: 's3', dinner_id: '2', step_number: 1, instruction: 'Boil the pasta.' }],
+      }),
+      dinnerWithSteps({ id: '3', name: 'Curry', dinner_steps: [] }),
+    ]);
+    renderPage();
+
+    await screen.findByText('Tacos');
+    await user.click(screen.getByRole('button', { name: 'Expand Tacos' }));
+
+    expect(await screen.findByText('Brown the turkey.')).toBeInTheDocument();
+    expect(screen.getByText('Serve in tortillas.')).toBeInTheDocument();
+    expect(screen.queryByText('Boil the pasta.')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Collapse Tacos' })).toHaveAttribute('aria-expanded', 'true');
+
+    await user.click(screen.getByRole('button', { name: 'Expand Pasta' }));
+
+    expect(await screen.findByText('Boil the pasta.')).toBeInTheDocument();
+    // Tacos stays expanded — each card's state is independent.
+    expect(screen.getByText('Brown the turkey.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Collapse Tacos' }));
+
+    expect(screen.queryByText('Brown the turkey.')).not.toBeInTheDocument();
+    expect(screen.getByText('Boil the pasta.')).toBeInTheDocument();
+  });
+
+  it('shows a fallback note for a dinner with zero steps, once expanded', async () => {
+    const user = userEvent.setup();
     mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: threeSelections }));
     mockedFetchDinnersWithStepsByIds.mockResolvedValue([
       dinnerWithSteps({ id: '1', name: 'Tacos', dinner_steps: [] }),
@@ -129,13 +170,18 @@ describe('CookingViewPage', () => {
     ]);
     renderPage();
 
-    expect(await screen.findByText('Tacos')).toBeInTheDocument();
-    expect(screen.getAllByText(/no steps available/i)).toHaveLength(3);
+    await screen.findByText('Tacos');
+    await user.click(screen.getByRole('button', { name: 'Expand Tacos' }));
+    await user.click(screen.getByRole('button', { name: 'Expand Pasta' }));
+    await user.click(screen.getByRole('button', { name: 'Expand Curry' }));
+
+    expect(await screen.findAllByText(/no steps available/i)).toHaveLength(3);
   });
 
   it('shows the same steps unchanged once the plan is locked', async () => {
+    const user = userEvent.setup();
     mockedFetchCurrentPlan.mockResolvedValue(
-      plan({ locked_at: '2026-08-27T12:00:00Z', weekly_plan_selections: threeSelections })
+      plan({ locked_at: '2026-08-27T12:00:00Z', weekly_plan_selections: threeSelections }),
     );
     mockedFetchDinnersWithStepsByIds.mockResolvedValue([
       dinnerWithSteps({
@@ -148,7 +194,9 @@ describe('CookingViewPage', () => {
     ]);
     renderPage();
 
-    expect(await screen.findByText('Tacos')).toBeInTheDocument();
-    expect(screen.getByText('Brown the turkey.')).toBeInTheDocument();
+    await screen.findByText('Tacos');
+    await user.click(screen.getByRole('button', { name: 'Expand Tacos' }));
+
+    expect(await screen.findByText('Brown the turkey.')).toBeInTheDocument();
   });
 });

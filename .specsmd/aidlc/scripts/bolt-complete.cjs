@@ -148,7 +148,7 @@ const INTENTS_DIR = path.join(MEMORY_BANK_DIR, 'intents');
  * Extract frontmatter from a markdown file
  */
 function extractFrontmatter(content) {
-    const match = content.match(/^---\n([\s\S]+?)\n---/);
+    const match = content.match(/^---\r?\n([\s\S]+?)\r?\n---/);
     if (!match) return null;
 
     try {
@@ -163,7 +163,7 @@ function extractFrontmatter(content) {
  * Update frontmatter in a markdown file
  */
 function updateFrontmatter(content, newFrontmatter) {
-    const match = content.match(/^---\n([\s\S]+?)\n---/);
+    const match = content.match(/^---\r?\n([\s\S]+?)\r?\n---/);
     if (!match) return null;
 
     const newYaml = yaml.dump(newFrontmatter, {
@@ -455,6 +455,26 @@ async function updateIntentStatus(bolt) {
         return { updated: false };
     }
 
+    // Gather every bolt's (unit, status) once, so each unit can be checked against its
+    // actual bolts rather than trusting unit-brief.status alone — a unit-brief can say
+    // "complete" from an earlier round while still having newer bolts planned/in-progress
+    // (this project's convention: reopened units keep status: complete, tracked via a
+    // "Revised" note, rather than reverting to an earlier lifecycle stage).
+    const boltDirs = await fs.readdir(BOLTS_DIR).catch(() => []);
+    const boltsByUnit = new Map();
+    for (const boltDir of boltDirs) {
+        const boltPath = path.join(BOLTS_DIR, boltDir, 'bolt.md');
+        if (await fs.pathExists(boltPath)) {
+            const content = await fs.readFile(boltPath, 'utf8');
+            const frontmatter = extractFrontmatter(content);
+            if (frontmatter && frontmatter.unit) {
+                const list = boltsByUnit.get(frontmatter.unit) || [];
+                list.push(frontmatter.status);
+                boltsByUnit.set(frontmatter.unit, list);
+            }
+        }
+    }
+
     const unitDirs = await fs.readdir(unitsDir).catch(() => []);
     const allComplete = [];
 
@@ -464,7 +484,9 @@ async function updateIntentStatus(bolt) {
             const content = await fs.readFile(unitBriefPath, 'utf8');
             const frontmatter = extractFrontmatter(content);
             if (frontmatter) {
-                allComplete.push(frontmatter.status === 'complete');
+                const unitBolts = boltsByUnit.get(frontmatter.unit) || [];
+                const boltsAllComplete = unitBolts.length === 0 || unitBolts.every((s) => s === 'complete');
+                allComplete.push(frontmatter.status === 'complete' && boltsAllComplete);
             }
         }
     }

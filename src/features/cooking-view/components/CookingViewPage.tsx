@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Alert,
@@ -6,9 +6,8 @@ import {
   Box,
   Center,
   Heading,
+  HStack,
   Link as ChakraLink,
-  ListItem,
-  OrderedList,
   Spinner,
   Stack,
   Text,
@@ -16,6 +15,7 @@ import {
 
 import { useCurrentPlan } from '@/features/weekly-plan/hooks';
 import { useDinnersWithSteps } from '@/features/cooking-view/hooks';
+import { cuisineIcon, metaIcons, stepIcon, uiIcons } from '@/shared/components/icons';
 
 export function CookingViewPage() {
   const currentPlan = useCurrentPlan();
@@ -24,6 +24,17 @@ export function CookingViewPage() {
   const dinnerIds = useMemo(() => (plan?.weekly_plan_selections ?? []).map((s) => s.dinner_id), [plan]);
 
   const dinners = useDinnersWithSteps(dinnerIds);
+  // Independent per-card expand state — several cards may be open at once.
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  function toggle(id: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   if (currentPlan.isLoading) {
     return (
@@ -35,7 +46,7 @@ export function CookingViewPage() {
 
   if (currentPlan.isError) {
     return (
-      <Alert status="error" borderRadius="md">
+      <Alert status="error" borderRadius="field">
         <AlertIcon />
         Couldn’t load the cooking view. Try refreshing the page.
       </Alert>
@@ -44,7 +55,7 @@ export function CookingViewPage() {
 
   if (selections.length < 3) {
     return (
-      <Text color="gray.600">
+      <Text textStyle="faint">
         Pick 3 dinners on{' '}
         <ChakraLink as={RouterLink} to="/">
           the catalog
@@ -56,7 +67,9 @@ export function CookingViewPage() {
 
   return (
     <Stack gap={4}>
-      <Heading size="lg">Cooking</Heading>
+      <Heading textStyle="pageTitle" as="h1">
+        Cooking
+      </Heading>
 
       {dinners.isLoading && (
         <Center py={12}>
@@ -65,28 +78,98 @@ export function CookingViewPage() {
       )}
 
       {dinners.isError && (
-        <Alert status="error" borderRadius="md">
+        <Alert status="error" borderRadius="field">
           <AlertIcon />
           Couldn’t load the steps for your picks. Try refreshing the page.
         </Alert>
       )}
 
-      {dinners.data?.map((dinner) => (
-        <Box key={dinner.id} borderWidth="1px" borderRadius="md" p={4}>
-          <Heading size="md" mb={3}>
-            {dinner.name}
-          </Heading>
-          {dinner.dinner_steps.length === 0 ? (
-            <Text color="gray.600">No steps available for this dinner yet.</Text>
-          ) : (
-            <OrderedList spacing={2}>
-              {dinner.dinner_steps.map((step) => (
-                <ListItem key={step.id}>{step.instruction}</ListItem>
+      {dinners.data?.map((dinner) => {
+        const isExpanded = expandedIds.has(dinner.id);
+        const CuisineIcon = cuisineIcon(dinner.cuisine_type);
+        const stepCount = dinner.dinner_steps.length;
+
+        return (
+          <Box
+            key={dinner.id}
+            borderWidth="1px"
+            borderRadius="card"
+            borderColor={isExpanded ? '#E3E7DA' : 'line.subtle'}
+            bg={isExpanded ? 'brand.50' : 'paper.base'}
+            p={3}
+          >
+            <Box
+              as="button"
+              type="button"
+              display="flex"
+              width="full"
+              alignItems="center"
+              justifyContent="space-between"
+              textAlign="left"
+              aria-expanded={isExpanded}
+              aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${dinner.name}`}
+              onClick={() => toggle(dinner.id)}
+            >
+              <HStack gap={3}>
+                <Center
+                  w="44px"
+                  h="44px"
+                  borderRadius="control"
+                  bg="paper.sunken"
+                  color="ink.300"
+                  flexShrink={0}
+                >
+                  <CuisineIcon size={20} strokeWidth={1.5} />
+                </Center>
+                <Box>
+                  <Heading textStyle="cardTitle">{dinner.name}</Heading>
+                  <HStack textStyle="meta" gap={1}>
+                    <metaIcons.cookTime size={13} strokeWidth={1.8} />
+                    <Text as="span">
+                      {dinner.cook_time_minutes} min · {stepCount} step{stepCount === 1 ? '' : 's'}
+                    </Text>
+                  </HStack>
+                </Box>
+              </HStack>
+              {isExpanded ? (
+                <uiIcons.collapse size={18} strokeWidth={2} />
+              ) : (
+                <uiIcons.expand size={18} strokeWidth={2} />
+              )}
+            </Box>
+
+            {isExpanded &&
+              (stepCount === 0 ? (
+                <Text textStyle="faint" mt={3}>
+                  No steps available for this dinner yet.
+                </Text>
+              ) : (
+                <Stack gap={2} mt={3}>
+                  {dinner.dinner_steps.map((step) => {
+                    const StepIcon = stepIcon(step.instruction);
+                    return (
+                      <HStack key={step.id} bg="paper.base" borderRadius="control" p={2} gap={2.5}>
+                        <Center
+                          w="30px"
+                          h="30px"
+                          borderRadius="control"
+                          bg="paper.subtle"
+                          color="brand.500"
+                          flexShrink={0}
+                        >
+                          <StepIcon size={15} strokeWidth={1.8} />
+                        </Center>
+                        <Text fontSize="0.8125rem" color="ink.700">
+                          {step.instruction}
+                        </Text>
+                      </HStack>
+                    );
+                  })}
+                </Stack>
               ))}
-            </OrderedList>
-          )}
-        </Box>
-      ))}
+          </Box>
+        );
+      })}
     </Stack>
   );
 }

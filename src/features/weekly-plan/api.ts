@@ -14,6 +14,24 @@ export async function fetchCurrentPlan(): Promise<CurrentPlan | null> {
   return data as CurrentPlan | null;
 }
 
+/**
+ * The plan whose `start_date` matches exactly (FR-11's week navigation) — null if that week
+ * was skipped (no plan exists for it). If more than one plan somehow shares a start_date, the
+ * most recently created one wins, same tie-break as `fetchCurrentPlan`.
+ */
+export async function fetchPlanByStartDate(startDate: string): Promise<CurrentPlan | null> {
+  const { data, error } = await supabase
+    .from('weekly_plans')
+    .select('*, weekly_plan_selections(*, dinners(*))')
+    .eq('start_date', startDate)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data as CurrentPlan | null;
+}
+
 /** Starts a new draft plan. Used when there's no current plan, or the current one is locked. */
 export async function createPlan(startDate: string): Promise<WeeklyPlan> {
   const { data, error } = await supabase
