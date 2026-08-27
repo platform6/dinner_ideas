@@ -88,8 +88,7 @@ describe('PlanPage', () => {
     );
     renderPage();
 
-    expect(await screen.findByText('2/3 selected')).toBeInTheDocument();
-    expect(screen.getByText('Tacos')).toBeInTheDocument();
+    expect(await screen.findByText('Tacos')).toBeInTheDocument();
     expect(screen.getByText('Pasta')).toBeInTheDocument();
 
     await user.click(screen.getAllByRole('button', { name: /remove/i })[0]);
@@ -153,6 +152,37 @@ describe('PlanPage', () => {
     expect(screen.getByText('Eaten')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /remove/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /next week/i })).toBeEnabled();
+  });
+
+  it('shows the all-picked dashed card with a link to the shopping list once 3 are picked', async () => {
+    mockedFetchCurrentPlan.mockResolvedValue(
+      plan({
+        weekly_plan_selections: [
+          selection({
+            id: 'sel-1',
+            dinner_id: 'tacos',
+            dinners: { ...selection({}).dinners, name: 'Tacos' },
+          }),
+          selection({
+            id: 'sel-2',
+            dinner_id: 'pasta',
+            dinners: { ...selection({}).dinners, name: 'Pasta' },
+          }),
+          selection({
+            id: 'sel-3',
+            dinner_id: 'curry',
+            dinners: { ...selection({}).dinners, name: 'Curry' },
+          }),
+        ],
+      }),
+    );
+    renderPage();
+
+    expect(await screen.findByText(/all three picked/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /see shopping list/i })).toHaveAttribute(
+      'href',
+      '/shopping-list',
+    );
   });
 
   it('shows a clear empty state for a skipped week with no plan', async () => {

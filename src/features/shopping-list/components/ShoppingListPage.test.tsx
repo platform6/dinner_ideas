@@ -123,7 +123,8 @@ describe('ShoppingListPage', () => {
     renderPage();
 
     expect(await screen.findByText('Produce')).toBeInTheDocument();
-    expect(screen.getByText(/3 each onion/)).toBeInTheDocument();
+    expect(screen.getByText('3 each')).toBeInTheDocument();
+    expect(screen.getByText('onion')).toBeInTheDocument();
   });
 
   it('copies and locks by default when Copy is tapped', async () => {

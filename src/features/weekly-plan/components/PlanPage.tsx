@@ -9,6 +9,7 @@ import {
   Center,
   Heading,
   HStack,
+  IconButton,
   Link as ChakraLink,
   Spinner,
   Stack,
@@ -17,6 +18,7 @@ import {
 
 import { useCurrentPlan, useToggleSelection, useWeekByOffset } from '@/features/weekly-plan/hooks';
 import { formatWeekRange } from '@/features/weekly-plan/date';
+import { uiIcons } from '@/shared/components/icons';
 
 export function PlanPage() {
   const [offset, setOffset] = useState(0);
@@ -30,6 +32,7 @@ export function PlanPage() {
   const plan = week.data;
   const isLocked = plan?.locked_at != null;
   const selections = plan?.weekly_plan_selections ?? [];
+  const isFull = isCurrentWeek && !isLocked && selections.length === 3;
 
   if (week.isLoading) {
     return (
@@ -41,7 +44,7 @@ export function PlanPage() {
 
   if (week.isError) {
     return (
-      <Alert status="error" borderRadius="md">
+      <Alert status="error" borderRadius="field">
         <AlertIcon />
         Couldn’t load this week’s plan. Try refreshing the page.
       </Alert>
@@ -51,67 +54,79 @@ export function PlanPage() {
   return (
     <Stack gap={4}>
       <HStack justify="space-between" flexWrap="wrap" gap={3}>
+        <Box>
+          <Text textStyle="eyebrow">{formatWeekRange(week.weekStartDate)}</Text>
+          <Heading textStyle="pageTitle" as="h1">
+            This week’s plan
+          </Heading>
+        </Box>
         <HStack gap={2}>
-          <Button
-            size="sm"
-            variant="outline"
+          <IconButton
             aria-label="Previous week"
-            onClick={() => setOffset((o) => o - 1)}
-          >
-            ◀
-          </Button>
-          <Heading size="lg">{formatWeekRange(week.weekStartDate)}</Heading>
-          <Button
+            icon={<uiIcons.back size={16} strokeWidth={2} />}
+            variant="ghost"
             size="sm"
-            variant="outline"
+            onClick={() => setOffset((o) => o - 1)}
+          />
+          <IconButton
             aria-label="Next week"
+            icon={<uiIcons.nextWeek size={16} strokeWidth={2} />}
+            variant="ghost"
+            size="sm"
             isDisabled={isCurrentWeek}
             onClick={() => setOffset((o) => o + 1)}
-          >
-            ▶
-          </Button>
-        </HStack>
-        <HStack gap={3}>
-          {!isCurrentWeek && isLocked && <Badge colorScheme="green">Eaten</Badge>}
-          {isCurrentWeek && !isLocked && <Text color="gray.600">{selections.length}/3 selected</Text>}
+          />
+          {!isCurrentWeek && isLocked && (
+            <Badge variant="count">
+              <HStack gap={1}>
+                <uiIcons.eaten size={13} strokeWidth={2} />
+                <Text as="span">Eaten</Text>
+              </HStack>
+            </Badge>
+          )}
         </HStack>
       </HStack>
 
       {isCurrentWeek && toggleSelection.isError && (
-        <Alert status="error" borderRadius="md">
+        <Alert status="error" borderRadius="field">
           <AlertIcon />
           Couldn’t save that change, try again.
         </Alert>
       )}
 
       {!plan && (
-        <Text color="gray.600">
-          {isCurrentWeek ? (
-            <>
-              No plan yet.{' '}
-              <ChakraLink as={RouterLink} to="/">
-                Pick dinners from the catalog
-              </ChakraLink>{' '}
-              to start this week’s plan.
-            </>
-          ) : (
-            'No plan this week.'
-          )}
-        </Text>
+        <Box layerStyle="cardDashed" textAlign="center">
+          <uiIcons.allDone size={20} strokeWidth={1.8} color="var(--chakra-colors-ink-300)" />
+          <Text textStyle="faint" mt={2}>
+            {isCurrentWeek ? (
+              <>
+                No plan yet.{' '}
+                <ChakraLink as={RouterLink} to="/">
+                  Pick dinners from the catalog
+                </ChakraLink>{' '}
+                to start this week’s plan.
+              </>
+            ) : (
+              'No plan this week.'
+            )}
+          </Text>
+        </Box>
       )}
 
       {plan && selections.length === 0 && isCurrentWeek && (
-        <Text color="gray.600">
-          No dinners picked yet.{' '}
-          <ChakraLink as={RouterLink} to="/">
-            Browse the catalog
-          </ChakraLink>{' '}
-          to add some.
-        </Text>
+        <Box layerStyle="cardDashed" textAlign="center">
+          <Text textStyle="faint">
+            No dinners picked yet.{' '}
+            <ChakraLink as={RouterLink} to="/">
+              Browse the catalog
+            </ChakraLink>{' '}
+            to add some.
+          </Text>
+        </Box>
       )}
 
       {isCurrentWeek && isLocked && selections.length > 0 && (
-        <Text color="gray.600" fontSize="sm">
+        <Text textStyle="faint">
           This plan is locked — its shopping list has already been sent. Pick a dinner from the catalog to
           start next week’s plan.
         </Text>
@@ -119,18 +134,38 @@ export function PlanPage() {
 
       {selections.length > 0 && (
         <Stack gap={2}>
-          {selections.map((selection) => (
-            <HStack key={selection.id} justify="space-between" borderWidth="1px" borderRadius="md" p={3}>
-              <Box>
-                <Text fontWeight="medium">{selection.dinners.name}</Text>
-                <Text fontSize="sm" color="gray.600">
-                  {selection.dinners.cuisine_type} · {selection.dinners.cook_time_minutes} min
-                </Text>
-              </Box>
+          {selections.map((selection, index) => (
+            <HStack key={selection.id} justify="space-between" bg="brand.50" borderRadius="card" p={3}>
+              <HStack gap={3}>
+                <Center
+                  w="34px"
+                  h="34px"
+                  borderRadius="full"
+                  bg="brand.500"
+                  color="paper.base"
+                  fontWeight={600}
+                  fontSize="0.8125rem"
+                  flexShrink={0}
+                >
+                  {index + 1}
+                </Center>
+                <Box>
+                  <Text textStyle="cardTitle" fontSize="0.9375rem">
+                    {selection.dinners.name}
+                  </Text>
+                  <Text textStyle="meta">
+                    {selection.dinners.cuisine_type} · {selection.dinners.cook_time_minutes} min
+                  </Text>
+                </Box>
+              </HStack>
               {isCurrentWeek && !isLocked && (
-                <Button
-                  size="sm"
+                <IconButton
+                  w="36px"
+                  h="36px"
+                  minW="36px"
                   variant="outline"
+                  aria-label={`Remove ${selection.dinners.name}`}
+                  icon={<uiIcons.remove size={15} strokeWidth={2} />}
                   isLoading={
                     toggleSelection.isPending && toggleSelection.variables?.dinnerId === selection.dinner_id
                   }
@@ -140,13 +175,27 @@ export function PlanPage() {
                       currentPlan: currentPlan.data ?? null,
                     })
                   }
-                >
-                  Remove
-                </Button>
+                />
               )}
             </HStack>
           ))}
         </Stack>
+      )}
+
+      {isFull && (
+        <Box layerStyle="cardDashed" textAlign="center">
+          <uiIcons.allDone size={20} strokeWidth={1.8} color="var(--chakra-colors-brand-500)" />
+          <Text textStyle="faint" mt={2} mb={3}>
+            All three picked. Your shopping list is ready.
+          </Text>
+          <Button
+            as={RouterLink}
+            to="/shopping-list"
+            leftIcon={<uiIcons.shoppingList size={16} strokeWidth={1.8} />}
+          >
+            See shopping list
+          </Button>
+        </Box>
       )}
     </Stack>
   );

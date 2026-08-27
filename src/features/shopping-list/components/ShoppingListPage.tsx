@@ -22,6 +22,11 @@ import { buildShoppingList } from '@/features/shopping-list/aggregate';
 import { reorderGroupsByRows } from '@/features/shopping-list/reorder';
 import { formatShoppingListText } from '@/features/shopping-list/format';
 import { useAssignments, useRows } from '@/features/store-config/hooks';
+import { categoryIcon, uiIcons } from '@/shared/components/icons';
+
+function itemKey(category: string, name: string, unit: string) {
+  return `${category}-${name}-${unit}`;
+}
 
 export function ShoppingListPage() {
   const currentPlan = useCurrentPlan();
@@ -41,12 +46,15 @@ export function ShoppingListPage() {
   const [isCopying, setIsCopying] = useState(false);
   const [copyOutcome, setCopyOutcome] = useState<{ clipboardOk: boolean } | null>(null);
   const [lockErrorMessage, setLockErrorMessage] = useState<string | null>(null);
+  // Purely local "picked up in the store" state — never persisted, resets on remount.
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
 
   const groups = useMemo(() => {
     const built = buildShoppingList(dinners.data ?? []);
     return reorderGroupsByRows(built, rows.data ?? [], assignments.data ?? []);
   }, [dinners.data, rows.data, assignments.data]);
   const text = useMemo(() => formatShoppingListText(groups), [groups]);
+  const itemCount = useMemo(() => groups.reduce((sum, group) => sum + group.items.length, 0), [groups]);
 
   if (currentPlan.isLoading) {
     return (
@@ -58,7 +66,7 @@ export function ShoppingListPage() {
 
   if (currentPlan.isError) {
     return (
-      <Alert status="error" borderRadius="md">
+      <Alert status="error" borderRadius="field">
         <AlertIcon />
         Couldn’t load your shopping list. Try refreshing the page.
       </Alert>
@@ -67,7 +75,7 @@ export function ShoppingListPage() {
 
   if (selections.length < 3) {
     return (
-      <Text color="gray.600">
+      <Text textStyle="faint">
         Pick 3 dinners on{' '}
         <ChakraLink as={RouterLink} to="/">
           the catalog
@@ -75,6 +83,15 @@ export function ShoppingListPage() {
         to see your shopping list.
       </Text>
     );
+  }
+
+  function toggleItem(key: string) {
+    setCheckedItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   }
 
   async function handleCopy() {
@@ -105,8 +122,20 @@ export function ShoppingListPage() {
   }
 
   return (
-    <Stack gap={4}>
-      <Heading size="lg">Shopping list</Heading>
+    <Stack gap={4} pb={20}>
+      <HStack justify="space-between" gap={3}>
+        <Box>
+          <Text textStyle="eyebrow">
+            {selections.length} dinners · {itemCount} items
+          </Text>
+          <Heading textStyle="pageTitle" as="h1">
+            Shopping list
+          </Heading>
+        </Box>
+        <Center w="40px" h="40px" borderRadius="control" bg="brand.100" color="brand.500" flexShrink={0}>
+          <uiIcons.copy size={18} strokeWidth={1.8} />
+        </Center>
+      </HStack>
 
       {dinners.isLoading && (
         <Center py={12}>
@@ -115,7 +144,7 @@ export function ShoppingListPage() {
       )}
 
       {dinners.isError && (
-        <Alert status="error" borderRadius="md">
+        <Alert status="error" borderRadius="field">
           <AlertIcon />
           Couldn’t load the ingredients for your picks. Try refreshing the page.
         </Alert>
@@ -123,48 +152,62 @@ export function ShoppingListPage() {
 
       {dinners.data && (
         <>
-          <Stack gap={3}>
-            {groups.map((group) => (
-              <Box key={group.category}>
-                <Heading size="sm" mb={1}>
-                  {group.category}
-                </Heading>
-                <Stack gap={0.5} pl={2}>
-                  {group.items.map((item) => (
-                    <Text key={`${item.name}-${item.unit}`}>
-                      {item.quantity} {item.unit} {item.name}
-                    </Text>
-                  ))}
-                </Stack>
-              </Box>
-            ))}
+          <Stack gap={4}>
+            {groups.map((group) => {
+              const CategoryIcon = categoryIcon(group.category);
+              return (
+                <Box key={group.category}>
+                  <HStack gap={2} mb={2}>
+                    <CategoryIcon size={15} strokeWidth={1.8} color="var(--chakra-colors-brand-500)" />
+                    <Text textStyle="sectionLabel">{group.category}</Text>
+                    <Box flex={1} h="1px" bg="line.subtle" />
+                  </HStack>
+                  <Stack gap={1.5}>
+                    {group.items.map((item) => {
+                      const key = itemKey(group.category, item.name, item.unit);
+                      const isChecked = checkedItems.has(key);
+                      return (
+                        <HStack key={key} gap={3}>
+                          <Checkbox
+                            size="md"
+                            isChecked={isChecked}
+                            onChange={() => toggleItem(key)}
+                            aria-label={`Mark ${item.name} as picked up`}
+                          />
+                          <Text
+                            as="span"
+                            fontWeight={500}
+                            color={isChecked ? 'ink.200' : 'ink.500'}
+                            minW="56px"
+                            textDecoration={isChecked ? 'line-through' : 'none'}
+                          >
+                            {item.quantity} {item.unit}
+                          </Text>
+                          <Text
+                            as="span"
+                            color={isChecked ? 'ink.200' : 'ink.900'}
+                            textDecoration={isChecked ? 'line-through' : 'none'}
+                          >
+                            {item.name}
+                          </Text>
+                        </HStack>
+                      );
+                    })}
+                  </Stack>
+                </Box>
+              );
+            })}
           </Stack>
 
-          <HStack>
-            <Checkbox
-              isChecked={shouldLock}
-              isDisabled={isAlreadyLocked}
-              onChange={(e) => setLockChecked(e.target.checked)}
-            >
-              Also lock this week’s plan
-            </Checkbox>
-          </HStack>
-
-          <HStack>
-            <Button colorScheme="teal" isLoading={isCopying} onClick={() => void handleCopy()}>
-              Copy shopping list
-            </Button>
-          </HStack>
-
           {lockErrorMessage && (
-            <Alert status="error" borderRadius="md">
+            <Alert status="error" borderRadius="field">
               <AlertIcon />
               {lockErrorMessage}
             </Alert>
           )}
 
           {!lockErrorMessage && copyOutcome?.clipboardOk && (
-            <Alert status="success" borderRadius="md">
+            <Alert status="success" borderRadius="field">
               <AlertIcon />
               {shouldLock ? 'Copied! This week’s plan is locked in.' : 'Copied!'}
             </Alert>
@@ -172,7 +215,7 @@ export function ShoppingListPage() {
 
           {!lockErrorMessage && copyOutcome && !copyOutcome.clipboardOk && (
             <Stack gap={2}>
-              <Text fontSize="sm" color="gray.600">
+              <Text textStyle="faint">
                 Couldn’t copy automatically — select the text below to copy manually.
                 {shouldLock ? ' This week’s plan is locked in.' : ''}
               </Text>
@@ -185,6 +228,34 @@ export function ShoppingListPage() {
               />
             </Stack>
           )}
+
+          <Box
+            position="sticky"
+            bottom={0}
+            bg="paper.base"
+            pt={3}
+            borderTopWidth="1px"
+            borderColor="line.subtle"
+          >
+            <Stack gap={3}>
+              <Checkbox
+                isChecked={shouldLock}
+                isDisabled={isAlreadyLocked}
+                onChange={(e) => setLockChecked(e.target.checked)}
+              >
+                Also lock this week’s plan
+              </Checkbox>
+              <Button
+                size="lg"
+                width="full"
+                isLoading={isCopying}
+                leftIcon={<uiIcons.copy size={16} strokeWidth={2} />}
+                onClick={() => void handleCopy()}
+              >
+                Copy shopping list
+              </Button>
+            </Stack>
+          </Box>
         </>
       )}
     </Stack>
