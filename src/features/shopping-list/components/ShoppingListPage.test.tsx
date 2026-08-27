@@ -23,7 +23,6 @@ function selection(overrides: Partial<SelectionWithDinner>): SelectionWithDinner
       name: 'Dinner',
       cuisine_type: 'Italian',
       cook_time_minutes: 30,
-      rosie_approved: false,
       is_active: true,
       instructions: '',
       created_at: '2026-01-01T00:00:00Z',
@@ -49,7 +48,6 @@ function dinnerWithIngredients(id: string, name: string): DinnerWithIngredients 
     name,
     cuisine_type: 'Italian',
     cook_time_minutes: 30,
-    rosie_approved: false,
     is_active: true,
     instructions: '',
     created_at: '2026-01-01T00:00:00Z',
@@ -84,7 +82,7 @@ describe('ShoppingListPage', () => {
         <MemoryRouter>
           <ShoppingListPage />
         </MemoryRouter>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
   }
 
@@ -178,7 +176,7 @@ describe('ShoppingListPage', () => {
 
   it('disables the lock checkbox (checked) once the plan is already locked', async () => {
     mockedFetchCurrentPlan.mockResolvedValue(
-      plan({ locked_at: '2026-08-27T12:00:00Z', weekly_plan_selections: threeSelections })
+      plan({ locked_at: '2026-08-27T12:00:00Z', weekly_plan_selections: threeSelections }),
     );
     const user = setupUser();
     renderPage();

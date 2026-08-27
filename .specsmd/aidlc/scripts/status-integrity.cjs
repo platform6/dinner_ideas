@@ -38,7 +38,7 @@ const MAINTENANCE_LOG = path.join(MEMORY_BANK_DIR, 'maintenance-log.md');
  * Extract frontmatter from a markdown file
  */
 function extractFrontmatter(content) {
-    const match = content.match(/^---\n([\s\S]+?)\n---/);
+    const match = content.match(/^---\r?\n([\s\S]+?)\r?\n---/);
     if (!match) return null;
 
     try {
@@ -53,7 +53,7 @@ function extractFrontmatter(content) {
  * Update frontmatter in a markdown file
  */
 function updateFrontmatter(content, newFrontmatter) {
-    const match = content.match(/^---\n([\s\S]+?)\n---/);
+    const match = content.match(/^---\r?\n([\s\S]+?)\r?\n---/);
     if (!match) return null;
 
     const newYaml = yaml.dump(newFrontmatter, {

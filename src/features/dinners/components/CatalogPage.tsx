@@ -12,6 +12,7 @@ import {
 } from '@chakra-ui/react';
 
 import {
+  useAllTags,
   useDinners,
   useLastChosenDates,
   useSetDinnerActive,
@@ -25,7 +26,7 @@ import { useCurrentPlan, useToggleSelection } from '@/features/weekly-plan/hooks
 
 const defaultFilters: CatalogFilterState = {
   cuisine: null,
-  rosieApprovedOnly: false,
+  tags: [],
   sortByCookTime: false,
 };
 
@@ -39,6 +40,7 @@ export function CatalogPage() {
   const currentPlan = useCurrentPlan();
   const toggleSelection = useToggleSelection();
   const lastChosenDates = useLastChosenDates();
+  const allTags = useAllTags();
 
   const selectedDinnerIds = useMemo(() => {
     const plan = currentPlan.data;
@@ -90,7 +92,14 @@ export function CatalogPage() {
         </Alert>
       )}
 
-      {!showSuppressed && <CatalogFilters cuisines={cuisines} filters={filters} onChange={setFilters} />}
+      {!showSuppressed && (
+        <CatalogFilters
+          cuisines={cuisines}
+          availableTags={(allTags.data ?? []).map((tag) => tag.name)}
+          filters={filters}
+          onChange={setFilters}
+        />
+      )}
 
       {isLoading && (
         <Center py={12}>

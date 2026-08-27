@@ -22,7 +22,6 @@ function selection(overrides: Partial<SelectionWithDinner>): SelectionWithDinner
       name: 'Dinner',
       cuisine_type: 'Italian',
       cook_time_minutes: 30,
-      rosie_approved: false,
       is_active: true,
       instructions: '',
       created_at: '2026-01-01T00:00:00Z',
@@ -48,7 +47,6 @@ function dinnerWithSteps(overrides: Partial<DinnerWithSteps>): DinnerWithSteps {
     name: 'Dinner',
     cuisine_type: 'Italian',
     cook_time_minutes: 30,
-    rosie_approved: false,
     is_active: true,
     instructions: '',
     created_at: '2026-01-01T00:00:00Z',
@@ -74,7 +72,7 @@ describe('CookingViewPage', () => {
         <MemoryRouter>
           <CookingViewPage />
         </MemoryRouter>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
   }
 
@@ -135,7 +133,7 @@ describe('CookingViewPage', () => {
 
   it('shows the same steps unchanged once the plan is locked', async () => {
     mockedFetchCurrentPlan.mockResolvedValue(
-      plan({ locked_at: '2026-08-27T12:00:00Z', weekly_plan_selections: threeSelections })
+      plan({ locked_at: '2026-08-27T12:00:00Z', weekly_plan_selections: threeSelections }),
     );
     mockedFetchDinnersWithStepsByIds.mockResolvedValue([
       dinnerWithSteps({

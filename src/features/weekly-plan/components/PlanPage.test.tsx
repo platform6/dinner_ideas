@@ -20,7 +20,6 @@ function selection(overrides: Partial<SelectionWithDinner>): SelectionWithDinner
       name: 'Dinner',
       cuisine_type: 'Italian',
       cook_time_minutes: 30,
-      rosie_approved: false,
       is_active: true,
       instructions: '',
       created_at: '2026-01-01T00:00:00Z',
@@ -51,7 +50,7 @@ describe('PlanPage', () => {
         <MemoryRouter>
           <PlanPage />
         </MemoryRouter>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
   }
 
@@ -73,10 +72,18 @@ describe('PlanPage', () => {
     mockedFetchCurrentPlan.mockResolvedValue(
       plan({
         weekly_plan_selections: [
-          selection({ id: 'sel-1', dinner_id: 'tacos', dinners: { ...selection({}).dinners, name: 'Tacos' } }),
-          selection({ id: 'sel-2', dinner_id: 'pasta', dinners: { ...selection({}).dinners, name: 'Pasta' } }),
+          selection({
+            id: 'sel-1',
+            dinner_id: 'tacos',
+            dinners: { ...selection({}).dinners, name: 'Tacos' },
+          }),
+          selection({
+            id: 'sel-2',
+            dinner_id: 'pasta',
+            dinners: { ...selection({}).dinners, name: 'Pasta' },
+          }),
         ],
-      })
+      }),
     );
     renderPage();
 
@@ -94,9 +101,13 @@ describe('PlanPage', () => {
       plan({
         locked_at: '2026-08-25T12:00:00Z',
         weekly_plan_selections: [
-          selection({ id: 'sel-1', dinner_id: 'tacos', dinners: { ...selection({}).dinners, name: 'Tacos' } }),
+          selection({
+            id: 'sel-1',
+            dinner_id: 'tacos',
+            dinners: { ...selection({}).dinners, name: 'Tacos' },
+          }),
         ],
-      })
+      }),
     );
     renderPage();
 

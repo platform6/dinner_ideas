@@ -6,28 +6,29 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CatalogPage } from '@/features/dinners/components/CatalogPage';
 import {
   fetchActiveDinners,
+  fetchAllTags,
   fetchLastChosenDates,
   fetchSuppressedDinners,
   setDinnerActive,
 } from '@/features/dinners/api';
 import { addSelection, createPlan, fetchCurrentPlan } from '@/features/weekly-plan/api';
 import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/types';
-import type { DinnerWithIngredients } from '@/features/dinners/types';
+import type { CatalogDinner } from '@/features/dinners/types';
 
 vi.mock('@/features/dinners/api');
 vi.mock('@/features/weekly-plan/api');
 
-function dinner(overrides: Partial<DinnerWithIngredients>): DinnerWithIngredients {
+function dinner(overrides: Partial<CatalogDinner>): CatalogDinner {
   return {
     id: 'id',
     name: 'Dinner',
     cuisine_type: 'Italian',
     cook_time_minutes: 30,
-    rosie_approved: false,
     is_active: true,
     instructions: '',
     created_at: '2026-01-01T00:00:00Z',
     dinner_ingredients: [],
+    tags: [],
     ...overrides,
   };
 }
@@ -38,6 +39,7 @@ describe('CatalogPage (suppress flow)', () => {
   const mockedSetActive = vi.mocked(setDinnerActive);
   const mockedFetchCurrentPlan = vi.mocked(fetchCurrentPlan);
   const mockedFetchLastChosenDates = vi.mocked(fetchLastChosenDates);
+  const mockedFetchAllTags = vi.mocked(fetchAllTags);
 
   function renderPage() {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -55,6 +57,7 @@ describe('CatalogPage (suppress flow)', () => {
     mockedSetActive.mockResolvedValue(undefined);
     mockedFetchCurrentPlan.mockResolvedValue(null);
     mockedFetchLastChosenDates.mockResolvedValue(new Map());
+    mockedFetchAllTags.mockResolvedValue([]);
   });
 
   it('suppresses a dinner via "Not interested"', async () => {
@@ -129,6 +132,7 @@ describe('CatalogPage (pick-3 flow)', () => {
   const mockedCreatePlan = vi.mocked(createPlan);
   const mockedAddSelection = vi.mocked(addSelection);
   const mockedFetchLastChosenDates = vi.mocked(fetchLastChosenDates);
+  const mockedFetchAllTags = vi.mocked(fetchAllTags);
 
   function renderPage() {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -145,6 +149,7 @@ describe('CatalogPage (pick-3 flow)', () => {
     mockedCreatePlan.mockResolvedValue(plan({ id: 'new-plan' }));
     mockedAddSelection.mockResolvedValue(undefined);
     mockedFetchLastChosenDates.mockResolvedValue(new Map());
+    mockedFetchAllTags.mockResolvedValue([]);
   });
 
   it('starts a new plan and adds the pick when none exists yet', async () => {

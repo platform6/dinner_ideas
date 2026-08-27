@@ -41,7 +41,7 @@ const BOLTS_DIR = path.join(MEMORY_BANK_DIR, 'bolts');
  * Extract frontmatter from a markdown file
  */
 function extractFrontmatter(content) {
-    const match = content.match(/^---\n([\s\S]+?)\n---/);
+    const match = content.match(/^---\r?\n([\s\S]+?)\r?\n---/);
     if (!match) return null;
     try {
         return yaml.load(match[1]);
@@ -54,7 +54,7 @@ function extractFrontmatter(content) {
  * Update frontmatter in a markdown file
  */
 function updateFrontmatter(content, newFrontmatter) {
-    const match = content.match(/^---\n([\s\S]+?)\n---/);
+    const match = content.match(/^---\r?\n([\s\S]+?)\r?\n---/);
     if (!match) return null;
 
     const newYaml = yaml.dump(newFrontmatter, {

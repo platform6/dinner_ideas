@@ -1,9 +1,13 @@
 import type { CatalogFilterState } from '@/features/dinners/components/CatalogFilters';
-import type { DinnerWithIngredients } from '@/features/dinners/types';
+import type { CatalogDinner } from '@/features/dinners/types';
 import { daysSinceForSort } from '@/features/dinners/last-chosen';
 
 /**
- * Combines cuisine/Rosie-approved filtering with sorting for the catalog view.
+ * Combines cuisine/tag filtering with sorting for the catalog view.
+ *
+ * Tag filtering is OR, not AND: a dinner matches if it has *any* of the selected tags, not all
+ * of them — chosen because AND semantics on a small, freeform vocabulary tends to produce empty
+ * results fast (see bolt `012-weekly-dinner-planner-ui`'s implementation-plan.md).
  *
  * When cook-time sort is off (the default), dinners are ordered by least-recently-made
  * first (never-made ones lead), per story `007-variety-indicator` — not alphabetically.
@@ -12,17 +16,17 @@ import { daysSinceForSort } from '@/features/dinners/last-chosen';
  * made" and the alphabetical tie-break below determines order.
  */
 export function applyFilters(
-  dinners: DinnerWithIngredients[],
+  dinners: CatalogDinner[],
   filters: CatalogFilterState,
-  lastChosenDates: ReadonlyMap<string, string | null> = new Map()
-): DinnerWithIngredients[] {
+  lastChosenDates: ReadonlyMap<string, string | null> = new Map(),
+): CatalogDinner[] {
   let result = dinners;
 
   if (filters.cuisine) {
     result = result.filter((dinner) => dinner.cuisine_type === filters.cuisine);
   }
-  if (filters.rosieApprovedOnly) {
-    result = result.filter((dinner) => dinner.rosie_approved);
+  if (filters.tags.length > 0) {
+    result = result.filter((dinner) => dinner.tags.some((tag) => filters.tags.includes(tag)));
   }
 
   if (filters.sortByCookTime) {
