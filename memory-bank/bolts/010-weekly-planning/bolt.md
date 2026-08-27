@@ -3,10 +3,28 @@ id: 010-weekly-planning
 unit: 002-weekly-planning
 intent: 001-weekly-dinner-planner
 type: ddd-construction-bolt
-status: planned
+status: complete
 stories:
   - 004-meal-history-schema
 created: '2026-08-27T01:00:00Z'
+started: '2026-08-27T05:10:00Z'
+current_stage: null
+stages_completed:
+  - name: model
+    completed: '2026-08-27T05:20:00Z'
+    artifact: ddd-01-domain-model.md
+  - name: design
+    completed: '2026-08-27T05:30:00Z'
+    artifact: ddd-02-technical-design.md
+  - name: adr-analysis
+    completed: '2026-08-27T05:35:00Z'
+    artifact: adr-002-history-writes-belong-in-triggers.md
+  - name: implement
+    completed: '2026-08-27T05:45:00Z'
+    artifact: supabase/migrations/20260827030000_weekly_planning_meal_history.sql (applied to live "dinner ideas" project via supabase db push)
+  - name: test
+    completed: '2026-08-27T05:55:00Z'
+    artifact: ddd-03-test-report.md
 requires_bolts: []
 enables_bolts:
   - 013-weekly-dinner-planner-ui
@@ -17,6 +35,7 @@ complexity:
   avg_uncertainty: 2
   max_dependencies: 1
   testing_scope: 2
+completed: '2026-08-27T20:03:12Z'
 ---
 
 # Bolt: 010-weekly-planning

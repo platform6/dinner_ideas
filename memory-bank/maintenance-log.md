@@ -1,5 +1,17 @@
 # Maintenance Log
 
+## 2026-08-27T06:00:00Z - Status Sync + Root-Cause Fix
+
+**Triggered by**: `bolt-complete.cjs` cascade after completing bolt `010-weekly-planning` (same false-positive as the 2026-08-27T05:00:00Z entry below, recurring)
+
+| Artifact                                          | Old Status | New Status   | Reason                                                                                |
+| ------------------------------------------------- | ---------- | ------------ | ------------------------------------------------------------------------------------- |
+| intents/001-weekly-dinner-planner/requirements.md | complete   | construction | Units 003 and 004 still have pending bolts (013, 011) — same false positive as before |
+
+**Root cause fixed this time**, not just patched: `bolt-complete.cjs`'s `updateIntentStatus` and `status-integrity.cjs`'s `checkIntentStatus` both trusted `unit-brief.status === 'complete'` alone, but this project deliberately keeps that field `complete` across a reopened unit's newer, still-pending bolts (see `001-dinner-catalog`'s unit-brief Notes for the established precedent). Both functions now cross-reference each unit's actual bolt statuses — a unit only counts as complete when its unit-brief says so **and** all of its own bolts are `complete`. Verified via a fresh `status-integrity.cjs` run: the intent-level false positive is gone; only the separate, already-known unit-level heuristic gaps remain (which reflect the same convention question, not a bug, and are left as informational).
+
+---
+
 ## 2026-08-27T05:00:00Z - Status Sync
 
 **Triggered by**: `bolt-complete.cjs` cascade after completing bolt `012-weekly-dinner-planner-ui`

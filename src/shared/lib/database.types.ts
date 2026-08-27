@@ -178,6 +178,49 @@ export type Database = {
         };
         Relationships: [];
       };
+      meal_history: {
+        Row: {
+          dinner_id: string;
+          id: string;
+          week_start_date: string;
+          weekly_plan_id: string;
+        };
+        Insert: {
+          dinner_id: string;
+          id?: string;
+          week_start_date: string;
+          weekly_plan_id: string;
+        };
+        Update: {
+          dinner_id?: string;
+          id?: string;
+          week_start_date?: string;
+          weekly_plan_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'meal_history_dinner_id_fkey';
+            columns: ['dinner_id'];
+            isOneToOne: false;
+            referencedRelation: 'dinner_last_chosen';
+            referencedColumns: ['dinner_id'];
+          },
+          {
+            foreignKeyName: 'meal_history_dinner_id_fkey';
+            columns: ['dinner_id'];
+            isOneToOne: false;
+            referencedRelation: 'dinners';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'meal_history_weekly_plan_id_fkey';
+            columns: ['weekly_plan_id'];
+            isOneToOne: false;
+            referencedRelation: 'weekly_plans';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       tags: {
         Row: {
           id: string;

@@ -2,11 +2,11 @@
 id: 004-meal-history-schema
 unit: 002-weekly-planning
 intent: 001-weekly-dinner-planner
-status: planned
+status: complete
 priority: should
 created: '2026-08-27T01:00:00Z'
 assigned_bolt: 010-weekly-planning
-implemented: false
+implemented: true
 ---
 
 # Story: 004-meal-history-schema

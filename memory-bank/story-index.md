@@ -3,8 +3,8 @@
 ## Overview
 
 - **Total stories**: 24
-- **Completed**: 18
-- **Planned**: 6
+- **Completed**: 19
+- **Planned**: 5
 - **Last updated**: 2026-08-27
 
 ---
@@ -25,7 +25,7 @@
 - [x] **001-weekly-plan-schema** (weekly-planning): Weekly plan schema - Must - ✅ COMPLETE
 - [x] **002-enforce-exactly-three-immutable** (weekly-planning): Enforce exactly-3 & immutability - Must - ✅ COMPLETE
 - [x] **003-last-chosen-query** (weekly-planning): Last-chosen query - Should - ✅ COMPLETE
-- [ ] **004-meal-history-schema** (weekly-planning): Meal history schema - Should - 📋 PLANNED
+- [x] **004-meal-history-schema** (weekly-planning): Meal history schema - Should - ✅ COMPLETE
 
 **Unit: 003-weekly-dinner-planner-ui**
 
@@ -53,7 +53,7 @@
 
 ## Stories by Status
 
-- **Planned**: 6
+- **Planned**: 5
 - **Generated**: 0
 - **In Progress**: 0
-- **Completed**: 18
+- **Completed**: 19

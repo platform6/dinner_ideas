@@ -281,6 +281,26 @@ async function checkIntentStatus(intent) {
         return [];
     }
 
+    // Gather every bolt's (unit, status) once, so a unit only counts as "complete" here
+    // when its own bolts are all actually complete — not just because its unit-brief.status
+    // says "complete" (this project's convention keeps that field "complete" across a
+    // reopened unit's newer, still-pending bolts; see bolt-complete.cjs's updateIntentStatus
+    // for the same fix applied there).
+    const boltDirsForIntent = await fs.readdir(BOLTS_DIR).catch(() => []);
+    const boltsByUnitForIntent = new Map();
+    for (const boltDir of boltDirsForIntent) {
+        const boltPath = path.join(BOLTS_DIR, boltDir, 'bolt.md');
+        if (await fs.pathExists(boltPath)) {
+            const content = await fs.readFile(boltPath, 'utf8');
+            const frontmatter = extractFrontmatter(content);
+            if (frontmatter && frontmatter.unit) {
+                const list = boltsByUnitForIntent.get(frontmatter.unit) || [];
+                list.push(frontmatter.status);
+                boltsByUnitForIntent.set(frontmatter.unit, list);
+            }
+        }
+    }
+
     const unitDirs = await fs.readdir(unitsDir).catch(() => []);
     const unitStatuses = [];
 
@@ -290,9 +310,14 @@ async function checkIntentStatus(intent) {
             const content = await fs.readFile(unitBriefPath, 'utf8');
             const frontmatter = extractFrontmatter(content);
             if (frontmatter) {
+                const unitBoltsForIntent = boltsByUnitForIntent.get(frontmatter.unit) || [];
+                const boltsAllComplete = unitBoltsForIntent.length === 0 || unitBoltsForIntent.every((s) => s === 'complete');
+                const effectiveStatus = frontmatter.status === 'complete' && !boltsAllComplete
+                    ? 'in-progress'
+                    : (frontmatter.status || 'unknown');
                 unitStatuses.push({
                     unit: unitDir,
-                    status: frontmatter.status || 'unknown'
+                    status: effectiveStatus
                 });
             }
         }
