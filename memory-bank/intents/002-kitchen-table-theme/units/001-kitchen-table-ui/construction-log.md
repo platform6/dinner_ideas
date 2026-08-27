@@ -2,7 +2,7 @@
 unit: 001-kitchen-table-ui
 intent: 002-kitchen-table-theme
 created: 2026-08-27T09:40:00Z
-last_updated: 2026-08-27T23:09:04Z
+last_updated: 2026-08-27T23:12:42Z
 ---
 
 # Construction Log: kitchen-table-ui
@@ -29,14 +29,14 @@ last_updated: 2026-08-27T23:09:04Z
 
 ## Current Bolt Structure
 
-| Bolt ID              | Stories                                                                                      | Status       | Changed         |
-| -------------------- | -------------------------------------------------------------------------------------------- | ------------ | --------------- |
-| 014-kitchen-table-ui | 001-design-token-foundation, 002-icon-vocabulary                                             | ✅ completed | -               |
-| 015-kitchen-table-ui | 003-bottom-tab-bar-navigation, 004-filter-chips-suppressed-route, 005-suppress-off-card-face | ✅ completed | Story 011 added |
-| 016-kitchen-table-ui | 006-login-restyle, 007-catalog-dinner-card-restyle                                           | ✅ completed | -               |
-| 017-kitchen-table-ui | 008-this-week-restyle-week-nav, 009-shopping-list-restyle                                    | ✅ completed | -               |
-| 018-kitchen-table-ui | 010-cooking-view-restyle, 011-suppressed-view-restyle                                        | [ ] planned  | -               |
-| 019-kitchen-table-ui | 012-store-config-restyle                                                                     | [ ] planned  | -               |
+| Bolt ID              | Stories                                                                                      | Status       | Changed                        |
+| -------------------- | -------------------------------------------------------------------------------------------- | ------------ | ------------------------------ |
+| 014-kitchen-table-ui | 001-design-token-foundation, 002-icon-vocabulary                                             | ✅ completed | -                              |
+| 015-kitchen-table-ui | 003-bottom-tab-bar-navigation, 004-filter-chips-suppressed-route, 005-suppress-off-card-face | ✅ completed | Story 011 added                |
+| 016-kitchen-table-ui | 006-login-restyle, 007-catalog-dinner-card-restyle                                           | ✅ completed | -                              |
+| 017-kitchen-table-ui | 008-this-week-restyle-week-nav, 009-shopping-list-restyle                                    | ✅ completed | -                              |
+| 018-kitchen-table-ui | 010-cooking-view-restyle                                                                     | ✅ completed | Story 011 moved out (bolt 015) |
+| 019-kitchen-table-ui | 012-store-config-restyle                                                                     | [ ] planned  | -                              |
 
 ## Execution History
 
@@ -61,6 +61,10 @@ last_updated: 2026-08-27T23:09:04Z
 | 2026-08-27T13:20:00Z | 017-kitchen-table-ui | stage-complete         | Plan → Implement                                                                                          |
 | 2026-08-27T13:30:00Z | 017-kitchen-table-ui | stage-complete         | Implement (tsc/eslint/vitest 123/123/vite build clean) → Test                                             |
 | 2026-08-27T23:09:04Z | 017-kitchen-table-ui | completed              | All 3 stages done (via bolt-complete.cjs)                                                                 |
+| 2026-08-27T13:45:00Z | 018-kitchen-table-ui | started                | Stage 1: Plan                                                                                             |
+| 2026-08-27T14:05:00Z | 018-kitchen-table-ui | stage-complete         | Plan → Implement                                                                                          |
+| 2026-08-27T14:15:00Z | 018-kitchen-table-ui | stage-complete         | Implement (tsc/eslint/vitest 124/124/vite build clean) → Test                                             |
+| 2026-08-27T23:12:42Z | 018-kitchen-table-ui | completed              | All 3 stages done (via bolt-complete.cjs)                                                                 |
 
 ## Execution Summary
 
@@ -68,9 +72,9 @@ last_updated: 2026-08-27T23:09:04Z
 | ---------------------- | ----- |
 | Original bolts planned | 6     |
 | Current bolt count     | 6     |
-| Bolts completed        | 4     |
+| Bolts completed        | 5     |
 | Bolts in progress      | 0     |
-| Bolts remaining        | 2     |
+| Bolts remaining        | 1     |
 | Replanning events      | 1     |
 
 ## Notes

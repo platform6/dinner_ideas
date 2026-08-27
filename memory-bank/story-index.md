@@ -62,7 +62,7 @@
 - [x] **007-catalog-dinner-card-restyle** (kitchen-table-ui): Catalog & dinner card restyle - Must - ✅ COMPLETE
 - [x] **008-this-week-restyle-week-nav** (kitchen-table-ui): This week restyle + week nav - Must - ✅ COMPLETE
 - [x] **009-shopping-list-restyle** (kitchen-table-ui): Shopping list restyle - Must - ✅ COMPLETE
-- [ ] **010-cooking-view-restyle** (kitchen-table-ui): Cooking view restyle - Must - 📋 PLANNED
+- [x] **010-cooking-view-restyle** (kitchen-table-ui): Cooking view restyle - Must - ✅ COMPLETE
 - [x] **011-suppressed-view-restyle** (kitchen-table-ui): Suppressed view restyle - Must - ✅ COMPLETE
 - [ ] **012-store-config-restyle** (kitchen-table-ui): Store config restyle - Should - 📋 PLANNED
 

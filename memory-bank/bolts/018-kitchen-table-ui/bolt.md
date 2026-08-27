@@ -3,10 +3,22 @@ id: 018-kitchen-table-ui
 unit: 001-kitchen-table-ui
 intent: 002-kitchen-table-theme
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 010-cooking-view-restyle
 created: '2026-08-27T09:30:00Z'
+started: '2026-08-27T13:45:00Z'
+current_stage: null
+stages_completed:
+  - name: plan
+    completed: '2026-08-27T13:45:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-08-27T14:05:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-08-27T14:15:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 014-kitchen-table-ui
 enables_bolts: []
@@ -17,6 +29,7 @@ complexity:
   avg_uncertainty: 1
   max_dependencies: 1
   testing_scope: 1
+completed: '2026-08-27T23:12:42Z'
 ---
 
 # Bolt: 018-kitchen-table-ui
@@ -42,9 +55,9 @@ Land the last of the original 6 documented screens.
 
 ## Stages
 
-- [ ] **1. Plan**
-- [ ] **2. Implement**
-- [ ] **3. Test**
+- [x] **1. Plan**
+- [x] **2. Implement**
+- [x] **3. Test**
 
 ## Dependencies
 
