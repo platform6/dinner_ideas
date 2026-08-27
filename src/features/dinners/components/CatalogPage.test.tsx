@@ -4,7 +4,12 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CatalogPage } from '@/features/dinners/components/CatalogPage';
-import { fetchActiveDinners, fetchLastChosenDates, fetchSuppressedDinners, setDinnerActive } from '@/features/dinners/api';
+import {
+  fetchActiveDinners,
+  fetchLastChosenDates,
+  fetchSuppressedDinners,
+  setDinnerActive,
+} from '@/features/dinners/api';
 import { addSelection, createPlan, fetchCurrentPlan } from '@/features/weekly-plan/api';
 import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/types';
 import type { DinnerWithIngredients } from '@/features/dinners/types';
@@ -39,7 +44,7 @@ describe('CatalogPage (suppress flow)', () => {
     return render(
       <QueryClientProvider client={queryClient}>
         <CatalogPage />
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
   }
 
@@ -130,7 +135,7 @@ describe('CatalogPage (pick-3 flow)', () => {
     return render(
       <QueryClientProvider client={queryClient}>
         <CatalogPage />
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
   }
 
@@ -169,7 +174,7 @@ describe('CatalogPage (pick-3 flow)', () => {
           selectionWithDinner({ id: 'sel-2', dinner_id: '2' }),
           selectionWithDinner({ id: 'sel-3', dinner_id: '3' }),
         ],
-      })
+      }),
     );
     renderPage();
 
@@ -180,5 +185,40 @@ describe('CatalogPage (pick-3 flow)', () => {
     expect(screen.getByRole('checkbox', { name: 'Pick Tacos for this week' })).toBeEnabled();
     expect(screen.getByRole('checkbox', { name: 'Pick Enchiladas for this week' })).not.toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Pick Enchiladas for this week' })).toBeDisabled();
+  });
+
+  it('disables other checkboxes while a pick is in flight, to prevent a double-pick race', async () => {
+    // Regression: clicking a second dinner before the first pick's mutation settles used to
+    // decide both actions from the same stale "no current plan" snapshot, risking two plans
+    // being created at once (see 20260827002830_weekly_planning_concurrency_fixes.sql).
+    mockedFetchActive.mockResolvedValue([
+      dinner({ id: '1', name: 'Tacos' }),
+      dinner({ id: '2', name: 'Pasta' }),
+    ]);
+    mockedFetchCurrentPlan.mockResolvedValue(null);
+
+    let resolveCreatePlan!: (value: CurrentPlan) => void;
+    mockedCreatePlan.mockReturnValue(
+      new Promise((resolve) => {
+        resolveCreatePlan = resolve;
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText('Tacos');
+    await user.click(screen.getByRole('checkbox', { name: 'Pick Tacos for this week' }));
+
+    await waitFor(() =>
+      expect(screen.getByRole('checkbox', { name: 'Pick Pasta for this week' })).toBeDisabled(),
+    );
+
+    resolveCreatePlan(plan({ id: 'new-plan' }));
+
+    await waitFor(() => expect(mockedAddSelection).toHaveBeenCalledWith('new-plan', '1'));
+    await waitFor(() =>
+      expect(screen.getByRole('checkbox', { name: 'Pick Pasta for this week' })).toBeEnabled(),
+    );
   });
 });

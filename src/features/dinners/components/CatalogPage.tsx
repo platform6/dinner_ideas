@@ -127,7 +127,13 @@ export function CatalogPage() {
                   ? undefined
                   : {
                       isSelected: selectedDinnerIds.has(dinner.id),
-                      selectionDisabled: selectedDinnerIds.size >= 3 && !selectedDinnerIds.has(dinner.id),
+                      // Also disabled (not just this card's own spinner) while any pick is in
+                      // flight — clicking a second dinner before the first mutation settles
+                      // would decide its add/remove/create-plan action from the same stale
+                      // currentPlan snapshot, risking two plans getting created at once.
+                      selectionDisabled:
+                        (selectedDinnerIds.size >= 3 && !selectedDinnerIds.has(dinner.id)) ||
+                        (toggleSelection.isPending && toggleSelection.variables?.dinnerId !== dinner.id),
                       isTogglingSelection:
                         toggleSelection.isPending && toggleSelection.variables?.dinnerId === dinner.id,
                       onToggleSelect: (id) =>

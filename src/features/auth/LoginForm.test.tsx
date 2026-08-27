@@ -47,4 +47,23 @@ describe('LoginForm', () => {
     expect(mockedUseAuth().signIn).toHaveBeenCalledWith('household@example.com', 'correct-password');
     expect(screen.queryByText(/couldn.t log in/i)).not.toBeInTheDocument();
   });
+
+  it('shows an error when signIn throws instead of resolving with an error result', async () => {
+    // Regression: signIn is only documented to resolve with { error }, but a network
+    // failure could throw instead — that must not leave the form with no feedback at all.
+    mockedUseAuth.mockReturnValue({
+      session: null,
+      isLoading: false,
+      signIn: vi.fn().mockRejectedValue(new Error('network down')),
+      signOut: vi.fn(),
+    });
+    const user = userEvent.setup();
+
+    render(<LoginForm />);
+    await user.type(screen.getByLabelText(/email/i), 'household@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'correct-password');
+    await user.click(screen.getByRole('button', { name: /log in/i }));
+
+    expect(await screen.findByText(/couldn.t log in/i)).toBeInTheDocument();
+  });
 });

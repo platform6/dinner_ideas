@@ -1,5 +1,15 @@
 import { useState, type FormEvent } from 'react';
-import { Alert, AlertIcon, Box, Button, FormControl, FormLabel, Heading, Input, Stack } from '@chakra-ui/react';
+import {
+  Alert,
+  AlertIcon,
+  Box,
+  Button,
+  FormControl,
+  FormLabel,
+  Heading,
+  Input,
+  Stack,
+} from '@chakra-ui/react';
 
 import { useAuth } from '@/features/auth/useAuth';
 
@@ -19,6 +29,10 @@ export function LoginForm() {
       if (signInError) {
         setError('Couldn’t log in. Check your email and password and try again.');
       }
+    } catch {
+      // signIn only resolves with { error } for auth failures; this catches everything
+      // else (e.g. a network failure), which would otherwise leave no error shown at all.
+      setError('Couldn’t log in. Check your connection and try again.');
     } finally {
       setIsSubmitting(false);
     }

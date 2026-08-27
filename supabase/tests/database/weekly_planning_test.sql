@@ -5,7 +5,7 @@
 -- during Stage 4/5 (see ddd-03-test-report.md).
 
 begin;
-select plan(9);
+select plan(10);
 
 -- Schema shape
 select has_table('public', 'weekly_plans', 'weekly_plans table exists');
@@ -69,6 +69,24 @@ select throws_ok(
   'P0001',
   null,
   'deleting a selection from a locked plan is rejected'
+);
+
+-- At most one unlocked (draft) plan may exist at a time (idx_weekly_plans_one_unlocked) —
+-- added after a code-review finding: two concurrent "no current plan" reads could each
+-- create their own plan, silently orphaning one pick. See 20260827002830_weekly_planning_concurrency_fixes.sql.
+select throws_ok(
+  $$
+    do $do$
+    begin
+      insert into public.weekly_plans (start_date) values (current_date);
+      -- this must fail: an unlocked plan already exists
+      insert into public.weekly_plans (start_date) values (current_date);
+    end;
+    $do$;
+  $$,
+  '23505',
+  null,
+  'a second unlocked weekly plan is rejected while one already exists'
 );
 
 -- RLS

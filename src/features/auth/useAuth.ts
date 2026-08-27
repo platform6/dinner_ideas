@@ -21,10 +21,18 @@ export function useAuth(): UseAuthResult {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setIsLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        setSession(data.session);
+        setIsLoading(false);
+      })
+      .catch((error: unknown) => {
+        // Falls back to the login form rather than spinning forever — e.g. storage access
+        // blocked in a private-browsing context, or a transient error reading the token.
+        console.error('Failed to read the existing session', error);
+        setIsLoading(false);
+      });
 
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
