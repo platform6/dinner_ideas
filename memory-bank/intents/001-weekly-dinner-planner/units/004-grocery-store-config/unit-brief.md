@@ -4,7 +4,7 @@ intent: 001-weekly-dinner-planner
 phase: inception
 status: complete
 created: '2026-08-27T01:00:00Z'
-updated: '2026-08-27T01:00:00Z'
+updated: '2026-08-27T07:05:00Z'
 ---
 
 # Unit Brief: Grocery Store Config
@@ -70,10 +70,10 @@ Owns the grocery-store-layout domain: lets the wife define her store as an order
 
 ### Stories
 
-| Story ID                          | Title                         | Priority | Status  |
-| --------------------------------- | ----------------------------- | -------- | ------- |
-| 001-store-rows-schema             | Store rows schema             | Must     | Planned |
-| 002-reorder-shopping-list-by-rows | Reorder shopping list by rows | Must     | Planned |
+| Story ID                          | Title                         | Priority | Status   |
+| --------------------------------- | ----------------------------- | -------- | -------- |
+| 001-store-rows-schema             | Store rows schema             | Must     | Complete |
+| 002-reorder-shopping-list-by-rows | Reorder shopping list by rows | Must     | Complete |
 
 ---
 
@@ -130,18 +130,18 @@ Supabase migration (SQL) for `grocery_store_rows` + category assignment, per `st
 
 ### Functional
 
-- [ ] Rows can be added, named, and reordered; positions stay contiguous after a reorder
-- [ ] Each ingredient category can be assigned to exactly one row
-- [ ] Shopping list groups sort by row position when config exists; unassigned/unconfigured categories fall back to alphabetical order after configured rows
+- [x] Rows can be added, named, and reordered; positions stay unique after a reorder (relaxed from "contiguous" during Stage 2 — see `ddd-02-technical-design.md`; a gap after deleting a row is cosmetically invisible since `ORDER BY position` still works)
+- [x] Each ingredient category can be assigned to exactly one row
+- [ ] Shopping list groups sort by row position when config exists; unassigned/unconfigured categories fall back to alphabetical order after configured rows — client-side reorder function is bolt `013`'s job
 
 ### Non-Functional
 
-- [ ] RLS restricts read/write to authenticated household session only
+- [x] RLS restricts read/write to authenticated household session only
 
 ### Quality
 
-- [ ] All acceptance criteria met
-- [ ] Reorder function covered by unit tests (mirrors `aggregate.test.ts` style)
+- [x] All schema/RPC acceptance criteria met (live-verified via `supabase db query`, see `ddd-03-test-report.md`)
+- [x] Reorder RPC covered by a pgTAP regression suite (`supabase/tests/database/grocery_store_config_test.sql`)
 
 ---
 

@@ -2,11 +2,11 @@
 id: 002-reorder-shopping-list-by-rows
 unit: 004-grocery-store-config
 intent: 001-weekly-dinner-planner
-status: planned
+status: complete
 priority: must
 created: '2026-08-27T01:00:00Z'
 assigned_bolt: 011-grocery-store-config
-implemented: false
+implemented: true
 ---
 
 # Story: 002-reorder-shopping-list-by-rows

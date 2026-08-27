@@ -3,11 +3,29 @@ id: 011-grocery-store-config
 unit: 004-grocery-store-config
 intent: 001-weekly-dinner-planner
 type: ddd-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-store-rows-schema
   - 002-reorder-shopping-list-by-rows
 created: '2026-08-27T01:00:00Z'
+started: '2026-08-27T06:10:00Z'
+current_stage: null
+stages_completed:
+  - name: model
+    completed: '2026-08-27T06:25:00Z'
+    artifact: ddd-01-domain-model.md
+  - name: design
+    completed: '2026-08-27T06:35:00Z'
+    artifact: ddd-02-technical-design.md
+  - name: adr-analysis
+    completed: '2026-08-27T06:36:00Z'
+    artifact: null
+  - name: implement
+    completed: '2026-08-27T06:45:00Z'
+    artifact: supabase/migrations/20260827040000_grocery_store_config.sql (applied to live "dinner ideas" project via supabase db push)
+  - name: test
+    completed: '2026-08-27T07:00:00Z'
+    artifact: ddd-03-test-report.md
 requires_bolts: []
 enables_bolts:
   - 013-weekly-dinner-planner-ui
@@ -18,6 +36,7 @@ complexity:
   avg_uncertainty: 1
   max_dependencies: 1
   testing_scope: 2
+completed: '2026-08-27T21:08:09Z'
 ---
 
 # Bolt: 011-grocery-store-config

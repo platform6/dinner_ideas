@@ -33,6 +33,29 @@ export type Database = {
   };
   public: {
     Tables: {
+      category_row_assignments: {
+        Row: {
+          category: string;
+          row_id: string;
+        };
+        Insert: {
+          category: string;
+          row_id: string;
+        };
+        Update: {
+          category?: string;
+          row_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'category_row_assignments_row_id_fkey';
+            columns: ['row_id'];
+            isOneToOne: false;
+            referencedRelation: 'grocery_store_rows';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       dinner_ingredients: {
         Row: {
           category: string;
@@ -175,6 +198,24 @@ export type Database = {
           instructions?: string;
           is_active?: boolean;
           name?: string;
+        };
+        Relationships: [];
+      };
+      grocery_store_rows: {
+        Row: {
+          id: string;
+          name: string;
+          position: number;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          position: number;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          position?: number;
         };
         Relationships: [];
       };
@@ -321,6 +362,20 @@ export type Database = {
           to: 'weekly_plans';
           isOneToOne: true;
           isSetofReturn: false;
+        };
+      };
+      reorder_grocery_store_row: {
+        Args: { p_new_position: number; p_row_id: string };
+        Returns: {
+          id: string;
+          name: string;
+          position: number;
+        }[];
+        SetofOptions: {
+          from: '*';
+          to: 'grocery_store_rows';
+          isOneToOne: false;
+          isSetofReturn: true;
         };
       };
     };

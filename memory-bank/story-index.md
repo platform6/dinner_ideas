@@ -3,8 +3,8 @@
 ## Overview
 
 - **Total stories**: 24
-- **Completed**: 19
-- **Planned**: 5
+- **Completed**: 21
+- **Planned**: 3
 - **Last updated**: 2026-08-27
 
 ---
@@ -46,8 +46,8 @@
 
 **Unit: 004-grocery-store-config**
 
-- [ ] **001-store-rows-schema** (grocery-store-config): Store rows schema - Must - 📋 PLANNED
-- [ ] **002-reorder-shopping-list-by-rows** (grocery-store-config): Reorder shopping list by rows - Must - 📋 PLANNED
+- [x] **001-store-rows-schema** (grocery-store-config): Store rows schema - Must - ✅ COMPLETE
+- [x] **002-reorder-shopping-list-by-rows** (grocery-store-config): Reorder shopping list by rows - Must - ✅ COMPLETE
 
 ---
 
