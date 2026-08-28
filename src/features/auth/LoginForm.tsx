@@ -9,6 +9,7 @@ import {
   FormLabel,
   Heading,
   IconButton,
+  Image,
   Input,
   InputGroup,
   InputLeftElement,
@@ -50,11 +51,9 @@ export function LoginForm() {
     <Flex minH={{ md: '100vh' }} align={{ md: 'center' }} justify="center">
       <Box maxW="sm" w="full" mx="auto" mt={{ base: 12, md: 0 }} px={{ base: 5, md: 4 }}>
         <Center flexDirection="column" mb={6}>
-          <Center w="60px" h="60px" borderRadius="control" bg="brand.100" color="brand.500" mb={3}>
-            <uiIcons.logo size={30} strokeWidth={1.8} />
-          </Center>
+          <Image src="/dino-mark.png" alt="Dino Recipes" boxSize="64px" mb={3} />
           <Heading textStyle="pageTitle" fontSize="2rem" textAlign="center">
-            Dinner Ideas
+            Dino Recipes
           </Heading>
           <Text fontSize="14px" color="ink.400" mt={1}>
             Three dinners, one shopping list.

@@ -31,8 +31,8 @@ the DB types, and keep the existing test suite green.
 
 ### Out of Scope
 
-- Registration / login / password-reset / invite UI → `006-auth-flows`
-- `/settings` page → `007-account-settings`
+- Registration / login / password-reset / invite UI → `007-auth-flows`
+- `/settings` page → `008-account-settings`
 - Any visual or UX change — this unit ships no component markup
 
 ---
@@ -92,7 +92,7 @@ by the DB default)._
 
 | Unit                      | Reason                                                         |
 | ------------------------- | -------------------------------------------------------------- |
-| `006-auth-flows` (future) | Registration / invite UI builds on the exposed `useAuth` shape |
+| `007-auth-flows` (future) | Registration / invite UI builds on the exposed `useAuth` shape |
 
 ### External Dependencies
 

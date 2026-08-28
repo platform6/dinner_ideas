@@ -23,6 +23,16 @@ describe('LoginForm', () => {
     vi.clearAllMocks();
   });
 
+  it('shows the "Dino Recipes" heading and the dino mark instead of the old glyph', () => {
+    mockSignIn({ error: null });
+
+    render(<LoginForm />);
+
+    expect(screen.getByRole('heading', { name: 'Dino Recipes' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Dinner Ideas' })).not.toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Dino Recipes' })).toHaveAttribute('src', '/dino-mark.png');
+  });
+
   it('shows a clear error message when credentials are rejected', async () => {
     mockSignIn({ error: 'Invalid login credentials' });
     const user = userEvent.setup();

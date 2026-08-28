@@ -18,7 +18,7 @@ Replace the single-shared-login assumption with a three-tier model (`auth.users`
 every domain table, a full RLS rewrite, a reusable default-catalog seeding routine, a
 `handle_new_user()` provisioning trigger, and a one-time migration that folds all existing data
 into a single founding household. Delivers a complete, testable provisioning mechanism; the
-registration/invite UI is intent `006-auth-flows`.
+registration/invite UI is intent `007-auth-flows`.
 
 ## Scope
 
@@ -50,11 +50,11 @@ registration/invite UI is intent `006-auth-flows`.
 
 ### Out of Scope
 
-- Public registration UI, email confirmation, password reset → `006-auth-flows`
-- Invite-**sending** UI + notification email (the table + consume-on-signup logic ARE here) → `006-auth-flows`
-- Role-differentiated permissions beyond owner-only household update / invite RLS → `006-auth-flows`
-- New-household onboarding / empty states → `006-auth-flows`
-- `/settings` page and `dinners_per_week` → `007-account-settings`
+- Public registration UI, email confirmation, password reset → `007-auth-flows`
+- Invite-**sending** UI + notification email (the table + consume-on-signup logic ARE here) → `007-auth-flows`
+- Role-differentiated permissions beyond owner-only household update / invite RLS → `007-auth-flows`
+- New-household onboarding / empty states → `007-auth-flows`
+- `/settings` page and `dinners_per_week` → `008-account-settings`
 - Multi-household membership / household switching → future
 - Private per-user weekly plans → future (rejected for now)
 - Frontend changes (`useAuth`, types, insert sites) → unit `002-account-model-ui`
@@ -140,8 +140,8 @@ registration/invite UI is intent `006-auth-flows`.
 | Unit                                 | Reason                                                                          |
 | ------------------------------------ | ------------------------------------------------------------------------------- |
 | `002-account-model-ui` (this intent) | Client wiring needs the new columns, helper, RLS, and `household_members` table |
-| `006-auth-flows` (future)            | Registration/invite UI consumes this provisioning mechanism                     |
-| `007-account-settings` (future)      | `dinners_per_week` hangs off `households`                                       |
+| `007-auth-flows` (future)            | Registration/invite UI consumes this provisioning mechanism                     |
+| `008-account-settings` (future)      | `dinners_per_week` hangs off `households`                                       |
 
 ### External Dependencies
 

@@ -56,4 +56,12 @@ describe('Layout (phone view)', () => {
     screen.getByRole('button', { name: /log out/i }).click();
     expect(signOut).toHaveBeenCalled();
   });
+
+  it('shows the "Dino Recipes" wordmark and the dino mark in the header', () => {
+    renderLayout('/');
+
+    expect(screen.getByText('Dino Recipes')).toBeInTheDocument();
+    expect(screen.queryByText('Dinner Ideas')).not.toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Dino Recipes' })).toHaveAttribute('src', '/dino-mark.png');
+  });
 });

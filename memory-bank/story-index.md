@@ -2,9 +2,9 @@
 
 ## Overview
 
-- **Total stories**: 69
+- **Total stories**: 72
 - **Completed**: 57
-- **Generated**: 12
+- **Generated**: 15
 - **Planned**: 0
 - **Last updated**: 2026-08-28
 
@@ -118,11 +118,19 @@
 - [x] **008-pointer-hover-states** (desktop-layout-ui): Pointer / hover states - Could - ✅ COMPLETE
 - [x] **009-responsive-test-infrastructure** (desktop-layout-ui): matchMedia polyfill + ChakraProvider wrapper - Must - ✅ COMPLETE
 
+### 006-dino-branding
+
+**Unit: 001-dino-branding-ui**
+
+- [x] **001-prepare-dino-mark-assets** (dino-branding-ui): Trimmed transparent dino-mark asset set - Must - ✅ GENERATED
+- [x] **002-dino-recipes-wordmark-and-title** (dino-branding-ui): "Dino Recipes" text on the five surfaces - Must - ✅ GENERATED
+- [x] **003-dino-mark-in-chrome-login-and-icons** (dino-branding-ui): Mark in rail / header / login + favicon + PWA icons - Must - ✅ GENERATED
+
 ---
 
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 12
+- **Generated**: 15
 - **In Progress**: 0
 - **Completed**: 57

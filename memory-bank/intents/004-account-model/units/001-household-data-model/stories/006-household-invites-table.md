@@ -38,7 +38,7 @@ assigned_bolt: 029-household-data-model
 
 - This story delivers the **table + RLS only**. The "invited user joins on signup" behaviour is
   the trigger branch in story `007`. The "owner sends an invite" UI + notification email are
-  intent `006-auth-flows`.
+  intent `007-auth-flows`.
 - `invited_by` is nullable so the founding migration (or a script) can create invites without a
   profile context if ever needed.
 - Email is stored as entered; all matching is `lower(...)`.
@@ -60,10 +60,10 @@ assigned_bolt: 029-household-data-model
 | Two owners invite the same email to the same household | Second insert blocked by the partial unique index                      |
 | Same email invited to two different households         | Allowed; story `007` picks the oldest pending invite deterministically |
 | Invite revoked before the user registers               | `status = 'revoked'` → trigger ignores it, user gets a fresh household |
-| User already registered when invited                   | Out of scope here — `006-auth-flows` handles inviting existing users   |
+| User already registered when invited                   | Out of scope here — `007-auth-flows` handles inviting existing users   |
 
 ## Out of Scope
 
-- Sending the invite email / any UI (intent `006-auth-flows`)
-- Accepting an invite for an already-existing account (intent `006-auth-flows`)
+- Sending the invite email / any UI (intent `007-auth-flows`)
+- Accepting an invite for an already-existing account (intent `007-auth-flows`)
 - Expiry / TTL on invites

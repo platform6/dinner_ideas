@@ -41,7 +41,7 @@ scoping fixes for `fn_weekly_plans_record_meal_history`, `reorder_grocery_store_
 **Dependencies**:
 
 - Depends on: `001-weekly-dinner-planner` (complete) — rescopes every table it created
-- Depended by: `002-account-model-ui` (this intent); `006-auth-flows`, `007-account-settings` (future)
+- Depended by: `002-account-model-ui` (this intent); `007-auth-flows`, `008-account-settings` (future)
 
 **Estimated Complexity**: L — large migration surface (10 tables, 35 policies, 3 functions/1 view),
 a data migration that must not lose rows, and a provisioning trigger on `auth.users`. Individual
@@ -71,7 +71,7 @@ frontend test suite green.
 
 - Depends on: `001-household-data-model` — needs the new columns, RLS, helper, and
   `household_members` table to exist (bolts 026–028 in practice)
-- Depended by: `006-auth-flows` (future) — builds its registration/invite UI on the exposed
+- Depended by: `007-auth-flows` (future) — builds its registration/invite UI on the exposed
   `useAuth` shape
 
 **Estimated Complexity**: S — one hook change, one api change, a types regen, and test upkeep. No
@@ -83,7 +83,7 @@ new components.
 [001-weekly-dinner-planner (complete)]
         │
         ▼
-[001-household-data-model] ──► [002-account-model-ui] ──► (006-auth-flows, 007-account-settings)
+[001-household-data-model] ──► [002-account-model-ui] ──► (007-auth-flows, 008-account-settings)
 ```
 
 ## Execution Order

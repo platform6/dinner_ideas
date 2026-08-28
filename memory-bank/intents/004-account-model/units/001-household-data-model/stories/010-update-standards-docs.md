@@ -32,8 +32,8 @@ assigned_bolt: 030-household-data-model
 - [ ] **Given** `memory-bank/standards/decision-index.md`, **When** updated, **Then** it has a
       dated entry for "adopt three-tier household account model (intent 004)" pointing at this
       intent
-- [ ] **Given** the docs, **Then** they note what is still deferred (registration UI → 006-auth-flows,
-      settings → 007-account-settings, multi-household → future)
+- [ ] **Given** the docs, **Then** they note what is still deferred (registration UI → 007-auth-flows,
+      settings → 008-account-settings, multi-household → future)
 
 ## Technical Notes
 
@@ -52,7 +52,7 @@ assigned_bolt: 030-household-data-model
 
 ### Enables
 
-- `006-auth-flows`, `007-account-settings` — future intents read these docs as ground truth
+- `007-auth-flows`, `008-account-settings` — future intents read these docs as ground truth
 
 ## Edge Cases
 

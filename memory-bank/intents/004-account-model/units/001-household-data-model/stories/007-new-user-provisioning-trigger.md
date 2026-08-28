@@ -43,9 +43,9 @@ assigned_bolt: 029-household-data-model
 ## Technical Notes
 
 - Ties stories `005` (seed routine) and `006` (invites table) together — grouped in bolt `029`.
-- The `name` default is deliberately simple; `006-auth-flows` can let the owner rename the
+- The `name` default is deliberately simple; `007-auth-flows` can let the owner rename the
   household. Open question OQ-1 in requirements.
-- `display_name` stays null until `006-auth-flows` collects it at registration (OQ-2).
+- `display_name` stays null until `007-auth-flows` collects it at registration (OQ-2).
 - Mirrors the well-known Supabase `handle_new_user` pattern; the only non-standard part is the
   invite branch and the catalog seed call.
 
@@ -61,7 +61,7 @@ assigned_bolt: 029-household-data-model
 ### Enables
 
 - `002-account-model-ui` (unit 2) — `useAuth` can now assume every session has a membership
-- `006-auth-flows` (future) — registration UI just calls `supabase.auth.signUp`
+- `007-auth-flows` (future) — registration UI just calls `supabase.auth.signUp`
 
 ## Edge Cases
 
@@ -74,6 +74,6 @@ assigned_bolt: 029-household-data-model
 
 ## Out of Scope
 
-- Email confirmation settings / SMTP config (intent `006-auth-flows`)
-- Inviting a user who already has an account (intent `006-auth-flows`)
+- Email confirmation settings / SMTP config (intent `007-auth-flows`)
+- Inviting a user who already has an account (intent `007-auth-flows`)
 - Any UI
