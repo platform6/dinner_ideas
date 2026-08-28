@@ -1,7 +1,7 @@
 ---
 intent: 004-account-model
 phase: inception
-status: in-progress
+status: inception-complete
 created: 2026-08-28T00:00:00Z
 updated: 2026-08-28T00:00:00Z
 ---
@@ -19,10 +19,10 @@ the app can go public-facing. This is the first of three "Tier 2" intents:
   `handle_new_user()` trigger that provisions every new `auth.users` row (fresh seeded
   household, or join-by-invite); and a one-time migration folding all existing data into a
   single founding household. The existing login keeps working as a member of that household.
-- **006-auth-flows** (next) — the public registration UI, email confirmation, password reset,
+- **007-auth-flows** (next) — the public registration UI, email confirmation, password reset,
   the invite-sending UI + notification email, role-differentiated permissions, and
   onboarding / empty states.
-- **007-account-settings** (last) — the `/settings` page and a household-level
+- **008-account-settings** (last) — the `/settings` page and a household-level
   `dinners_per_week`, threaded through the frontend and the two weekly-plan DB triggers.
 
 ### Three-tier model
@@ -57,7 +57,7 @@ the app can go public-facing. This is the first of three "Tier 2" intents:
 | A user in household A can never read or write household B's data                                      | Per-table cross-household isolation test in `supabase/tests/database/` passes                                                                                                                | Must     |
 | Any new `auth.users` row becomes a fully provisioned, catalog-seeded household with zero backend code | Inserting a user (via Supabase dashboard or `signUp`) yields: 1 `profiles` row, 1 `households` row (or invited join), 1 owner `household_members` row, a full default catalog + store config | Must     |
 | Existing data survives under one founding household                                                   | After migration, the current login shows the same dinners, tags, plans, store config, and history as before                                                                                  | Must     |
-| Model is complete enough that 006-auth-flows adds only UI + email                                     | 006-auth-flows introduces no new ownership columns and no RLS rewrites                                                                                                                       | Must     |
+| Model is complete enough that 007-auth-flows adds only UI + email                                     | 007-auth-flows introduces no new ownership columns and no RLS rewrites                                                                                                                       | Must     |
 | No regression while shared login is still in use                                                      | Full frontend + DB test suites pass on the new schema                                                                                                                                        | Must     |
 
 ---
@@ -170,7 +170,7 @@ p.household_id = current_user_household_id()))`.
 
 - **Description**: An `after insert on auth.users` trigger (`security definer`) that, for the
   new user:
-  1. Inserts a `profiles` row (`display_name` = `null` for now; 006-auth-flows collects it).
+  1. Inserts a `profiles` row (`display_name` = `null` for now; 007-auth-flows collects it).
   2. If a pending `household_invites` row matches `new.email` (case-insensitive): insert
      `household_members (household_id, profile_id, 'member')` and set the invite `accepted`.
   3. Otherwise: insert a `households` row (`name` = a sensible default, e.g. the email
@@ -281,7 +281,7 @@ p.household_id = current_user_household_id()))`.
 
 | Requirement                   | Notes                                                                                                                                              |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Shared login keeps working    | The existing password login operates as an owner member of the founding household for the entire life of this intent; sign-up UI is 006-auth-flows |
+| Shared login keeps working    | The existing password login operates as an owner member of the founding household for the entire life of this intent; sign-up UI is 007-auth-flows |
 | No user-facing feature change | 004 ships no new screens; catalog, plan, shopping list, cooking, store config behave exactly as before                                             |
 
 ---
@@ -328,7 +328,7 @@ p.household_id = current_user_household_id()))`.
 | #    | Question                                                                                                                                          | Owner                      | Resolution                                                                  |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | --------------------------------------------------------------------------- |
 | OQ-1 | Founding household `name` value (cosmetic)                                                                                                        | User                       | Default to `"Household"` / email local-part unless specified — non-blocking |
-| OQ-2 | Is `profiles.display_name` collected at registration (006-auth-flows) or derived from the email local-part until then?                            | Deferred to 006-auth-flows | Non-blocking for 004; column is nullable                                    |
+| OQ-2 | Is `profiles.display_name` collected at registration (007-auth-flows) or derived from the email local-part until then?                            | Deferred to 007-auth-flows | Non-blocking for 004; column is nullable                                    |
 | OQ-3 | DB tests: one shared test-household fixture vs per-file setup                                                                                     | Construction Agent         | Implementation detail                                                       |
 | OQ-4 | Should `dinners` / `weekly_plans` / `meal_history` also record _which_ member created/locked (`created_by` profile ref) for later attribution UI? | User                       | Currently OUT of scope — add only if wanted now                             |
 

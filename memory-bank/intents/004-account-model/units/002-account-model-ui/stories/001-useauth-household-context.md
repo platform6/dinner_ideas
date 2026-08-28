@@ -12,7 +12,7 @@ assigned_bolt: 031-account-model-ui
 
 ## User Story
 
-**As a** frontend developer (and, soon, the `006-auth-flows` registration screens)
+**As a** frontend developer (and, soon, the `007-auth-flows` registration screens)
 **I want** `useAuth` to expose the signed-in user's profile, household id, and role
 **So that** components can show household-aware UI without each one re-querying membership
 
@@ -51,7 +51,7 @@ assigned_bolt: 031-account-model-ui
 ### Enables
 
 - `002-insert-site-audit-and-types-regen`
-- `006-auth-flows` (future) — registration flow reads `householdId` / `role`
+- `007-auth-flows` (future) — registration flow reads `householdId` / `role`
 
 ## Edge Cases
 
@@ -63,5 +63,5 @@ assigned_bolt: 031-account-model-ui
 
 ## Out of Scope
 
-- Any UI that displays the household name/role (that's `006-auth-flows`)
+- Any UI that displays the household name/role (that's `007-auth-flows`)
 - Household switching (future multi-household intent)

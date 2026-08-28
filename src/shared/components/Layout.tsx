@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Box, Flex, HStack, IconButton, Text, useBreakpointValue } from '@chakra-ui/react';
+import { Box, Flex, HStack, IconButton, Image, Text, useBreakpointValue } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 
 import { useAuth } from '@/features/auth/useAuth';
@@ -92,9 +92,12 @@ export function Layout({ children, wide }: LayoutProps) {
           borderColor="line.subtle"
           bg="paper.base"
         >
-          <Text fontFamily="heading" fontSize="0.9375rem" color="ink.900" px={3.5} mb={5}>
-            Dinner Ideas
-          </Text>
+          <HStack px={3.5} mb={5} gap={2}>
+            <Image src="/dino-mark.png" alt="Dino Recipes" h="22px" />
+            <Text fontFamily="heading" fontSize="0.9375rem" color="ink.900">
+              Dino Recipes
+            </Text>
+          </HStack>
 
           <Flex direction="column" gap={1}>
             {navItems.map((item) => (
@@ -144,9 +147,12 @@ export function Layout({ children, wide }: LayoutProps) {
         borderBottomWidth="1px"
         borderColor="line.subtle"
       >
-        <Text fontFamily="heading" fontSize="0.9375rem" color="ink.700">
-          Dinner Ideas
-        </Text>
+        <HStack gap={2}>
+          <Image src="/dino-mark.png" alt="Dino Recipes" h="22px" />
+          <Text fontFamily="heading" fontSize="0.9375rem" color="ink.700">
+            Dino Recipes
+          </Text>
+        </HStack>
         <HStack gap={1}>
           <IconButton
             as={RouterLink}

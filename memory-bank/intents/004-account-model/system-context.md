@@ -18,7 +18,7 @@ into a single founding household.
 
 No screens are added in this intent. The existing shared password login keeps working as an owner
 member of the founding household. The public registration UI, invite-sending UI, and settings page
-are later intents (`006-auth-flows`, `007-account-settings`).
+are later intents (`007-auth-flows`, `008-account-settings`).
 
 ## Context Diagram
 
@@ -26,8 +26,8 @@ are later intents (`006-auth-flows`, `007-account-settings`).
 C4Context
     title System Context - Account Model (004)
 
-    Person(member, "Household member", "Existing user — shared login today, per-user login after 006-auth-flows")
-    Person(registrant, "Public registrant", "Signs up with email + password (UI in 006-auth-flows; model supported now)")
+    Person(member, "Household member", "Existing user — shared login today, per-user login after 007-auth-flows")
+    Person(registrant, "Public registrant", "Signs up with email + password (UI in 007-auth-flows; model supported now)")
     Person(invitee, "Invited user", "Joins an existing household via a pending invite")
 
     System(app, "Dinner Ideas PWA", "Same routes/data; every query now household-scoped via RLS")
@@ -36,7 +36,7 @@ C4Context
     System_Ext(fonts, "Google Fonts", "Lora + Outfit — unchanged")
 
     Rel(member, app, "Uses (browser/PWA)")
-    Rel(registrant, gotrue, "Registers (signUp) — UI in 006-auth-flows")
+    Rel(registrant, gotrue, "Registers (signUp) — UI in 007-auth-flows")
     Rel(invitee, gotrue, "Registers against a pending invite")
     Rel(app, pg, "Reads/writes — now RLS-scoped to caller's household")
     Rel(app, gotrue, "Session / signIn — unchanged in 004")
@@ -47,14 +47,14 @@ C4Context
 ## Actors
 
 - **Household member** (Human): the current user. Today authenticates with the shared household
-  password; after `006-auth-flows` with a personal email/password. In `004` they operate as the `owner` of
+  password; after `007-auth-flows` with a personal email/password. In `004` they operate as the `owner` of
   the founding household. Every read/write they make is transparently scoped to that household.
 - **Public registrant** (Human): anyone who signs up. Registration creates a fresh `profiles`
   row, a new `households` row they own, and a full seeded catalog + store config. The sign-up
-  _form_ ships in `006-auth-flows`; `004` makes the underlying provisioning work for any `auth.users` insert.
+  _form_ ships in `007-auth-flows`; `004` makes the underlying provisioning work for any `auth.users` insert.
 - **Invited user** (Human): a person with a pending `household_invites` row for their email. Their
   registration attaches them to the inviting household as a `member` instead of creating a new
-  one. Invite _creation_ UI + email ship in `006-auth-flows`.
+  one. Invite _creation_ UI + email ship in `007-auth-flows`.
 - **`handle_new_user()` trigger** (System): runs inside the `auth.users` INSERT transaction and
   performs all provisioning. It is the reason registration needs no server code.
 
@@ -68,7 +68,7 @@ C4Context
   (`current_user_household_id()`, `seed_default_household_catalog()`).
 - **Supabase Auth (GoTrue)**: Unchanged as an integration — same `signInWithPassword` /
   `getSession` / `onAuthStateChange` calls in `useAuth`. New: an `after insert on auth.users`
-  trigger. No GoTrue config changes in `004` (email confirmation settings are a `006-auth-flows` concern).
+  trigger. No GoTrue config changes in `004` (email confirmation settings are a `007-auth-flows` concern).
 - **Google Fonts / `lucide-react`**: Unchanged.
 
 ## Data Flows

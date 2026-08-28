@@ -10,18 +10,17 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Dinner Ideas',
-        short_name: 'Dinner Ideas',
+        name: 'Dino Recipes',
+        short_name: 'Dino Recipes',
         description: 'Weekly dinner planning, shopping list, and cooking view for the household.',
         theme_color: '#4A6741',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',
         icons: [
-          { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {

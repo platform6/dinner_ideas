@@ -55,7 +55,7 @@ assigned_bolt: 031-account-model-ui
 
 ### Enables
 
-- Clean baseline for `006-auth-flows`
+- Clean baseline for `007-auth-flows`
 
 ## Edge Cases
 
