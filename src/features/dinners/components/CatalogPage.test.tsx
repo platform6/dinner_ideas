@@ -192,6 +192,62 @@ describe('CatalogPage (pick-3 flow)', () => {
     expect(screen.getByRole('checkbox', { name: 'Pick Enchiladas for this week' })).toBeDisabled();
   });
 
+  it('shows a single at-capacity banner once 3 are selected (story 017)', async () => {
+    mockedFetchActive.mockResolvedValue([
+      dinner({ id: '1', name: 'Tacos' }),
+      dinner({ id: '2', name: 'Pasta' }),
+      dinner({ id: '3', name: 'Curry' }),
+      dinner({ id: '4', name: 'Enchiladas' }),
+    ]);
+    mockedFetchCurrentPlan.mockResolvedValue(
+      plan({
+        weekly_plan_selections: [
+          selectionWithDinner({ id: 'sel-1', dinner_id: '1' }),
+          selectionWithDinner({ id: 'sel-2', dinner_id: '2' }),
+          selectionWithDinner({ id: 'sel-3', dinner_id: '3' }),
+        ],
+      }),
+    );
+    renderPage();
+
+    expect(await screen.findByText(/picked 3 for this week/i)).toBeInTheDocument();
+    // The per-card notice is gone — the message appears exactly once.
+    expect(screen.getAllByText(/picked 3 for this week/i)).toHaveLength(1);
+  });
+
+  it('does not show the at-capacity banner with fewer than 3 selections', async () => {
+    mockedFetchActive.mockResolvedValue([dinner({ id: '1', name: 'Tacos' })]);
+    mockedFetchCurrentPlan.mockResolvedValue(
+      plan({ weekly_plan_selections: [selectionWithDinner({ id: 'sel-1', dinner_id: '1' })] }),
+    );
+    renderPage();
+
+    expect(await screen.findByText('Tacos')).toBeInTheDocument();
+    expect(screen.queryByText(/picked 3 for this week/i)).not.toBeInTheDocument();
+  });
+
+  it('does not show the at-capacity banner when the plan is locked', async () => {
+    mockedFetchActive.mockResolvedValue([
+      dinner({ id: '1', name: 'Tacos' }),
+      dinner({ id: '2', name: 'Pasta' }),
+      dinner({ id: '3', name: 'Curry' }),
+    ]);
+    mockedFetchCurrentPlan.mockResolvedValue(
+      plan({
+        locked_at: '2026-08-25T00:00:00Z',
+        weekly_plan_selections: [
+          selectionWithDinner({ id: 'sel-1', dinner_id: '1' }),
+          selectionWithDinner({ id: 'sel-2', dinner_id: '2' }),
+          selectionWithDinner({ id: 'sel-3', dinner_id: '3' }),
+        ],
+      }),
+    );
+    renderPage();
+
+    expect(await screen.findByText('Tacos')).toBeInTheDocument();
+    expect(screen.queryByText(/picked 3 for this week/i)).not.toBeInTheDocument();
+  });
+
   it('disables other checkboxes while a pick is in flight, to prevent a double-pick race', async () => {
     // Regression: clicking a second dinner before the first pick's mutation settles used to
     // decide both actions from the same stale "no current plan" snapshot, risking two plans

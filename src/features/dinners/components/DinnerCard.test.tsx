@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -33,7 +34,10 @@ const details: DinnerFullDetails = {
   tags: [{ id: 't1', name: 'kid-friendly' }],
 };
 
-function renderCard(onSuppress = vi.fn()) {
+function renderCard(
+  onSuppress = vi.fn(),
+  selectionOverrides: Partial<ComponentProps<typeof DinnerCard>['selection']> = {},
+) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
@@ -46,6 +50,7 @@ function renderCard(onSuppress = vi.fn()) {
           selectionDisabled: false,
           isTogglingSelection: false,
           onToggleSelect: vi.fn(),
+          ...selectionOverrides,
         }}
       />
     </QueryClientProvider>,
@@ -111,6 +116,29 @@ describe('DinnerCard details section', () => {
     await user.click(screen.getByRole('button', { name: 'Remove tag kid-friendly' }));
 
     expect(mockedRemoveTag).toHaveBeenCalledWith('d1', 't1');
+  });
+});
+
+describe('DinnerCard at capacity (story 017)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedFetchDetails.mockResolvedValue(details);
+  });
+
+  it('shows the "Full" pill but no per-card "already picked 3" notice when locked', () => {
+    renderCard(vi.fn(), { selectionDisabled: true, isSelected: false });
+
+    expect(screen.getByText('Full')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Pick Tacos for this week' })).toBeDisabled();
+    expect(screen.queryByText(/already have 3 picked/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/remove one/i)).not.toBeInTheDocument();
+  });
+
+  it('is unchanged for a picked card at capacity', () => {
+    renderCard(vi.fn(), { selectionDisabled: true, isSelected: true });
+
+    expect(screen.getByText('Picked')).toBeInTheDocument();
+    expect(screen.queryByText(/already have 3 picked/i)).not.toBeInTheDocument();
   });
 });
 

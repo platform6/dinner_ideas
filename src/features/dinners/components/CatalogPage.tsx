@@ -101,6 +101,16 @@ export function CatalogPage() {
         onChange={setFilters}
       />
 
+      {/* One list-level at-capacity notice instead of the same line repeated on every
+          locked card. selectedDinnerIds is empty when the plan is missing or locked,
+          so size >= 3 already covers "don't show" for those cases. */}
+      {selectedDinnerIds.size >= 3 && (
+        <Alert status="info" borderRadius="field" mb={4}>
+          <AlertIcon />
+          You’ve picked 3 for this week — remove one to swap in another.
+        </Alert>
+      )}
+
       {activeDinners.isLoading && (
         <Center py={12}>
           <Spinner size="lg" />

@@ -2,8 +2,8 @@
 
 ## Overview
 
-- **Total stories**: 72
-- **Completed**: 57
+- **Total stories**: 73
+- **Completed**: 58
 - **Generated**: 15
 - **Planned**: 0
 - **Last updated**: 2026-08-28
@@ -46,6 +46,7 @@
 - [x] **014-grocery-store-config-page** (weekly-dinner-planner-ui): Grocery store config page - Must - ✅ COMPLETE
 - [x] **015-standalone-tag-filter-dropdown** (weekly-dinner-planner-ui): Standalone tag filter dropdown - Must - ✅ COMPLETE
 - [x] **016-rename-filter-menu-cuisine** (weekly-dinner-planner-ui): Rename filter menu "More" → "Cuisine" - Must - ✅ COMPLETE
+- [x] **017-at-capacity-list-banner** (weekly-dinner-planner-ui): Single list-level at-capacity banner (replaces per-card notice) - Should - ✅ COMPLETE
 
 **Unit: 004-grocery-store-config**
 
@@ -133,4 +134,4 @@
 - **Planned**: 0
 - **Generated**: 15
 - **In Progress**: 0
-- **Completed**: 57
+- **Completed**: 58

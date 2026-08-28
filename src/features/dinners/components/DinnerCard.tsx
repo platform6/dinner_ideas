@@ -307,12 +307,6 @@ export function DinnerCard({ dinner, onSuppress, isMutating, selection, lastChos
         </HStack>
       )}
 
-      {isLocked && (
-        <Box layerStyle="notice" mb={3} fontSize="0.78125rem">
-          Already have 3 picked — remove one first.
-        </Box>
-      )}
-
       <HStack justify="space-between" align="center">
         <PickPill dinner={dinner} selection={selection} />
         <Button
