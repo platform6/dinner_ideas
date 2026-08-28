@@ -4,7 +4,7 @@ import { applyFilters } from '@/features/dinners/filters';
 import type { CatalogFilterState } from '@/features/dinners/components/CatalogFilters';
 import type { CatalogDinner } from '@/features/dinners/types';
 
-const noFilters: CatalogFilterState = { cuisine: null, tags: [], sortByCookTime: false };
+const noFilters: CatalogFilterState = { cuisine: [], tags: [], sortByCookTime: false };
 
 function dinner(overrides: Partial<CatalogDinner>): CatalogDinner {
   return {
@@ -45,8 +45,13 @@ describe('applyFilters', () => {
   });
 
   it('filters by cuisine', () => {
-    const result = applyFilters(dinners, { ...noFilters, cuisine: 'Mexican' });
+    const result = applyFilters(dinners, { ...noFilters, cuisine: ['Mexican'] });
     expect(result.map((d) => d.id)).toEqual(['1']);
+  });
+
+  it('matches a dinner whose cuisine is ANY of the selected cuisines (OR, not AND)', () => {
+    const result = applyFilters(dinners, { ...noFilters, cuisine: ['Mexican', 'Indian'] });
+    expect(result.map((d) => d.id).sort()).toEqual(['1', '3']);
   });
 
   it('filters by a single tag', () => {
@@ -77,7 +82,7 @@ describe('applyFilters', () => {
       }),
     ];
     const result = applyFilters(combined, {
-      cuisine: 'Mexican',
+      cuisine: ['Mexican'],
       tags: ['kid-friendly'],
       sortByCookTime: true,
     });
@@ -85,7 +90,7 @@ describe('applyFilters', () => {
   });
 
   it('returns an empty list when no dinner matches the filters', () => {
-    const result = applyFilters(dinners, { ...noFilters, cuisine: 'Thai' });
+    const result = applyFilters(dinners, { ...noFilters, cuisine: ['Thai'] });
     expect(result).toEqual([]);
   });
 

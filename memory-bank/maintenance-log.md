@@ -1,5 +1,21 @@
 # Maintenance Log
 
+## 2026-08-28T16:00:00Z - Status Sync
+
+**Triggered by**: analyze-context integrity check (`/specsmd-master-agent` activation)
+
+**Context**: All 21 bolts and all 39 stories across both intents are complete, but four roll-up artifacts were never re-stamped after the last post-completion bolts (`009`, `020`, `021`) landed.
+
+| Artifact                                                              | Old Status                                     | New Status                                   | Reason                                                                                    |
+| --------------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| memory-bank/story-index.md (summary + status counts)                  | Completed 33 / Planned 6                       | Completed 39 / Planned 0                     | Every story file is `status: complete`; all 21 bolts complete                             |
+| memory-bank/story-index.md (`004-generic-tags-schema` line)           | `[ ]` PLANNED                                  | `[x]` COMPLETE                               | Story file `status: complete`, `implemented: true`; bolt `009-dinner-catalog` complete    |
+| .../001-dinner-catalog/construction-log.md (bolt `009` row + summary) | `009` in-progress; completed 2 / in progress 1 | `009` completed; completed 3 / in progress 0 | `bolts/009-dinner-catalog/bolt.md` is `status: complete` (completed 2026-08-27T18:38:12Z) |
+| intents/002-kitchen-table-theme/units.md                              | units-decomposed                               | complete                                     | Sole unit `001-kitchen-table-ui` + all 6 bolts (`014`–`019`) complete                     |
+| intents/002-kitchen-table-theme/inception-log.md                      | in-progress; completed null                    | complete; completed 2026-08-27T23:15:48Z     | Same — intent fully built                                                                 |
+
+---
+
 ## 2026-08-27T06:00:00Z - Status Sync + Root-Cause Fix
 
 **Triggered by**: `bolt-complete.cjs` cascade after completing bolt `010-weekly-planning` (same false-positive as the 2026-08-27T05:00:00Z entry below, recurring)

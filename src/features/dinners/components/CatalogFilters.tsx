@@ -2,9 +2,12 @@ import {
   Button,
   Checkbox,
   CheckboxGroup,
+  HStack,
+  IconButton,
   Menu,
   MenuButton,
   MenuList,
+  Text,
   useDisclosure,
   Wrap,
 } from '@chakra-ui/react';
@@ -12,7 +15,8 @@ import {
 import { metaIcons, uiIcons } from '@/shared/components/icons';
 
 export interface CatalogFilterState {
-  cuisine: string | null;
+  /** OR semantics: a dinner matches if its cuisine is any of these (see `filters.ts`). */
+  cuisine: string[];
   /** OR semantics: a dinner matches if it has any of these tags (see `filters.ts`). */
   tags: string[];
   sortByCookTime: boolean;
@@ -24,6 +28,43 @@ interface CatalogFiltersProps {
   availableTags: string[];
   filters: CatalogFilterState;
   onChange: (filters: CatalogFilterState) => void;
+}
+
+/**
+ * Active-filter chip: the label is plain text, only the trailing ✕ (Lucide `X`) is a target,
+ * so a chip can be read without being a button (FR / review polish 10).
+ */
+function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <HStack
+      as="span"
+      gap={0.5}
+      h="34px"
+      pl={3}
+      pr={1}
+      bg="brand.500"
+      color="paper.base"
+      borderRadius="chip"
+      fontSize="0.75rem"
+      fontWeight={600}
+    >
+      <Text as="span">{label}</Text>
+      <IconButton
+        aria-label={`Remove ${label} filter`}
+        icon={<uiIcons.remove size={12} strokeWidth={2.5} />}
+        onClick={onRemove}
+        variant="unstyled"
+        display="inline-flex"
+        alignItems="center"
+        justifyContent="center"
+        minW="24px"
+        h="24px"
+        color="paper.base"
+        borderRadius="chip"
+        _hover={{ bg: 'whiteAlpha.300' }}
+      />
+    </HStack>
+  );
 }
 
 /**
@@ -40,9 +81,9 @@ export function CatalogFilters({ cuisines, availableTags, filters, onChange }: C
     <Wrap gap={2} mb={4} align="center">
       <Button
         size="sm"
-        variant={filters.cuisine === null ? 'solid' : 'outline'}
+        variant={filters.cuisine.length === 0 ? 'solid' : 'outline'}
         leftIcon={<uiIcons.allCuisines size={14} strokeWidth={2} />}
-        onClick={() => onChange({ ...filters, cuisine: null })}
+        onClick={() => onChange({ ...filters, cuisine: [] })}
       >
         All
       </Button>
@@ -56,21 +97,20 @@ export function CatalogFilters({ cuisines, availableTags, filters, onChange }: C
         Quickest
       </Button>
 
-      {filters.cuisine !== null && (
-        <Button size="sm" variant="solid" onClick={() => onChange({ ...filters, cuisine: null })}>
-          {filters.cuisine} ✕
-        </Button>
-      )}
+      {filters.cuisine.map((cuisine) => (
+        <FilterChip
+          key={cuisine}
+          label={cuisine}
+          onRemove={() => onChange({ ...filters, cuisine: filters.cuisine.filter((c) => c !== cuisine) })}
+        />
+      ))}
 
       {filters.tags.map((tag) => (
-        <Button
+        <FilterChip
           key={tag}
-          size="sm"
-          variant="solid"
-          onClick={() => onChange({ ...filters, tags: filters.tags.filter((t) => t !== tag) })}
-        >
-          {tag} ✕
-        </Button>
+          label={tag}
+          onRemove={() => onChange({ ...filters, tags: filters.tags.filter((t) => t !== tag) })}
+        />
       ))}
 
       {cuisines.length > 0 && (
@@ -86,10 +126,8 @@ export function CatalogFilters({ cuisines, availableTags, filters, onChange }: C
           </MenuButton>
           <MenuList p={3} minW="14rem">
             <CheckboxGroup
-              value={filters.cuisine ? [filters.cuisine] : []}
-              onChange={(values) =>
-                onChange({ ...filters, cuisine: (values[values.length - 1] as string) ?? null })
-              }
+              value={filters.cuisine}
+              onChange={(values) => onChange({ ...filters, cuisine: values as string[] })}
             >
               <Wrap direction="column">
                 {cuisines.map((cuisine) => (

@@ -239,7 +239,8 @@ export function DinnerCard({ dinner, onSuppress, isMutating, selection, lastChos
     <Box
       layerStyle={selection.isSelected ? 'cardSelected' : 'card'}
       opacity={isLocked ? 0.55 : 1}
-      transition="opacity 0.15s ease"
+      transition="opacity 0.15s ease, border-color 0.12s ease"
+      _hover={{ borderColor: 'line.brand' }}
     >
       <HStack justify="space-between" align="start" mb={2} gap={2}>
         <HStack align="start" gap={3}>

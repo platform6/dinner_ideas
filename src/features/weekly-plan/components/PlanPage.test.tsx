@@ -1,3 +1,4 @@
+import { ChakraProvider } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -5,6 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PlanPage } from '@/features/weekly-plan/components/PlanPage';
+import { theme } from '@/shared/theme';
 import { fetchCurrentPlan, fetchPlanByStartDate, removeSelection } from '@/features/weekly-plan/api';
 import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/types';
 
@@ -47,11 +49,13 @@ describe('PlanPage', () => {
   function renderPage() {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          <PlanPage />
-        </MemoryRouter>
-      </QueryClientProvider>,
+      <ChakraProvider theme={theme}>
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter>
+            <PlanPage />
+          </MemoryRouter>
+        </QueryClientProvider>
+      </ChakraProvider>,
     );
   }
 

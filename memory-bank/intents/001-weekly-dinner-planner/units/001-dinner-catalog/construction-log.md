@@ -2,7 +2,7 @@
 unit: 001-dinner-catalog
 intent: 001-weekly-dinner-planner
 created: 2026-08-26T17:42:16Z
-last_updated: 2026-08-27T02:00:00Z
+last_updated: 2026-08-28T16:00:00Z
 ---
 
 # Construction Log: dinner-catalog
@@ -25,11 +25,11 @@ last_updated: 2026-08-27T02:00:00Z
 
 ## Current Bolt Structure
 
-| Bolt ID            | Stories                                                    | Status         | Changed               |
-| ------------------ | ---------------------------------------------------------- | -------------- | --------------------- |
-| 001-dinner-catalog | 001-dinner-catalog-schema, 002-seed-healthy-family-dinners | ✅ completed   | -                     |
-| 007-dinner-catalog | 003-dinner-step-by-step-instructions                       | ✅ completed   | Added post-completion |
-| 009-dinner-catalog | 004-generic-tags-schema                                    | ⏳ in-progress | Added post-completion |
+| Bolt ID            | Stories                                                    | Status       | Changed               |
+| ------------------ | ---------------------------------------------------------- | ------------ | --------------------- |
+| 001-dinner-catalog | 001-dinner-catalog-schema, 002-seed-healthy-family-dinners | ✅ completed | -                     |
+| 007-dinner-catalog | 003-dinner-step-by-step-instructions                       | ✅ completed | Added post-completion |
+| 009-dinner-catalog | 004-generic-tags-schema                                    | ✅ completed | Added post-completion |
 
 ## Execution History
 
@@ -55,6 +55,7 @@ last_updated: 2026-08-27T02:00:00Z
 | 2026-08-27T02:25:00Z | 009-dinner-catalog | stage-complete         | Technical Design → ADR Analysis                                                                                                 |
 | 2026-08-27T02:26:00Z | 009-dinner-catalog | stage-complete         | ADR Analysis (none) → Implement                                                                                                 |
 | 2026-08-27T03:00:00Z | 009-dinner-catalog | stage-complete         | Implement (migration applied to linked Supabase project "dinner ideas" by user, confirmed via `supabase migration list`) → Test |
+| 2026-08-27T18:38:12Z | 009-dinner-catalog | completed              | All 5 stages done (via bolt-complete.cjs)                                                                                       |
 
 ## Execution Summary
 
@@ -62,8 +63,8 @@ last_updated: 2026-08-27T02:00:00Z
 | ---------------------- | ----- |
 | Original bolts planned | 1     |
 | Current bolt count     | 3     |
-| Bolts completed        | 2     |
-| Bolts in progress      | 1     |
+| Bolts completed        | 3     |
+| Bolts in progress      | 0     |
 | Bolts remaining        | 0     |
 | Replanning events      | 2     |
 
@@ -76,3 +77,5 @@ Unit 001-dinner-catalog's original scope (schema, RLS, 50 seed dinners) is compl
 **2026-08-26**: bolt `007-dinner-catalog` complete — `dinner_steps` live for all 50 seed dinners (216 total steps). Unit `001-dinner-catalog` is fully complete again.
 
 **2026-08-27**: reopened again with bolt `009-dinner-catalog`, adding a generic `tags`/`dinner_tags` schema (FR-9) to replace `rosie_approved` — requested post-deployment. See `inception-log.md` Scope Changes.
+
+**2026-08-27**: bolt `009-dinner-catalog` complete — generic tag schema live. Unit `001-dinner-catalog` fully complete again.

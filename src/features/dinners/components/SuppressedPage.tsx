@@ -66,7 +66,7 @@ export function SuppressedPage() {
       ) : (
         <Stack gap={2}>
           {dinners.map((dinner) => (
-            <HStack key={dinner.id} justify="space-between" bg="paper.subtle" borderRadius="card" p={3}>
+            <HStack key={dinner.id} justify="space-between" layerStyle="card" bg="paper.subtle">
               <HStack gap={3}>
                 <Center
                   w="38px"

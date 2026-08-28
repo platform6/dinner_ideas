@@ -36,14 +36,20 @@ const colors = {
   },
   // Warm neutrals. "paper" = surfaces, "ink" = text, "line" = borders.
   paper: { base: '#FFFDFA', subtle: '#FAF8F3', sunken: '#F1EEE6' },
-  line: { subtle: '#EDE9DE', DEFAULT: '#E0DCD1', dashed: '#DCD7C9', brand: '#CFD6C2' },
+  line: {
+    subtle: '#EDE9DE',
+    DEFAULT: '#E0DCD1',
+    dashed: '#DCD7C9',
+    brand: '#CFD6C2',
+    brandSubtle: '#E3E7DA',
+  },
   ink: {
     900: '#232019',
     700: '#5C5749',
     500: '#7E7869',
-    400: '#8C8677',
-    300: '#A39C8B',
-    200: '#B8B1A0',
+    400: '#726C5B',
+    300: '#757060',
+    200: '#8A8272',
   },
 };
 
@@ -131,7 +137,7 @@ const layerStyles = {
   cardSelected: {
     bg: 'brand.50',
     borderWidth: '1px',
-    borderColor: '#E3E7DA',
+    borderColor: 'line.brandSubtle',
     borderRadius: 'card',
     p: 3,
   },
@@ -169,7 +175,7 @@ const components = {
       fontFamily: 'body',
       fontWeight: 600,
       borderRadius: 'chip',
-      _focusVisible: { boxShadow: '0 0 0 3px rgba(74, 103, 65, 0.28)' },
+      // Focus ring is defined once, globally, in styles.global (theme-patch.ts §5).
     },
     sizes: {
       // Every tappable control is >= 44px tall on phone.
@@ -253,7 +259,7 @@ const components = {
         field: {
           bg: 'paper.subtle',
           borderWidth: '1px',
-          borderColor: '#E3E7DA',
+          borderColor: 'line.brandSubtle',
           borderRadius: 'field',
           h: '50px',
           fontSize: '0.9375rem',
@@ -280,10 +286,90 @@ const components = {
       },
     },
   },
+  Menu: {
+    baseStyle: {
+      list: {
+        bg: 'paper.base',
+        borderWidth: '1px',
+        borderColor: 'line.subtle',
+        borderRadius: 'card',
+        boxShadow: 'raised',
+        py: 1.5,
+        minW: '10rem',
+      },
+      item: {
+        fontFamily: 'body',
+        fontSize: '0.8125rem',
+        color: 'ink.700',
+        px: 3,
+        py: 2,
+        bg: 'transparent',
+        _hover: { bg: 'paper.subtle', color: 'ink.900' },
+        _focus: { bg: 'paper.subtle', color: 'ink.900' },
+        _active: { bg: 'brand.50' },
+      },
+      groupTitle: {
+        fontFamily: 'body',
+        fontSize: 'eyebrow',
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+        color: 'ink.400',
+        mx: 3,
+        my: 2,
+      },
+    },
+  },
+  Textarea: {
+    variants: {
+      filled: {
+        bg: 'paper.subtle',
+        borderWidth: '1px',
+        borderColor: 'line.brandSubtle',
+        borderRadius: 'field',
+        fontSize: '0.875rem',
+        _hover: { bg: 'paper.subtle' },
+        _focusVisible: { bg: 'paper.base', borderColor: 'brand.300', boxShadow: 'none' },
+      },
+    },
+    defaultProps: { variant: 'filled' },
+  },
+  CloseButton: {
+    baseStyle: {
+      color: 'ink.400',
+      borderRadius: 'chip',
+      _hover: { bg: 'transparent', color: 'ink.700' },
+    },
+    sizes: {
+      sm: { w: '16px', h: '16px', fontSize: '9px' },
+    },
+  },
   Alert: {
     baseStyle: {
-      container: { borderRadius: 'field', fontFamily: 'body', fontSize: 'meta' },
+      container: {
+        borderRadius: 'field',
+        borderWidth: '1px',
+        fontFamily: 'body',
+        fontSize: 'meta',
+        lineHeight: 1.45,
+        px: 3,
+        py: '11px',
+        alignItems: 'flex-start',
+      },
+      icon: { w: '16px', h: '16px', mr: 2, mt: '1px', flexShrink: 0 },
     },
+    variants: {
+      subtle: (props: { status?: string }) => {
+        const map: Record<string, { bg: string; borderColor: string; color: string }> = {
+          error: { bg: 'heart.50', borderColor: 'heart.200', color: 'heart.700' },
+          success: { bg: 'brand.50', borderColor: 'line.brandSubtle', color: 'brand.600' },
+          info: { bg: 'paper.subtle', borderColor: 'line.subtle', color: 'ink.700' },
+          warning: { bg: 'heart.50', borderColor: 'heart.200', color: 'heart.700' },
+        };
+        const tone = map[props.status ?? 'info'] ?? map.info;
+        return { container: tone, icon: { color: tone.color } };
+      },
+    },
+    defaultProps: { variant: 'subtle' },
   },
   Spinner: { baseStyle: { color: 'brand.500' } },
 };
@@ -303,6 +389,13 @@ export const theme = extendTheme({
     global: {
       body: { bg: 'paper.base', color: 'ink.900', textRendering: 'optimizeLegibility' },
       '*::selection': { bg: 'brand.100' },
+      // Olive focus ring on every focusable control, not just Button (theme-patch.ts §5).
+      'a:focus-visible, button:focus-visible, [role="button"]:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible':
+        {
+          outline: 'none',
+          boxShadow: '0 0 0 3px rgba(74, 103, 65, 0.28)',
+          borderRadius: 'control',
+        },
     },
   },
 });

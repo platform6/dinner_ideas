@@ -14,6 +14,7 @@ import {
   Stack,
   Text,
   Textarea,
+  useBreakpointValue,
 } from '@chakra-ui/react';
 
 import { useCurrentPlan, useLockPlan } from '@/features/weekly-plan/hooks';
@@ -42,6 +43,10 @@ export function ShoppingListPage() {
   const isAlreadyLocked = plan?.locked_at != null;
   const [lockChecked, setLockChecked] = useState(true);
   const shouldLock = isAlreadyLocked || lockChecked;
+
+  // md+: the lock + Copy controls sit in the page header and the list flows into two columns;
+  // phone keeps the sticky footer and a single column (a phone affordance — review finding 3).
+  const actionsInHeader = useBreakpointValue({ base: false, md: true }, { ssr: false }) ?? false;
 
   const [isCopying, setIsCopying] = useState(false);
   const [copyOutcome, setCopyOutcome] = useState<{ clipboardOk: boolean } | null>(null);
@@ -121,8 +126,30 @@ export function ShoppingListPage() {
     setIsCopying(false);
   }
 
+  const lockCheckbox = (
+    <Checkbox
+      isChecked={shouldLock}
+      isDisabled={isAlreadyLocked}
+      onChange={(e) => setLockChecked(e.target.checked)}
+    >
+      Also lock this week’s plan
+    </Checkbox>
+  );
+
+  const copyButton = (
+    <Button
+      size="lg"
+      width={{ base: 'full', md: 'auto' }}
+      isLoading={isCopying}
+      leftIcon={<uiIcons.copy size={16} strokeWidth={2} />}
+      onClick={() => void handleCopy()}
+    >
+      Copy shopping list
+    </Button>
+  );
+
   return (
-    <Stack gap={4} pb={20}>
+    <Stack gap={4}>
       <HStack justify="space-between" gap={3}>
         <Box>
           <Text textStyle="eyebrow">
@@ -132,9 +159,16 @@ export function ShoppingListPage() {
             Shopping list
           </Heading>
         </Box>
-        <Center w="40px" h="40px" borderRadius="control" bg="brand.100" color="brand.500" flexShrink={0}>
-          <uiIcons.copy size={18} strokeWidth={1.8} />
-        </Center>
+        {actionsInHeader ? (
+          <HStack gap={4} flexShrink={0}>
+            {lockCheckbox}
+            {copyButton}
+          </HStack>
+        ) : (
+          <Center w="40px" h="40px" borderRadius="control" bg="brand.100" color="brand.500" flexShrink={0}>
+            <uiIcons.copy size={18} strokeWidth={1.8} />
+          </Center>
+        )}
       </HStack>
 
       {dinners.isLoading && (
@@ -152,11 +186,11 @@ export function ShoppingListPage() {
 
       {dinners.data && (
         <>
-          <Stack gap={4}>
+          <Box sx={{ columns: { base: 1, md: 2 }, columnGap: '28px' }}>
             {groups.map((group) => {
               const CategoryIcon = categoryIcon(group.category);
               return (
-                <Box key={group.category}>
+                <Box key={group.category} mb={4} sx={{ breakInside: 'avoid' }}>
                   <HStack gap={2} mb={2}>
                     <CategoryIcon size={15} strokeWidth={1.8} color="var(--chakra-colors-brand-500)" />
                     <Text textStyle="sectionLabel">{group.category}</Text>
@@ -167,37 +201,45 @@ export function ShoppingListPage() {
                       const key = itemKey(group.category, item.name, item.unit);
                       const isChecked = checkedItems.has(key);
                       return (
-                        <HStack key={key} gap={3}>
-                          <Checkbox
-                            size="md"
-                            isChecked={isChecked}
-                            onChange={() => toggleItem(key)}
-                            aria-label={`Mark ${item.name} as picked up`}
-                          />
-                          <Text
-                            as="span"
-                            fontWeight={500}
-                            color={isChecked ? 'ink.200' : 'ink.500'}
-                            minW="56px"
-                            textDecoration={isChecked ? 'line-through' : 'none'}
-                          >
-                            {item.quantity} {item.unit}
-                          </Text>
-                          <Text
-                            as="span"
-                            color={isChecked ? 'ink.200' : 'ink.900'}
-                            textDecoration={isChecked ? 'line-through' : 'none'}
-                          >
-                            {item.name}
-                          </Text>
-                        </HStack>
+                        <Checkbox
+                          key={key}
+                          size="md"
+                          isChecked={isChecked}
+                          onChange={() => toggleItem(key)}
+                          w="full"
+                          px={2}
+                          py={1}
+                          borderRadius="control"
+                          _hover={{ bg: 'paper.subtle' }}
+                          alignItems="center"
+                          sx={{ '.chakra-checkbox__label': { flex: 1, ml: 3 } }}
+                        >
+                          <HStack as="span" gap={3}>
+                            <Text
+                              as="span"
+                              fontWeight={500}
+                              color={isChecked ? 'ink.200' : 'ink.500'}
+                              minW="56px"
+                              textDecoration={isChecked ? 'line-through' : 'none'}
+                            >
+                              {item.quantity} {item.unit}
+                            </Text>
+                            <Text
+                              as="span"
+                              color={isChecked ? 'ink.200' : 'ink.900'}
+                              textDecoration={isChecked ? 'line-through' : 'none'}
+                            >
+                              {item.name}
+                            </Text>
+                          </HStack>
+                        </Checkbox>
                       );
                     })}
                   </Stack>
                 </Box>
               );
             })}
-          </Stack>
+          </Box>
 
           {lockErrorMessage && (
             <Alert status="error" borderRadius="field">
@@ -229,33 +271,23 @@ export function ShoppingListPage() {
             </Stack>
           )}
 
-          <Box
-            position="sticky"
-            bottom={0}
-            bg="paper.base"
-            pt={3}
-            borderTopWidth="1px"
-            borderColor="line.subtle"
-          >
-            <Stack gap={3}>
-              <Checkbox
-                isChecked={shouldLock}
-                isDisabled={isAlreadyLocked}
-                onChange={(e) => setLockChecked(e.target.checked)}
-              >
-                Also lock this week’s plan
-              </Checkbox>
-              <Button
-                size="lg"
-                width="full"
-                isLoading={isCopying}
-                leftIcon={<uiIcons.copy size={16} strokeWidth={2} />}
-                onClick={() => void handleCopy()}
-              >
-                Copy shopping list
-              </Button>
-            </Stack>
-          </Box>
+          {/* Phone only: a sticky footer, lifted clear of the 70px tab bar. At md+ these controls
+              live in the page header instead — sticky footers are a phone affordance (finding 3). */}
+          {!actionsInHeader && (
+            <Box
+              position="sticky"
+              bottom="70px"
+              bg="paper.base"
+              pt={3}
+              borderTopWidth="1px"
+              borderColor="line.subtle"
+            >
+              <Stack gap={3}>
+                {lockCheckbox}
+                {copyButton}
+              </Stack>
+            </Box>
+          )}
         </>
       )}
     </Stack>
