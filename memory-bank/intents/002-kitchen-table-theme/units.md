@@ -1,8 +1,8 @@
 ---
 intent: 002-kitchen-table-theme
 phase: inception
-status: units-decomposed
-updated: 2026-08-27T09:15:00Z
+status: complete
+updated: 2026-08-28T16:00:00Z
 ---
 
 # Kitchen Table Theme - Unit Decomposition

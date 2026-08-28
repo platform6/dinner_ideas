@@ -11,9 +11,11 @@ import {
   HStack,
   IconButton,
   Link as ChakraLink,
+  SimpleGrid,
   Spinner,
   Stack,
   Text,
+  useBreakpointValue,
 } from '@chakra-ui/react';
 
 import { useCurrentPlan, useToggleSelection, useWeekByOffset } from '@/features/weekly-plan/hooks';
@@ -32,6 +34,8 @@ export function PlanPage() {
   const plan = week.data;
   const isLocked = plan?.locked_at != null;
   const selections = plan?.weekly_plan_selections ?? [];
+  // md+ lays the three picks side by side as vertical cards; phone keeps horizontal rows.
+  const threeAcross = useBreakpointValue({ base: false, md: true }, { ssr: false }) ?? false;
   const isFull = isCurrentWeek && !isLocked && selections.length === 3;
 
   if (week.isLoading) {
@@ -133,53 +137,82 @@ export function PlanPage() {
       )}
 
       {selections.length > 0 && (
-        <Stack gap={2}>
-          {selections.map((selection, index) => (
-            <HStack key={selection.id} justify="space-between" bg="brand.50" borderRadius="card" p={3}>
-              <HStack gap={3}>
-                <Center
-                  w="34px"
-                  h="34px"
-                  borderRadius="full"
-                  bg="brand.500"
-                  color="paper.base"
-                  fontWeight={600}
-                  fontSize="0.8125rem"
-                  flexShrink={0}
-                >
-                  {index + 1}
-                </Center>
-                <Box>
-                  <Text textStyle="cardTitle" fontSize="0.9375rem">
-                    {selection.dinners.name}
-                  </Text>
-                  <Text textStyle="meta">
-                    {selection.dinners.cuisine_type} · {selection.dinners.cook_time_minutes} min
-                  </Text>
-                </Box>
+        <SimpleGrid columns={{ base: 1, md: 3 }} gap={{ base: 2, md: 3 }}>
+          {selections.map((selection, index) => {
+            const removeButton = isCurrentWeek && !isLocked && (
+              <IconButton
+                w="36px"
+                h="36px"
+                minW="36px"
+                variant="outline"
+                aria-label={`Remove ${selection.dinners.name}`}
+                icon={<uiIcons.remove size={15} strokeWidth={2} />}
+                isLoading={
+                  toggleSelection.isPending && toggleSelection.variables?.dinnerId === selection.dinner_id
+                }
+                onClick={() =>
+                  toggleSelection.mutate({
+                    dinnerId: selection.dinner_id,
+                    currentPlan: currentPlan.data ?? null,
+                  })
+                }
+              />
+            );
+            const badge = (
+              <Center
+                w={threeAcross ? '28px' : '34px'}
+                h={threeAcross ? '28px' : '34px'}
+                borderRadius="full"
+                bg="brand.500"
+                color="paper.base"
+                fontWeight={600}
+                fontSize="0.8125rem"
+                flexShrink={0}
+              >
+                {index + 1}
+              </Center>
+            );
+            const name = (
+              <Text textStyle="cardTitle" fontSize="0.9375rem">
+                {selection.dinners.name}
+              </Text>
+            );
+            const meta = (
+              <Text textStyle="meta">
+                {selection.dinners.cuisine_type} · {selection.dinners.cook_time_minutes} min
+              </Text>
+            );
+
+            if (threeAcross) {
+              return (
+                <Stack key={selection.id} layerStyle="cardSelected" p={3.5} gap={2.5}>
+                  <HStack justify="space-between" align="flex-start">
+                    {badge}
+                    {removeButton}
+                  </HStack>
+                  <Box h="76px" bg="paper.sunken" borderRadius="control" />
+                  <Box>
+                    {name}
+                    {meta}
+                  </Box>
+                </Stack>
+              );
+            }
+
+            return (
+              <HStack key={selection.id} justify="space-between" layerStyle="cardSelected">
+                <HStack gap={3}>
+                  {badge}
+                  <Box>
+                    {name}
+                    {meta}
+                  </Box>
+                </HStack>
+                {removeButton}
               </HStack>
-              {isCurrentWeek && !isLocked && (
-                <IconButton
-                  w="36px"
-                  h="36px"
-                  minW="36px"
-                  variant="outline"
-                  aria-label={`Remove ${selection.dinners.name}`}
-                  icon={<uiIcons.remove size={15} strokeWidth={2} />}
-                  isLoading={
-                    toggleSelection.isPending && toggleSelection.variables?.dinnerId === selection.dinner_id
-                  }
-                  onClick={() =>
-                    toggleSelection.mutate({
-                      dinnerId: selection.dinner_id,
-                      currentPlan: currentPlan.data ?? null,
-                    })
-                  }
-                />
-              )}
-            </HStack>
-          ))}
-        </Stack>
+            );
+          })}
+        </SimpleGrid>
       )}
 
       {isFull && (

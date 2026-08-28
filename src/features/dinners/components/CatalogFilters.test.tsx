@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { CatalogFilters, type CatalogFilterState } from '@/features/dinners/components/CatalogFilters';
 
 const baseFilters: CatalogFilterState = {
-  cuisine: null,
+  cuisine: [],
   tags: [],
   sortByCookTime: false,
 };
@@ -50,7 +50,17 @@ describe('CatalogFilters', () => {
 
     await user.click(screen.getByRole('checkbox', { name: 'Mexican' }));
 
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ cuisine: 'Mexican', tags: [] }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ cuisine: ['Mexican'], tags: [] }));
+  });
+
+  it('keeps every ticked cuisine (multi-select, not last-wins)', async () => {
+    const user = userEvent.setup();
+    const { onChange } = renderFilters({ filters: { cuisine: ['Italian'] } });
+
+    await user.click(screen.getByRole('button', { name: 'Cuisine' }));
+    await user.click(await screen.findByRole('checkbox', { name: 'Mexican' }));
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ cuisine: ['Italian', 'Mexican'] }));
   });
 
   it('lists only tags in the Tags dropdown and reports an OR-set of tags via onChange', async () => {
@@ -65,26 +75,27 @@ describe('CatalogFilters', () => {
 
     await user.click(screen.getByRole('checkbox', { name: 'kid-friendly' }));
 
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ tags: ['kid-friendly'], cuisine: null }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ tags: ['kid-friendly'], cuisine: [] }));
   });
 
-  it('shows active tags as chips that clear the tag on click', async () => {
+  it('shows active tags as chips whose ✕ button clears just that tag', async () => {
     const user = userEvent.setup();
     const { onChange } = renderFilters({ filters: { tags: ['one-pot'] } });
 
-    const chip = screen.getByRole('button', { name: 'one-pot ✕' });
-    await user.click(chip);
+    // The label itself is not a button; only the trailing ✕ is a target.
+    expect(screen.queryByRole('button', { name: 'one-pot' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Remove one-pot filter' }));
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ tags: [] }));
   });
 
-  it('shows the active cuisine as a chip that clears the cuisine on click', async () => {
+  it('shows each active cuisine as a chip whose ✕ button clears just that cuisine', async () => {
     const user = userEvent.setup();
-    const { onChange } = renderFilters({ filters: { cuisine: 'Italian' } });
+    const { onChange } = renderFilters({ filters: { cuisine: ['Italian', 'Mexican'] } });
 
-    await user.click(screen.getByRole('button', { name: 'Italian ✕' }));
+    await user.click(screen.getByRole('button', { name: 'Remove Italian filter' }));
 
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ cuisine: null }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ cuisine: ['Mexican'] }));
   });
 
   it('hides the Tags dropdown when the tag vocabulary is empty', () => {

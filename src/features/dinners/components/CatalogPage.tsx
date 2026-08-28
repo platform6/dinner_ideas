@@ -23,7 +23,7 @@ import { useCurrentPlan, useToggleSelection } from '@/features/weekly-plan/hooks
 import { uiIcons } from '@/shared/components/icons';
 
 const defaultFilters: CatalogFilterState = {
-  cuisine: null,
+  cuisine: [],
   tags: [],
   sortByCookTime: false,
 };
@@ -119,7 +119,7 @@ export function CatalogPage() {
       )}
 
       {!activeDinners.isLoading && !activeDinners.isError && visibleDinners.length > 0 && (
-        <SimpleGrid columns={{ base: 1, sm: 2, lg: 3 }} gap={4}>
+        <SimpleGrid columns={{ base: 1, sm: 2, xl: 3 }} gap={4}>
           {visibleDinners.map((dinner) => (
             <DinnerCard
               key={dinner.id}

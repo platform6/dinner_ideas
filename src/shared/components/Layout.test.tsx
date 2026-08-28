@@ -1,62 +1,57 @@
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 import { Layout } from '@/shared/components/Layout';
 import { useAuth } from '@/features/auth/useAuth';
+import { renderWithProviders, screen } from '@/test/render';
 
 vi.mock('@/features/auth/useAuth');
 
 const mockedUseAuth = vi.mocked(useAuth);
 
-function renderLayout(path: string) {
-  mockedUseAuth.mockReturnValue({ session: null, isLoading: false, signIn: vi.fn(), signOut: vi.fn() });
-  return render(
-    <MemoryRouter initialEntries={[path]}>
-      <Layout>
-        <div>Page content</div>
-      </Layout>
-    </MemoryRouter>,
+function renderLayout(path: string, signOut = vi.fn()) {
+  mockedUseAuth.mockReturnValue({ session: null, isLoading: false, signIn: vi.fn(), signOut });
+  renderWithProviders(
+    <Layout>
+      <div>Page content</div>
+    </Layout>,
+    { route: path },
   );
+  return { signOut };
 }
 
-describe('Layout', () => {
-  it('renders all 4 bottom tabs and the page content', () => {
+/**
+ * Under jsdom the `matchMedia` stub in `src/test/setup.ts` makes `useBreakpointValue` resolve to
+ * its `base` value, so `Layout` renders its phone view (header + fixed bottom tab bar). The rail
+ * is the md+ view and is exercised in the browser, not here.
+ */
+describe('Layout (phone view)', () => {
+  it('renders all 4 nav links exactly once, plus the page content', () => {
     renderLayout('/');
 
-    expect(screen.getByRole('link', { name: 'Catalog' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'This week' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'List' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Cooking' })).toBeInTheDocument();
+    for (const name of ['Catalog', 'This week', 'List', 'Cooking']) {
+      expect(screen.getAllByRole('link', { name })).toHaveLength(1);
+    }
     expect(screen.getByText('Page content')).toBeInTheDocument();
   });
 
-  it('marks the tab matching the current route as active', () => {
+  it('marks the nav item matching the current route as active', () => {
     renderLayout('/plan');
 
     expect(screen.getByRole('link', { name: 'This week' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'Catalog' })).not.toHaveAttribute('aria-current');
   });
 
-  it('exposes store-config and log-out header actions, not in the tab bar', () => {
+  it('exposes Store setup and Log out outside the tab-bar nav', () => {
     renderLayout('/');
 
-    const storeConfigLink = screen.getByRole('link', { name: /store setup/i });
-    expect(storeConfigLink).toHaveAttribute('href', '/store-config');
-    expect(storeConfigLink.closest('nav')).toBeNull();
+    const storeSetup = screen.getByRole('link', { name: /store setup/i });
+    expect(storeSetup).toHaveAttribute('href', '/store-config');
+    expect(storeSetup.closest('nav')).toBeNull();
     expect(screen.getByRole('button', { name: /log out/i })).toBeInTheDocument();
   });
 
-  it('calls signOut when the log-out button is clicked', async () => {
-    const signOut = vi.fn();
-    mockedUseAuth.mockReturnValue({ session: null, isLoading: false, signIn: vi.fn(), signOut });
-    render(
-      <MemoryRouter>
-        <Layout>
-          <div />
-        </Layout>
-      </MemoryRouter>,
-    );
+  it('calls signOut when Log out is clicked', () => {
+    const { signOut } = renderLayout('/');
 
     screen.getByRole('button', { name: /log out/i }).click();
     expect(signOut).toHaveBeenCalled();

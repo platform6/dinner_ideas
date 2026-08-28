@@ -5,9 +5,10 @@ import { daysSinceForSort } from '@/features/dinners/last-chosen';
 /**
  * Combines cuisine/tag filtering with sorting for the catalog view.
  *
- * Tag filtering is OR, not AND: a dinner matches if it has *any* of the selected tags, not all
- * of them — chosen because AND semantics on a small, freeform vocabulary tends to produce empty
- * results fast (see bolt `012-weekly-dinner-planner-ui`'s implementation-plan.md).
+ * Cuisine and tag filtering are both OR, not AND: a dinner matches if its cuisine is any of the
+ * selected cuisines, and (separately) if it has any of the selected tags — not all of them.
+ * AND semantics on a small, freeform vocabulary tends to produce empty results fast (see bolt
+ * `012-weekly-dinner-planner-ui`'s implementation-plan.md). An empty list means "no filter".
  *
  * When cook-time sort is off (the default), dinners are ordered by least-recently-made
  * first (never-made ones lead), per story `007-variety-indicator` — not alphabetically.
@@ -22,8 +23,8 @@ export function applyFilters(
 ): CatalogDinner[] {
   let result = dinners;
 
-  if (filters.cuisine) {
-    result = result.filter((dinner) => dinner.cuisine_type === filters.cuisine);
+  if (filters.cuisine.length > 0) {
+    result = result.filter((dinner) => filters.cuisine.includes(dinner.cuisine_type));
   }
   if (filters.tags.length > 0) {
     result = result.filter((dinner) => dinner.tags.some((tag) => filters.tags.includes(tag)));

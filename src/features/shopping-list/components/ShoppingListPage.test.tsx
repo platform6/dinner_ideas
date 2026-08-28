@@ -1,3 +1,4 @@
+import { ChakraProvider } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -8,6 +9,7 @@ import { ShoppingListPage } from '@/features/shopping-list/components/ShoppingLi
 import { fetchDinnersByIds } from '@/features/dinners/api';
 import { fetchCurrentPlan, lockPlan } from '@/features/weekly-plan/api';
 import { fetchAssignments, fetchRows } from '@/features/store-config/api';
+import { theme } from '@/shared/theme';
 import type { DinnerWithIngredients } from '@/features/dinners/types';
 import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/types';
 
@@ -82,11 +84,13 @@ describe('ShoppingListPage', () => {
   function renderPage() {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          <ShoppingListPage />
-        </MemoryRouter>
-      </QueryClientProvider>,
+      <ChakraProvider theme={theme}>
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter>
+            <ShoppingListPage />
+          </MemoryRouter>
+        </QueryClientProvider>
+      </ChakraProvider>,
     );
   }
 

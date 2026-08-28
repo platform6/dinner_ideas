@@ -92,11 +92,9 @@ export function CookingViewPage() {
         return (
           <Box
             key={dinner.id}
-            borderWidth="1px"
-            borderRadius="card"
-            borderColor={isExpanded ? '#E3E7DA' : 'line.subtle'}
-            bg={isExpanded ? 'brand.50' : 'paper.base'}
-            p={3}
+            layerStyle={isExpanded ? 'cardSelected' : 'card'}
+            transition="border-color 0.12s ease"
+            _hover={isExpanded ? undefined : { borderColor: 'line.brand' }}
           >
             <Box
               as="button"
@@ -106,6 +104,7 @@ export function CookingViewPage() {
               alignItems="center"
               justifyContent="space-between"
               textAlign="left"
+              cursor="pointer"
               aria-expanded={isExpanded}
               aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${dinner.name}`}
               onClick={() => toggle(dinner.id)}
