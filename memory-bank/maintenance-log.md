@@ -56,3 +56,25 @@
 | memory-bank\intents\002-kitchen-table-theme\requirements.md                          | inception-complete | units-defined   | Intent has 1 units (0/1 complete) |
 
 ---
+
+## 2026-08-28T13:55:25.610Z - Status Sync
+
+**Triggered by**: status-integrity script
+
+| Artifact                                                                                       | Old Status | New Status      | Reason                            |
+| ---------------------------------------------------------------------------------------------- | ---------- | --------------- | --------------------------------- |
+| memory-bank\intents\001-weekly-dinner-planner\units\003-weekly-dinner-planner-ui\unit-brief.md | complete   | stories-defined | Unit has 8 bolts (7/8 complete)   |
+| memory-bank\intents\001-weekly-dinner-planner\units\004-grocery-store-config\unit-brief.md     | complete   | stories-defined | Unit has 2 bolts (1/2 complete)   |
+| memory-bank\intents\001-weekly-dinner-planner\requirements.md                                  | complete   | construction    | Intent has 4 units (2/4 complete) |
+
+---
+
+## 2026-08-28T13:55:37.596Z - Status Sync
+
+**Triggered by**: status-integrity script
+
+| Artifact                                                      | Old Status   | New Status    | Reason                            |
+| ------------------------------------------------------------- | ------------ | ------------- | --------------------------------- |
+| memory-bank\intents\001-weekly-dinner-planner\requirements.md | construction | units-defined | Intent has 4 units (2/4 complete) |
+
+---

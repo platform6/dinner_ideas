@@ -3,7 +3,7 @@ intent: 001-weekly-dinner-planner
 phase: inception
 status: complete
 created: '2026-08-26T17:20:36Z'
-updated: '2026-08-27T06:00:00Z'
+updated: '2026-08-28T00:00:00Z'
 ---
 
 # Requirements: Weekly Dinner Planner
@@ -158,6 +158,40 @@ A household web app that lets the user's wife browse a catalog of healthy dinner
   - Configuration is shared household-wide (single login), not per-user.
 - **Priority**: Must
 - **Related Stories**: `001-store-rows-schema`, `002-reorder-shopping-list-by-rows`, `014-grocery-store-config-page`
+
+### FR-13: Standalone Tag Filter Dropdown
+
+- **Description**: The catalog filter row's tag multi-select is split out of the shared overflow menu into its own dedicated "Tags" dropdown button, sitting beside the cuisine dropdown (FR-14). Behaviour of the tag filter itself is unchanged — multi-select checkboxes, OR semantics (a dinner matches if it has any selected tag), and each active tag shown as a removable chip in the filter row.
+- **Acceptance Criteria**:
+  - A separate dropdown button labelled "Tags" appears in the catalog filter row, adjacent to the cuisine dropdown.
+  - The "Tags" dropdown lists the full tag vocabulary (`useAllTags`), not only tags present on currently-visible dinners — unchanged from today.
+  - Selecting/deselecting tags updates results immediately (client-side); selected tags render as `tag ✕` chips that clear on click — unchanged from today.
+  - The cuisine dropdown (FR-14) no longer contains any tag checkboxes.
+  - The "Tags" dropdown is hidden when the tag vocabulary is empty (mirrors today's conditional render).
+- **Priority**: Must
+- **Related Stories**: `015-standalone-tag-filter-dropdown`
+
+### FR-14: Rename Catalog Filter Menu "More" → "Cuisine"
+
+- **Description**: The catalog filter row's overflow menu button, currently labelled "More", is relabelled "Cuisine" and scoped to contain only the cuisine list (its tag section moves to FR-13). "Cuisine" replaces "More" / "Category" as the agreed term for this control — the user confirmed "cuisine is a better label" during requirements intake for this round.
+- **Acceptance Criteria**:
+  - The menu button reads "Cuisine" (was "More"); its `aria-label` is updated to match (was "More filters").
+  - The menu contains only the cuisine checkbox list; selecting a cuisine behaves exactly as today (single-select, shown as a removable chip).
+  - No change to the always-inline "All" and "Quickest" controls.
+- **Priority**: Must
+- **Related Stories**: `016-rename-filter-menu-cuisine`
+
+### FR-15: Default Grocery Store Rows & Category Assignments
+
+- **Description**: Ship a known-good default grocery store layout so the shopping list groups in store order with zero setup. On introduction, **replace** any existing row configuration with 5 default rows in fixed order — **1 Dairy, 2 Grains, 3 Pantry, 4 Produce, 5 Protein** — and auto-assign each of the 5 seed ingredient categories one-to-one to the row of the same name. After this, user edits on the Store Config page (add / rename / reorder rows, reassign categories per FR-12) continue to work unchanged and continue to drive shopping-list order.
+- **Acceptance Criteria**:
+  - A one-time data change clears `grocery_store_rows` (cascading to `category_row_assignments`) and inserts exactly: Dairy (pos 1), Grains (pos 2), Pantry (pos 3), Produce (pos 4), Protein (pos 5). Any rows/assignments the household had previously set are discarded (user chose "Replace with defaults").
+  - It also inserts 5 `category_row_assignments`: `Dairy → Dairy row`, `Grains → Grains row`, `Pantry → Pantry row`, `Produce → Produce row`, `Protein → Protein row` (category strings match the seed data's exact casing: `Produce`, `Pantry`, `Protein`, `Grains`, `Dairy`).
+  - Immediately after, viewing the shopping list for a plan orders its category groups Dairy → Grains → Pantry → Produce → Protein; any category not in the 5 still falls back to alphabetical after configured rows (existing FR-12 behaviour, unchanged).
+  - Rows the user adds later take positions after 5 and are honoured by the shopping list exactly as in FR-12; the reorder RPC and Store Config UI are not modified by this FR.
+  - No change to the shopping-list generation/merge logic itself (FR-3) beyond the group ordering it already delegates to the row config.
+- **Priority**: Must
+- **Related Stories**: `004-grocery-store-config` unit → `003-default-grocery-store-rows`
 
 ---
 

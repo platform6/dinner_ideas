@@ -2,10 +2,10 @@
 
 ## Overview
 
-- **Total stories**: 36
-- **Completed**: 30
+- **Total stories**: 39
+- **Completed**: 33
 - **Planned**: 6
-- **Last updated**: 2026-08-27
+- **Last updated**: 2026-08-28
 
 ---
 
@@ -43,11 +43,14 @@
 - [x] **012-tag-management-ui** (weekly-dinner-planner-ui): Tag management UI - Must - ✅ COMPLETE
 - [x] **013-week-navigation-view** (weekly-dinner-planner-ui): Week navigation view - Should - ✅ COMPLETE
 - [x] **014-grocery-store-config-page** (weekly-dinner-planner-ui): Grocery store config page - Must - ✅ COMPLETE
+- [x] **015-standalone-tag-filter-dropdown** (weekly-dinner-planner-ui): Standalone tag filter dropdown - Must - ✅ COMPLETE
+- [x] **016-rename-filter-menu-cuisine** (weekly-dinner-planner-ui): Rename filter menu "More" → "Cuisine" - Must - ✅ COMPLETE
 
 **Unit: 004-grocery-store-config**
 
 - [x] **001-store-rows-schema** (grocery-store-config): Store rows schema - Must - ✅ COMPLETE
 - [x] **002-reorder-shopping-list-by-rows** (grocery-store-config): Reorder shopping list by rows - Must - ✅ COMPLETE
+- [x] **003-default-grocery-store-rows** (grocery-store-config): Default grocery store rows & category assignments - Must - ✅ COMPLETE
 
 ### 002-kitchen-table-theme
 
@@ -73,4 +76,4 @@
 - **Planned**: 6
 - **Generated**: 0
 - **In Progress**: 0
-- **Completed**: 30
+- **Completed**: 33

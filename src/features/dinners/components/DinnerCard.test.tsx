@@ -131,7 +131,7 @@ describe('DinnerCard overflow menu', () => {
     renderCard(onSuppress);
 
     await user.click(screen.getByRole('button', { name: `More actions for ${dinner.name}` }));
-    await user.click(screen.getByRole('menuitem', { name: /not interested/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /not interested/i }));
 
     expect(onSuppress).toHaveBeenCalledWith('d1');
   });

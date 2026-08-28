@@ -1,5 +1,13 @@
-import { useState } from 'react';
-import { Button, Checkbox, CheckboxGroup, Menu, MenuButton, MenuList, Wrap } from '@chakra-ui/react';
+import {
+  Button,
+  Checkbox,
+  CheckboxGroup,
+  Menu,
+  MenuButton,
+  MenuList,
+  useDisclosure,
+  Wrap,
+} from '@chakra-ui/react';
 
 import { metaIcons, uiIcons } from '@/shared/components/icons';
 
@@ -20,11 +28,13 @@ interface CatalogFiltersProps {
 
 /**
  * Filter row as chips (FR-4): "All" + "Quickest" are always inline; the full cuisine list and
- * tag filter live behind a `SlidersHorizontal` overflow menu. The theme's `Button` baseStyle
+ * the tag list each live behind their own dropdown — "Cuisine" (FR-14) and "Tags" (FR-13) —
+ * so the two kinds of filtering read as distinct controls. The theme's `Button` baseStyle
  * already sets `borderRadius: 'chip'`, so a plain solid/outline Button is the chip itself.
  */
 export function CatalogFilters({ cuisines, availableTags, filters, onChange }: CatalogFiltersProps) {
-  const [isOverflowOpen, setIsOverflowOpen] = useState(false);
+  const cuisineMenu = useDisclosure();
+  const tagMenu = useDisclosure();
 
   return (
     <Wrap gap={2} mb={4} align="center">
@@ -63,53 +73,60 @@ export function CatalogFilters({ cuisines, availableTags, filters, onChange }: C
         </Button>
       ))}
 
-      {(cuisines.length > 0 || availableTags.length > 0) && (
-        <Menu
-          isOpen={isOverflowOpen}
-          onOpen={() => setIsOverflowOpen(true)}
-          onClose={() => setIsOverflowOpen(false)}
-        >
+      {cuisines.length > 0 && (
+        <Menu isOpen={cuisineMenu.isOpen} onOpen={cuisineMenu.onOpen} onClose={cuisineMenu.onClose}>
           <MenuButton
             as={Button}
             size="sm"
             variant="outline"
-            leftIcon={<uiIcons.filters size={14} strokeWidth={2} />}
-            aria-label="More filters"
+            leftIcon={<uiIcons.allCuisines size={14} strokeWidth={2} />}
+            aria-label="Cuisine"
           >
-            More
+            Cuisine
           </MenuButton>
           <MenuList p={3} minW="14rem">
-            {cuisines.length > 0 && (
-              <CheckboxGroup
-                value={filters.cuisine ? [filters.cuisine] : []}
-                onChange={(values) =>
-                  onChange({ ...filters, cuisine: (values[values.length - 1] as string) ?? null })
-                }
-              >
-                <Wrap direction="column" mb={availableTags.length > 0 ? 3 : 0}>
-                  {cuisines.map((cuisine) => (
-                    <Checkbox key={cuisine} value={cuisine}>
-                      {cuisine}
-                    </Checkbox>
-                  ))}
-                </Wrap>
-              </CheckboxGroup>
-            )}
+            <CheckboxGroup
+              value={filters.cuisine ? [filters.cuisine] : []}
+              onChange={(values) =>
+                onChange({ ...filters, cuisine: (values[values.length - 1] as string) ?? null })
+              }
+            >
+              <Wrap direction="column">
+                {cuisines.map((cuisine) => (
+                  <Checkbox key={cuisine} value={cuisine}>
+                    {cuisine}
+                  </Checkbox>
+                ))}
+              </Wrap>
+            </CheckboxGroup>
+          </MenuList>
+        </Menu>
+      )}
 
-            {availableTags.length > 0 && (
-              <CheckboxGroup
-                value={filters.tags}
-                onChange={(tags) => onChange({ ...filters, tags: tags as string[] })}
-              >
-                <Wrap direction="column">
-                  {availableTags.map((tag) => (
-                    <Checkbox key={tag} value={tag}>
-                      {tag}
-                    </Checkbox>
-                  ))}
-                </Wrap>
-              </CheckboxGroup>
-            )}
+      {availableTags.length > 0 && (
+        <Menu isOpen={tagMenu.isOpen} onOpen={tagMenu.onOpen} onClose={tagMenu.onClose}>
+          <MenuButton
+            as={Button}
+            size="sm"
+            variant="outline"
+            leftIcon={<uiIcons.tag size={14} strokeWidth={2} />}
+            aria-label="Tags"
+          >
+            Tags
+          </MenuButton>
+          <MenuList p={3} minW="14rem">
+            <CheckboxGroup
+              value={filters.tags}
+              onChange={(tags) => onChange({ ...filters, tags: tags as string[] })}
+            >
+              <Wrap direction="column">
+                {availableTags.map((tag) => (
+                  <Checkbox key={tag} value={tag}>
+                    {tag}
+                  </Checkbox>
+                ))}
+              </Wrap>
+            </CheckboxGroup>
           </MenuList>
         </Menu>
       )}

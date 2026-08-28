@@ -67,7 +67,7 @@ describe('CatalogPage (suppress flow)', () => {
 
     expect(await screen.findByText('Tacos')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'More actions for Tacos' }));
-    await user.click(screen.getByRole('menuitem', { name: /not interested/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /not interested/i }));
 
     await waitFor(() => expect(mockedSetActive).toHaveBeenCalledWith('1', false));
   });

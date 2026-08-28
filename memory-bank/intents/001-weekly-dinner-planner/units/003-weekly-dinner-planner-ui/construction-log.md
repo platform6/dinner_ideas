@@ -2,7 +2,7 @@
 unit: 003-weekly-dinner-planner-ui
 intent: 001-weekly-dinner-planner
 created: 2026-08-26T19:36:03Z
-last_updated: 2026-08-27T08:15:00Z
+last_updated: 2026-08-28T01:40:00Z
 ---
 
 # Construction Log: weekly-dinner-planner-ui
@@ -28,6 +28,7 @@ last_updated: 2026-08-27T08:15:00Z
 | 2026-08-26 | append       | Added story `010-cooking-view` and new bolt `008-weekly-dinner-planner-ui`; added `react-router-dom` to bolt 003's in-progress plan                                                                                                                                            | User added FR-8 (Cooking View) and confirmed separate pages over tabs, during bolt 003 Stage 1      | Yes      |
 | 2026-08-26 | scope-change | Story `006-copy-shopping-list-to-clipboard` revised: locking decoupled from copy — a "Also lock this week's plan" checkbox (checked by default) next to Copy now controls whether the `lock_weekly_plan` RPC is called, instead of every successful copy locking automatically | User requested decoupling copy from lock, during bolt 005 Stage 1 (Plan), before any implementation | Yes      |
 | 2026-08-27 | append       | Added stories `011-catalog-card-expandable-details`, `012-tag-management-ui`, `013-week-navigation-view`, `014-grocery-store-config-page` and new bolts `012-weekly-dinner-planner-ui`, `013-weekly-dinner-planner-ui` to this (already-complete) unit                         | User requested 4 post-deployment enhancements (FR-9–FR-12) after using the live app                 | Yes      |
+| 2026-08-28 | append       | Added stories `015-standalone-tag-filter-dropdown`, `016-rename-filter-menu-cuisine` and new bolt `020-weekly-dinner-planner-ui` to this (already-complete) unit                                                                                                               | Inception enhancement round 3 (FR-13, FR-14) — catalog filter split & rename, from `tasks.md`       | Yes      |
 
 ## Current Bolt Structure
 
@@ -40,53 +41,58 @@ last_updated: 2026-08-27T08:15:00Z
 | 008-weekly-dinner-planner-ui | 010-cooking-view                                                         | ✅ complete  | Added later (append)               |
 | 012-weekly-dinner-planner-ui | 011-catalog-card-expandable-details, 012-tag-management-ui               | ✅ completed | Added post-completion              |
 | 013-weekly-dinner-planner-ui | 013-week-navigation-view, 014-grocery-store-config-page                  | ✅ complete  | Added post-completion              |
+| 020-weekly-dinner-planner-ui | 015-standalone-tag-filter-dropdown, 016-rename-filter-menu-cuisine       | ✅ complete  | Added post-completion (round 3)    |
 
 ## Execution History
 
-| Date                 | Bolt                         | Event                  | Details                                                                                             |
-| -------------------- | ---------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------- |
-| 2026-08-26T19:36:03Z | 003-weekly-dinner-planner-ui | started                | Stage 1: Plan                                                                                       |
-| 2026-08-26T19:36:03Z | 003-weekly-dinner-planner-ui | stage-artifact-drafted | Plan → awaiting human checkpoint                                                                    |
-| 2026-08-26T20:08:13Z | 003-weekly-dinner-planner-ui | stage-complete         | Plan → Implement                                                                                    |
-| 2026-08-26T20:45:00Z | 003-weekly-dinner-planner-ui | stage-complete         | Implement → Test                                                                                    |
-| 2026-08-26T21:27:31Z | 003-weekly-dinner-planner-ui | completed              | All 3 stages done (Plan, Implement, Test)                                                           |
-| 2026-08-26T21:35:00Z | 004-weekly-dinner-planner-ui | started                | Stage 1: Plan                                                                                       |
-| 2026-08-26T21:40:00Z | 004-weekly-dinner-planner-ui | stage-complete         | Plan → Implement                                                                                    |
-| 2026-08-26T21:45:00Z | 004-weekly-dinner-planner-ui | stage-complete         | Implement → Test                                                                                    |
-| 2026-08-26T21:47:58Z | 004-weekly-dinner-planner-ui | completed              | All 3 stages done (Plan, Implement, Test)                                                           |
-| 2026-08-26T21:50:17Z | 005-weekly-dinner-planner-ui | started                | Stage 1: Plan                                                                                       |
-| 2026-08-26T21:56:19Z | 005-weekly-dinner-planner-ui | stage-complete         | Plan → Implement                                                                                    |
-| 2026-08-26T22:00:47Z | 005-weekly-dinner-planner-ui | stage-complete         | Implement → Test                                                                                    |
-| 2026-08-26T22:08:07Z | 005-weekly-dinner-planner-ui | completed              | All 3 stages done (Plan, Implement, Test)                                                           |
-| 2026-08-26T22:11:00Z | 006-weekly-dinner-planner-ui | started                | Stage 1: Plan                                                                                       |
-| 2026-08-26T22:19:00Z | 006-weekly-dinner-planner-ui | stage-complete         | Plan → Implement                                                                                    |
-| 2026-08-26T22:27:38Z | 006-weekly-dinner-planner-ui | stage-complete         | Implement → Test                                                                                    |
-| 2026-08-26T22:34:51Z | 006-weekly-dinner-planner-ui | completed              | All 3 stages done (Plan, Implement, Test)                                                           |
-| 2026-08-26T23:03:51Z | 008-weekly-dinner-planner-ui | started                | Stage 1: Plan                                                                                       |
-| 2026-08-26T23:27:30Z | 008-weekly-dinner-planner-ui | stage-complete         | Plan → Implement                                                                                    |
-| 2026-08-26T23:31:20Z | 008-weekly-dinner-planner-ui | stage-complete         | Implement → Test                                                                                    |
-| 2026-08-26T23:40:07Z | 008-weekly-dinner-planner-ui | completed              | All 3 stages done (Plan, Implement, Test)                                                           |
-| 2026-08-27T03:30:00Z | 012-weekly-dinner-planner-ui | started                | Stage 1: Plan                                                                                       |
-| 2026-08-27T03:40:00Z | 012-weekly-dinner-planner-ui | stage-complete         | Plan → Implement                                                                                    |
-| 2026-08-27T04:00:00Z | 012-weekly-dinner-planner-ui | stage-complete         | Implement (tsc/eslint/vitest/vite build all clean) → Test                                           |
-| 2026-08-27T04:10:00Z | 012-weekly-dinner-planner-ui | stage-artifact-drafted | Test → awaiting human checkpoint (final stage)                                                      |
-| 2026-08-27T04:15:00Z | 012-weekly-dinner-planner-ui | completed              | All 3 stages done (via bolt-complete.cjs)                                                           |
-| 2026-08-27T07:15:00Z | 013-weekly-dinner-planner-ui | started                | Stage 1: Plan                                                                                       |
-| 2026-08-27T07:30:00Z | 013-weekly-dinner-planner-ui | stage-complete         | Plan → Implement                                                                                    |
-| 2026-08-27T08:00:00Z | 013-weekly-dinner-planner-ui | stage-complete         | Implement (tsc/eslint/vitest 98/98/vite build all clean; fixed a live-network-call test gap) → Test |
-| 2026-08-27T08:10:00Z | 013-weekly-dinner-planner-ui | stage-artifact-drafted | Test (98/98 passing) → awaiting human checkpoint (final stage)                                      |
-| 2026-08-27T08:15:00Z | 013-weekly-dinner-planner-ui | completed              | All 3 stages done (via bolt-complete.cjs)                                                           |
+| Date                 | Bolt                         | Event                  | Details                                                                                                                                                                           |
+| -------------------- | ---------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-26T19:36:03Z | 003-weekly-dinner-planner-ui | started                | Stage 1: Plan                                                                                                                                                                     |
+| 2026-08-26T19:36:03Z | 003-weekly-dinner-planner-ui | stage-artifact-drafted | Plan → awaiting human checkpoint                                                                                                                                                  |
+| 2026-08-26T20:08:13Z | 003-weekly-dinner-planner-ui | stage-complete         | Plan → Implement                                                                                                                                                                  |
+| 2026-08-26T20:45:00Z | 003-weekly-dinner-planner-ui | stage-complete         | Implement → Test                                                                                                                                                                  |
+| 2026-08-26T21:27:31Z | 003-weekly-dinner-planner-ui | completed              | All 3 stages done (Plan, Implement, Test)                                                                                                                                         |
+| 2026-08-26T21:35:00Z | 004-weekly-dinner-planner-ui | started                | Stage 1: Plan                                                                                                                                                                     |
+| 2026-08-26T21:40:00Z | 004-weekly-dinner-planner-ui | stage-complete         | Plan → Implement                                                                                                                                                                  |
+| 2026-08-26T21:45:00Z | 004-weekly-dinner-planner-ui | stage-complete         | Implement → Test                                                                                                                                                                  |
+| 2026-08-26T21:47:58Z | 004-weekly-dinner-planner-ui | completed              | All 3 stages done (Plan, Implement, Test)                                                                                                                                         |
+| 2026-08-26T21:50:17Z | 005-weekly-dinner-planner-ui | started                | Stage 1: Plan                                                                                                                                                                     |
+| 2026-08-26T21:56:19Z | 005-weekly-dinner-planner-ui | stage-complete         | Plan → Implement                                                                                                                                                                  |
+| 2026-08-26T22:00:47Z | 005-weekly-dinner-planner-ui | stage-complete         | Implement → Test                                                                                                                                                                  |
+| 2026-08-26T22:08:07Z | 005-weekly-dinner-planner-ui | completed              | All 3 stages done (Plan, Implement, Test)                                                                                                                                         |
+| 2026-08-26T22:11:00Z | 006-weekly-dinner-planner-ui | started                | Stage 1: Plan                                                                                                                                                                     |
+| 2026-08-26T22:19:00Z | 006-weekly-dinner-planner-ui | stage-complete         | Plan → Implement                                                                                                                                                                  |
+| 2026-08-26T22:27:38Z | 006-weekly-dinner-planner-ui | stage-complete         | Implement → Test                                                                                                                                                                  |
+| 2026-08-26T22:34:51Z | 006-weekly-dinner-planner-ui | completed              | All 3 stages done (Plan, Implement, Test)                                                                                                                                         |
+| 2026-08-26T23:03:51Z | 008-weekly-dinner-planner-ui | started                | Stage 1: Plan                                                                                                                                                                     |
+| 2026-08-26T23:27:30Z | 008-weekly-dinner-planner-ui | stage-complete         | Plan → Implement                                                                                                                                                                  |
+| 2026-08-26T23:31:20Z | 008-weekly-dinner-planner-ui | stage-complete         | Implement → Test                                                                                                                                                                  |
+| 2026-08-26T23:40:07Z | 008-weekly-dinner-planner-ui | completed              | All 3 stages done (Plan, Implement, Test)                                                                                                                                         |
+| 2026-08-27T03:30:00Z | 012-weekly-dinner-planner-ui | started                | Stage 1: Plan                                                                                                                                                                     |
+| 2026-08-27T03:40:00Z | 012-weekly-dinner-planner-ui | stage-complete         | Plan → Implement                                                                                                                                                                  |
+| 2026-08-27T04:00:00Z | 012-weekly-dinner-planner-ui | stage-complete         | Implement (tsc/eslint/vitest/vite build all clean) → Test                                                                                                                         |
+| 2026-08-27T04:10:00Z | 012-weekly-dinner-planner-ui | stage-artifact-drafted | Test → awaiting human checkpoint (final stage)                                                                                                                                    |
+| 2026-08-27T04:15:00Z | 012-weekly-dinner-planner-ui | completed              | All 3 stages done (via bolt-complete.cjs)                                                                                                                                         |
+| 2026-08-27T07:15:00Z | 013-weekly-dinner-planner-ui | started                | Stage 1: Plan                                                                                                                                                                     |
+| 2026-08-27T07:30:00Z | 013-weekly-dinner-planner-ui | stage-complete         | Plan → Implement                                                                                                                                                                  |
+| 2026-08-27T08:00:00Z | 013-weekly-dinner-planner-ui | stage-complete         | Implement (tsc/eslint/vitest 98/98/vite build all clean; fixed a live-network-call test gap) → Test                                                                               |
+| 2026-08-27T08:10:00Z | 013-weekly-dinner-planner-ui | stage-artifact-drafted | Test (98/98 passing) → awaiting human checkpoint (final stage)                                                                                                                    |
+| 2026-08-27T08:15:00Z | 013-weekly-dinner-planner-ui | completed              | All 3 stages done (via bolt-complete.cjs)                                                                                                                                         |
+| 2026-08-28T00:30:00Z | 020-weekly-dinner-planner-ui | started                | Stage 1: Plan                                                                                                                                                                     |
+| 2026-08-28T00:45:00Z | 020-weekly-dinner-planner-ui | stage-complete         | Plan → Implement                                                                                                                                                                  |
+| 2026-08-28T01:05:00Z | 020-weekly-dinner-planner-ui | stage-complete         | Implement (tsc / eslint / vitest 124 / vite build all clean) → Test                                                                                                               |
+| 2026-08-28T01:40:00Z | 020-weekly-dinner-planner-ui | completed              | All 3 stages done (via bolt-complete.cjs). New CatalogFilters.test.tsx (8); fixed a pre-existing overflow-menu test flake (getByRole→findByRole ×2); vitest 132/132 deterministic |
 
 ## Execution Summary
 
 | Metric                 | Value |
 | ---------------------- | ----- |
 | Original bolts planned | 4     |
-| Current bolt count     | 7     |
-| Bolts completed        | 7     |
+| Current bolt count     | 8     |
+| Bolts completed        | 8     |
 | Bolts in progress      | 0     |
 | Bolts remaining        | 0     |
-| Replanning events      | 4     |
+| Replanning events      | 5     |
 
 ## Notes
 

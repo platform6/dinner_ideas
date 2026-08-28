@@ -1,0 +1,5 @@
+- It loooks like custom tags get folded into the 'More' pick list. Instead lets seperate those into a tags picklist next to 'more'.
+- Rename 'More' to 'Category' on the front end
+- What determines when a dinner has been made in the UX flow currently?
+- I would like to change the grocery stor setup to default to 1 - dairy 2- grains - 3- pantry 4-produce 5-protein in the rows section. Then as I add more - that will display within the rows section and determine the order of the list.
+- This week's plan shows the 3 picked dinners. And I see the back button to show previous weeks, but what in the UX flow determines when a week is displayed as previous and how can I plan for future weeks?
