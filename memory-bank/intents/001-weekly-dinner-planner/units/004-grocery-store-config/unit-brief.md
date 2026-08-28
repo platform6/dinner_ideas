@@ -4,7 +4,7 @@ intent: 001-weekly-dinner-planner
 phase: inception
 status: complete
 created: '2026-08-27T01:00:00Z'
-updated: '2026-08-27T07:05:00Z'
+updated: '2026-08-28T00:00:00Z'
 ---
 
 # Unit Brief: Grocery Store Config
@@ -35,6 +35,7 @@ Owns the grocery-store-layout domain: lets the wife define her store as an order
 | FR    | Requirement                                              | Priority |
 | ----- | -------------------------------------------------------- | -------- |
 | FR-12 | Grocery store row configuration (schema + reorder logic) | Must     |
+| FR-15 | Default grocery store rows & category assignments (seed) | Must     |
 
 ---
 
@@ -63,17 +64,18 @@ Owns the grocery-store-layout domain: lets the wife define her store as an order
 
 | Metric        | Count |
 | ------------- | ----- |
-| Total Stories | 2     |
-| Must Have     | 2     |
+| Total Stories | 3     |
+| Must Have     | 3     |
 | Should Have   | 0     |
 | Could Have    | 0     |
 
 ### Stories
 
-| Story ID                          | Title                         | Priority | Status   |
-| --------------------------------- | ----------------------------- | -------- | -------- |
-| 001-store-rows-schema             | Store rows schema             | Must     | Complete |
-| 002-reorder-shopping-list-by-rows | Reorder shopping list by rows | Must     | Complete |
+| Story ID                          | Title                                             | Priority | Status   |
+| --------------------------------- | ------------------------------------------------- | -------- | -------- |
+| 001-store-rows-schema             | Store rows schema                                 | Must     | Complete |
+| 002-reorder-shopping-list-by-rows | Reorder shopping list by rows                     | Must     | Complete |
+| 003-default-grocery-store-rows    | Default grocery store rows & category assignments | Must     | Planned  |
 
 ---
 
@@ -147,12 +149,15 @@ Supabase migration (SQL) for `grocery_store_rows` + category assignment, per `st
 
 ## Bolt Suggestions
 
-| Bolt                     | Type | Stories                                                  | Objective                                                            |
-| ------------------------ | ---- | -------------------------------------------------------- | -------------------------------------------------------------------- |
-| 011-grocery-store-config | DDD  | 001-store-rows-schema, 002-reorder-shopping-list-by-rows | `grocery_store_rows` schema + category assignment + reorder function |
+| Bolt                     | Type   | Stories                                                  | Objective                                                                                                                                                         |
+| ------------------------ | ------ | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 011-grocery-store-config | DDD    | 001-store-rows-schema, 002-reorder-shopping-list-by-rows | `grocery_store_rows` schema + category assignment + reorder function                                                                                              |
+| 021-grocery-store-config | Simple | 003-default-grocery-store-rows                           | One-time seed migration: replace row config with 5 default rows (Dairy, Grains, Pantry, Produce, Protein) + 5 matching category assignments. No schema/RPC change |
 
 ---
 
 ## Notes
 
 New unit added 2026-08-27, post-deployment, after the user described wanting the shopping list ordered to match how they actually walk their store (Dairy first, Produce moved to last, then Bakery, as their example). Kept independent of `001-dinner-catalog`/`002-weekly-planning` since it introduces a genuinely new domain concept rather than extending either existing one. See `inception-log.md` Scope Changes.
+
+**Revised 2026-08-28 (enhancement round 3)**: added FR-15 and story `003-default-grocery-store-rows`, planned as bolt `021-grocery-store-config`. Ships a one-time seed migration that **replaces** any existing row config with 5 default rows (Dairy, Grains, Pantry, Produce, Protein) and auto-assigns the 5 seed ingredient categories one-to-one. Simple bolt, not DDD — no schema, entity, or RPC change. User chose "replace" over "merge" during requirements intake. See `inception-log.md` Scope Changes.

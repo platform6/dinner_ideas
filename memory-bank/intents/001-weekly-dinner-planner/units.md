@@ -2,7 +2,7 @@
 intent: 001-weekly-dinner-planner
 phase: inception
 status: complete
-updated: 2026-08-27T01:00:00Z
+updated: 2026-08-28T00:00:00Z
 ---
 
 # Weekly Dinner Planner - Unit Decomposition
@@ -131,3 +131,6 @@ Based on dependencies:
 - **FR-10** (Expandable Recipe Details) → `003-weekly-dinner-planner-ui` (catalog card details section)
 - **FR-11** (Week Navigation & Eaten History) → `002-weekly-planning` (`meal_history` schema), `003-weekly-dinner-planner-ui` (week nav UI)
 - **FR-12** (Grocery Store Row Config) → `004-grocery-store-config` (schema + reorder logic), `003-weekly-dinner-planner-ui` (config page)
+- **FR-13** (Standalone Tag Filter Dropdown) → `003-weekly-dinner-planner-ui` (`CatalogFilters.tsx` — split tag multi-select into its own "Tags" dropdown)
+- **FR-14** (Rename Catalog Filter Menu "More" → "Cuisine") → `003-weekly-dinner-planner-ui` (`CatalogFilters.tsx` — button label + aria-label)
+- **FR-15** (Default Grocery Store Rows & Category Assignments) → `004-grocery-store-config` (one-time seed migration replacing row config with 5 defaults + 5 category assignments)
