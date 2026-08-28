@@ -24,6 +24,9 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Drop precache entries from superseded SW versions so a client that updates through
+        // several deploys doesn't accumulate stale hashed chunks.
+        cleanupOutdatedCaches: true,
         // Precaches the built app shell (JS/CSS/HTML/icons) automatically. On top of that,
         // this one rule keeps Supabase data available offline: fresh whenever there's a
         // connection, falling back to the last successful response (e.g. the current plan's
