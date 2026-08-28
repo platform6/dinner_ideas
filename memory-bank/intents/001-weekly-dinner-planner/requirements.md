@@ -3,7 +3,7 @@ intent: 001-weekly-dinner-planner
 phase: inception
 status: complete
 created: '2026-08-26T17:20:36Z'
-updated: '2026-08-28T00:00:00Z'
+updated: '2026-08-28T12:00:00Z'
 ---
 
 # Requirements: Weekly Dinner Planner
@@ -50,7 +50,7 @@ A household web app that lets the user's wife browse a catalog of healthy dinner
   - Selections can be freely changed (swap any dinner for another) at any point before the shopping list is copied.
   - Once the shopping list is copied (see FR-3), the plan and its selections lock — no further changes are possible; starting a new week begins a fresh plan.
 - **Priority**: Must
-- **Related Stories**: `001-weekly-plan-schema`, `002-enforce-exactly-three-immutable`, `003-pick-three-dinners`, `004-editable-until-locked`
+- **Related Stories**: `001-weekly-plan-schema`, `002-enforce-exactly-three-immutable`, `003-pick-three-dinners`, `004-editable-until-locked`, `017-at-capacity-list-banner`
 
 ### FR-3: Shopping List Generation (Locks the Plan)
 

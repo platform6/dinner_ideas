@@ -2,7 +2,7 @@
 unit: 003-weekly-dinner-planner-ui
 intent: 001-weekly-dinner-planner
 created: 2026-08-26T19:36:03Z
-last_updated: 2026-08-28T01:40:00Z
+last_updated: 2026-08-28T13:55:00Z
 ---
 
 # Construction Log: weekly-dinner-planner-ui
@@ -29,19 +29,21 @@ last_updated: 2026-08-28T01:40:00Z
 | 2026-08-26 | scope-change | Story `006-copy-shopping-list-to-clipboard` revised: locking decoupled from copy — a "Also lock this week's plan" checkbox (checked by default) next to Copy now controls whether the `lock_weekly_plan` RPC is called, instead of every successful copy locking automatically | User requested decoupling copy from lock, during bolt 005 Stage 1 (Plan), before any implementation | Yes      |
 | 2026-08-27 | append       | Added stories `011-catalog-card-expandable-details`, `012-tag-management-ui`, `013-week-navigation-view`, `014-grocery-store-config-page` and new bolts `012-weekly-dinner-planner-ui`, `013-weekly-dinner-planner-ui` to this (already-complete) unit                         | User requested 4 post-deployment enhancements (FR-9–FR-12) after using the live app                 | Yes      |
 | 2026-08-28 | append       | Added stories `015-standalone-tag-filter-dropdown`, `016-rename-filter-menu-cuisine` and new bolt `020-weekly-dinner-planner-ui` to this (already-complete) unit                                                                                                               | Inception enhancement round 3 (FR-13, FR-14) — catalog filter split & rename, from `tasks.md`       | Yes      |
+| 2026-08-28 | append       | Added story `017-at-capacity-list-banner` and new bolt `036-weekly-dinner-planner-ui` to this (already-complete) unit                                                                                                                                                          | Consolidate the per-card "already picked 3" notice into one list-level banner (under FR-2)          | Yes      |
 
 ## Current Bolt Structure
 
-| Bolt ID                      | Stories                                                                  | Status       | Changed                            |
-| ---------------------------- | ------------------------------------------------------------------------ | ------------ | ---------------------------------- |
-| 003-weekly-dinner-planner-ui | 001-household-login, 002-browse-filter-sort-catalog, 009-suppress-dinner | ✅ complete  | -                                  |
-| 004-weekly-dinner-planner-ui | 003-pick-three-dinners, 004-editable-until-locked                        | ✅ complete  | Story 004 renamed                  |
-| 005-weekly-dinner-planner-ui | 005-generate-shopping-list, 006-copy-shopping-list-to-clipboard          | ✅ complete  | Story 006 revised (lock decoupled) |
-| 006-weekly-dinner-planner-ui | 007-variety-indicator, 008-pwa-install-offline                           | ✅ complete  | -                                  |
-| 008-weekly-dinner-planner-ui | 010-cooking-view                                                         | ✅ complete  | Added later (append)               |
-| 012-weekly-dinner-planner-ui | 011-catalog-card-expandable-details, 012-tag-management-ui               | ✅ completed | Added post-completion              |
-| 013-weekly-dinner-planner-ui | 013-week-navigation-view, 014-grocery-store-config-page                  | ✅ complete  | Added post-completion              |
-| 020-weekly-dinner-planner-ui | 015-standalone-tag-filter-dropdown, 016-rename-filter-menu-cuisine       | ✅ complete  | Added post-completion (round 3)    |
+| Bolt ID                      | Stories                                                                  | Status       | Changed                               |
+| ---------------------------- | ------------------------------------------------------------------------ | ------------ | ------------------------------------- |
+| 003-weekly-dinner-planner-ui | 001-household-login, 002-browse-filter-sort-catalog, 009-suppress-dinner | ✅ complete  | -                                     |
+| 004-weekly-dinner-planner-ui | 003-pick-three-dinners, 004-editable-until-locked                        | ✅ complete  | Story 004 renamed                     |
+| 005-weekly-dinner-planner-ui | 005-generate-shopping-list, 006-copy-shopping-list-to-clipboard          | ✅ complete  | Story 006 revised (lock decoupled)    |
+| 006-weekly-dinner-planner-ui | 007-variety-indicator, 008-pwa-install-offline                           | ✅ complete  | -                                     |
+| 008-weekly-dinner-planner-ui | 010-cooking-view                                                         | ✅ complete  | Added later (append)                  |
+| 012-weekly-dinner-planner-ui | 011-catalog-card-expandable-details, 012-tag-management-ui               | ✅ completed | Added post-completion                 |
+| 013-weekly-dinner-planner-ui | 013-week-navigation-view, 014-grocery-store-config-page                  | ✅ complete  | Added post-completion                 |
+| 020-weekly-dinner-planner-ui | 015-standalone-tag-filter-dropdown, 016-rename-filter-menu-cuisine       | ✅ complete  | Added post-completion (round 3)       |
+| 036-weekly-dinner-planner-ui | 017-at-capacity-list-banner                                              | ✅ complete  | Added post-completion (at-cap banner) |
 
 ## Execution History
 
@@ -82,17 +84,23 @@ last_updated: 2026-08-28T01:40:00Z
 | 2026-08-28T00:45:00Z | 020-weekly-dinner-planner-ui | stage-complete         | Plan → Implement                                                                                                                                                                  |
 | 2026-08-28T01:05:00Z | 020-weekly-dinner-planner-ui | stage-complete         | Implement (tsc / eslint / vitest 124 / vite build all clean) → Test                                                                                                               |
 | 2026-08-28T01:40:00Z | 020-weekly-dinner-planner-ui | completed              | All 3 stages done (via bolt-complete.cjs). New CatalogFilters.test.tsx (8); fixed a pre-existing overflow-menu test flake (getByRole→findByRole ×2); vitest 132/132 deterministic |
+| 2026-08-28T13:00:00Z | 036-weekly-dinner-planner-ui | started                | Stage 1: Plan                                                                                                                                                                     |
+| 2026-08-28T13:05:00Z | 036-weekly-dinner-planner-ui | stage-artifact-drafted | Plan → awaiting human checkpoint                                                                                                                                                  |
+| 2026-08-28T13:10:00Z | 036-weekly-dinner-planner-ui | stage-complete         | Plan → Implement                                                                                                                                                                  |
+| 2026-08-28T13:30:00Z | 036-weekly-dinner-planner-ui | stage-complete         | Implement (tsc / eslint / vite build clean; vitest 136/136 still green, no new tests yet) → Test                                                                                  |
+| 2026-08-28T13:50:00Z | 036-weekly-dinner-planner-ui | stage-artifact-drafted | Test (vitest 141/141; +5 new tests; tsc / eslint / vite build clean) → awaiting human checkpoint (final stage)                                                                    |
+| 2026-08-28T13:55:00Z | 036-weekly-dinner-planner-ui | completed              | All 3 stages done (via bolt-complete.cjs). Removed per-card at-cap notice from DinnerCard; single Alert banner on CatalogPage. vitest 141/141                                     |
 
 ## Execution Summary
 
 | Metric                 | Value |
 | ---------------------- | ----- |
 | Original bolts planned | 4     |
-| Current bolt count     | 8     |
-| Bolts completed        | 8     |
+| Current bolt count     | 9     |
+| Bolts completed        | 9     |
 | Bolts in progress      | 0     |
 | Bolts remaining        | 0     |
-| Replanning events      | 5     |
+| Replanning events      | 6     |
 
 ## Notes
 
@@ -101,3 +109,5 @@ Depends on 001-dinner-catalog (complete) and 002-weekly-planning (complete). Thi
 **2026-08-26**: all 5 bolts complete (61/61 tests passing across the unit). Unit `003-weekly-dinner-planner-ui` is fully complete — this was the last unit in intent `001-weekly-dinner-planner`, which is now complete as well.
 
 **2026-08-27**: bolts `012` and `013` complete (98/98 tests passing across the app) — added FR-9–FR-12 post-deployment: expandable catalog card details + tag management, past/future week navigation with an "Eaten" indicator, and grocery store row configuration wired into the shopping list. Unit `003-weekly-dinner-planner-ui` is fully complete again — this was also the last unit remaining in this enhancement round, so intent `001-weekly-dinner-planner` is fully complete once more (confirmed via `status-integrity.cjs`: 0 inconsistencies). The deferred real-time/optimistic pick-flow redesign remains for a future, dedicated UX-focused Inception pass.
+
+**2026-08-28**: bolt `020` complete (round 3 — catalog filter split "Tags"/"Cuisine"). Then bolt `036` complete (story `017`): the per-card "Already have 3 picked" inline notice was removed from `DinnerCard` and replaced with one `Alert` banner on `CatalogPage`, shown only while the plan holds 3 selections; cards keep the dim + "Full" pill. Presentation-only, two files + tests. `vitest` 141/141, `tsc`/`eslint`/`vite build` clean. Unit `003` and intent `001` are complete again (`status-integrity.cjs`: 0 inconsistencies).

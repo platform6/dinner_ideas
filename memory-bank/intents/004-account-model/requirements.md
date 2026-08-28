@@ -1,9 +1,9 @@
 ---
 intent: 004-account-model
 phase: inception
-status: inception-complete
-created: 2026-08-28T00:00:00Z
-updated: 2026-08-28T00:00:00Z
+status: units-defined
+created: '2026-08-28T00:00:00Z'
+updated: '2026-08-28T00:00:00Z'
 ---
 
 # Requirements: account-model

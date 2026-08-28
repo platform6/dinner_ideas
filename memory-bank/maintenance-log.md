@@ -94,3 +94,25 @@
 | memory-bank\intents\001-weekly-dinner-planner\requirements.md | construction | units-defined | Intent has 4 units (2/4 complete) |
 
 ---
+
+## 2026-08-28T20:33:10.222Z - Status Sync
+
+**Triggered by**: status-integrity script
+
+| Artifact                                                                                       | Old Status         | New Status      | Reason                            |
+| ---------------------------------------------------------------------------------------------- | ------------------ | --------------- | --------------------------------- |
+| memory-bank\intents\001-weekly-dinner-planner\units\003-weekly-dinner-planner-ui\unit-brief.md | complete           | stories-defined | Unit has 9 bolts (8/9 complete)   |
+| memory-bank\intents\001-weekly-dinner-planner\requirements.md                                  | complete           | construction    | Intent has 4 units (3/4 complete) |
+| memory-bank\intents\004-account-model\requirements.md                                          | inception-complete | units-defined   | Intent has 2 units (0/2 complete) |
+
+---
+
+## 2026-08-28T20:33:43.163Z - Status Sync
+
+**Triggered by**: status-integrity script
+
+| Artifact                                                      | Old Status   | New Status    | Reason                            |
+| ------------------------------------------------------------- | ------------ | ------------- | --------------------------------- |
+| memory-bank\intents\001-weekly-dinner-planner\requirements.md | construction | units-defined | Intent has 4 units (3/4 complete) |
+
+---

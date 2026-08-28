@@ -4,7 +4,7 @@ intent: 001-weekly-dinner-planner
 phase: inception
 status: complete
 created: '2026-08-26T17:26:14Z'
-updated: '2026-08-28T00:00:00Z'
+updated: '2026-08-28T12:00:00Z'
 unit_type: frontend
 default_bolt_type: simple-construction-bolt
 ---
@@ -83,31 +83,32 @@ _Consumes entities owned by `001-dinner-catalog`, `002-weekly-planning`, and `00
 
 | Metric        | Count |
 | ------------- | ----- |
-| Total Stories | 16    |
+| Total Stories | 17    |
 | Must Have     | 13    |
-| Should Have   | 3     |
+| Should Have   | 4     |
 | Could Have    | 0     |
 
 ### Stories
 
-| Story ID                            | Title                           | Priority | Status   |
-| ----------------------------------- | ------------------------------- | -------- | -------- |
-| 001-household-login                 | Household login                 | Must     | Complete |
-| 002-browse-filter-sort-catalog      | Browse/filter/sort catalog      | Must     | Complete |
-| 003-pick-three-dinners              | Pick three dinners              | Must     | Complete |
-| 004-editable-until-locked           | Editable until locked           | Must     | Complete |
-| 005-generate-shopping-list          | Generate shopping list          | Must     | Complete |
-| 006-copy-shopping-list-to-clipboard | Copy shopping list to clipboard | Must     | Complete |
-| 007-variety-indicator               | Variety indicator               | Should   | Complete |
-| 008-pwa-install-offline             | PWA install & offline           | Should   | Complete |
-| 009-suppress-dinner                 | Suppress dinner                 | Must     | Complete |
-| 010-cooking-view                    | Cooking view                    | Must     | Complete |
-| 011-catalog-card-expandable-details | Catalog card expandable details | Must     | Planned  |
-| 012-tag-management-ui               | Tag management UI               | Must     | Planned  |
-| 013-week-navigation-view            | Week navigation view            | Should   | Complete |
-| 014-grocery-store-config-page       | Grocery store config page       | Must     | Complete |
-| 015-standalone-tag-filter-dropdown  | Standalone tag filter dropdown  | Must     | Planned  |
-| 016-rename-filter-menu-cuisine      | Rename filter menu to "Cuisine" | Must     | Planned  |
+| Story ID                            | Title                                | Priority | Status   |
+| ----------------------------------- | ------------------------------------ | -------- | -------- |
+| 001-household-login                 | Household login                      | Must     | Complete |
+| 002-browse-filter-sort-catalog      | Browse/filter/sort catalog           | Must     | Complete |
+| 003-pick-three-dinners              | Pick three dinners                   | Must     | Complete |
+| 004-editable-until-locked           | Editable until locked                | Must     | Complete |
+| 005-generate-shopping-list          | Generate shopping list               | Must     | Complete |
+| 006-copy-shopping-list-to-clipboard | Copy shopping list to clipboard      | Must     | Complete |
+| 007-variety-indicator               | Variety indicator                    | Should   | Complete |
+| 008-pwa-install-offline             | PWA install & offline                | Should   | Complete |
+| 009-suppress-dinner                 | Suppress dinner                      | Must     | Complete |
+| 010-cooking-view                    | Cooking view                         | Must     | Complete |
+| 011-catalog-card-expandable-details | Catalog card expandable details      | Must     | Complete |
+| 012-tag-management-ui               | Tag management UI                    | Must     | Complete |
+| 013-week-navigation-view            | Week navigation view                 | Should   | Complete |
+| 014-grocery-store-config-page       | Grocery store config page            | Must     | Complete |
+| 015-standalone-tag-filter-dropdown  | Standalone tag filter dropdown       | Must     | Complete |
+| 016-rename-filter-menu-cuisine      | Rename filter menu to "Cuisine"      | Must     | Complete |
+| 017-at-capacity-list-banner         | Single list-level at-capacity banner | Should   | Complete |
 
 ---
 
@@ -189,16 +190,17 @@ _None owned — consumes Supabase directly; every pick/unpick is persisted immed
 
 ## Bolt Suggestions
 
-| Bolt                         | Type   | Stories                                                            | Objective                                                                                                                                                             |
-| ---------------------------- | ------ | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 003-weekly-dinner-planner-ui | Simple | Auth + catalog stories                                             | Login, catalog browse/filter/sort, suppress/un-suppress, routing scaffold                                                                                             |
-| 004-weekly-dinner-planner-ui | Simple | Selection flow stories                                             | Pick-3 flow, real-time persistence, editable-until-locked view                                                                                                        |
-| 005-weekly-dinner-planner-ui | Simple | Shopping list stories                                              | Aggregation logic, grouped view, copy-to-clipboard                                                                                                                    |
-| 006-weekly-dinner-planner-ui | Simple | PWA + variety UI stories                                           | PWA install/offline, last-chosen indicators                                                                                                                           |
-| 008-weekly-dinner-planner-ui | Simple | Cooking view story                                                 | Cooking view page, depends on `007-dinner-catalog`'s step data                                                                                                        |
-| 012-weekly-dinner-planner-ui | Simple | 011-catalog-card-expandable-details, 012-tag-management-ui         | Catalog card details dropdown + tag list/add/remove UI, depends on `009-dinner-catalog`'s tags schema                                                                 |
-| 013-weekly-dinner-planner-ui | Simple | 013-week-navigation-view, 014-grocery-store-config-page            | Week ◀ / ▶ navigation view + grocery store config page, depends on `010-weekly-planning`'s `meal_history` and `011-grocery-store-config`'s schema                     |
-| 020-weekly-dinner-planner-ui | Simple | 015-standalone-tag-filter-dropdown, 016-rename-filter-menu-cuisine | Split the tag filter into its own "Tags" dropdown and rename the "More" menu to "Cuisine" — both are `CatalogFilters.tsx` presentation changes, no state/logic change |
+| Bolt                         | Type   | Stories                                                            | Objective                                                                                                                                                                          |
+| ---------------------------- | ------ | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 003-weekly-dinner-planner-ui | Simple | Auth + catalog stories                                             | Login, catalog browse/filter/sort, suppress/un-suppress, routing scaffold                                                                                                          |
+| 004-weekly-dinner-planner-ui | Simple | Selection flow stories                                             | Pick-3 flow, real-time persistence, editable-until-locked view                                                                                                                     |
+| 005-weekly-dinner-planner-ui | Simple | Shopping list stories                                              | Aggregation logic, grouped view, copy-to-clipboard                                                                                                                                 |
+| 006-weekly-dinner-planner-ui | Simple | PWA + variety UI stories                                           | PWA install/offline, last-chosen indicators                                                                                                                                        |
+| 008-weekly-dinner-planner-ui | Simple | Cooking view story                                                 | Cooking view page, depends on `007-dinner-catalog`'s step data                                                                                                                     |
+| 012-weekly-dinner-planner-ui | Simple | 011-catalog-card-expandable-details, 012-tag-management-ui         | Catalog card details dropdown + tag list/add/remove UI, depends on `009-dinner-catalog`'s tags schema                                                                              |
+| 013-weekly-dinner-planner-ui | Simple | 013-week-navigation-view, 014-grocery-store-config-page            | Week ◀ / ▶ navigation view + grocery store config page, depends on `010-weekly-planning`'s `meal_history` and `011-grocery-store-config`'s schema                                  |
+| 020-weekly-dinner-planner-ui | Simple | 015-standalone-tag-filter-dropdown, 016-rename-filter-menu-cuisine | Split the tag filter into its own "Tags" dropdown and rename the "More" menu to "Cuisine" — both are `CatalogFilters.tsx` presentation changes, no state/logic change              |
+| 036-weekly-dinner-planner-ui | Simple | 017-at-capacity-list-banner                                        | Remove the per-card "Already have 3 picked" notice from `DinnerCard.tsx`; add one at-capacity banner above the grid in `CatalogPage.tsx`. Presentation-only, no state/logic change |
 
 ---
 
@@ -213,3 +215,5 @@ This is the largest unit by scope (L complexity) — likely to span multiple bol
 **Revised 2026-08-27 post-deployment**: added FR-9–FR-12 and 4 new stories (`011`–`014`). The real-time/optimistic pick-flow feel raised alongside these was explicitly deferred to a future dedicated UX Inception pass — not addressed in this unit's upcoming bolts. See `inception-log.md` Scope Changes.
 
 **Revised 2026-08-28 (enhancement round 3)**: added FR-13 (standalone "Tags" filter dropdown) and FR-14 (rename the "More" catalog filter menu to "Cuisine") with stories `015`–`016`, planned as bolt `020-weekly-dinner-planner-ui`. Both are presentation-only changes to `CatalogFilters.tsx`. Sourced from `tasks.md`; user revised the originally-requested label "Category" to "Cuisine" during requirements intake. See `inception-log.md` Scope Changes.
+
+**Revised 2026-08-28 (at-capacity banner)**: added story `017-at-capacity-list-banner` under existing FR-2 — a presentation refinement, no new FR. Replaces the per-card "Already have 3 picked" inline notice in `DinnerCard.tsx` with a single banner above the grid in `CatalogPage.tsx`, shown while the plan is at 3 selections. Cards keep the dim + "Full" pill. Planned as bolt `036-weekly-dinner-planner-ui` (simple). Also refreshed the Story Summary status column — stories `011`/`012`/`015`/`016` were built long ago but still read "Planned" here.
