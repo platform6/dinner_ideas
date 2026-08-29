@@ -2,7 +2,7 @@
 unit: 001-household-data-model
 intent: 004-account-model
 phase: inception
-status: stories-defined
+status: complete
 created: '2026-08-28T00:00:00Z'
 updated: '2026-08-28T00:00:00Z'
 unit_type: backend

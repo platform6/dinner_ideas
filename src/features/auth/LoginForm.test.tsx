@@ -13,6 +13,9 @@ function mockSignIn(result: { error: string | null }) {
   mockedUseAuth.mockReturnValue({
     session: null,
     isLoading: false,
+    profile: null,
+    householdId: null,
+    role: null,
     signIn: vi.fn().mockResolvedValue(result),
     signOut: vi.fn(),
   });
@@ -64,6 +67,9 @@ describe('LoginForm', () => {
     mockedUseAuth.mockReturnValue({
       session: null,
       isLoading: false,
+      profile: null,
+      householdId: null,
+      role: null,
       signIn: vi.fn().mockRejectedValue(new Error('network down')),
       signOut: vi.fn(),
     });

@@ -136,9 +136,12 @@ export async function addTagToDinner(dinnerId: string, rawName: string): Promise
   const name = normalizeTagName(rawName);
   if (!name) return;
 
+  // `household_id` is omitted: it defaults to `current_user_household_id()`, so the tag
+  // self-assigns to the caller's household. Conflict target is `unique (household_id, name)`
+  // (bolt 027) — a tag name is unique per household, not globally.
   const { data: tag, error: tagError } = await supabase
     .from('tags')
-    .upsert({ name }, { onConflict: 'name', ignoreDuplicates: false })
+    .upsert({ name }, { onConflict: 'household_id,name', ignoreDuplicates: false })
     .select()
     .single();
   if (tagError) throw tagError;

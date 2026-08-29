@@ -1,12 +1,15 @@
 -- pgTAP tests for the dinner-catalog schema (bolt 001-dinner-catalog)
 -- Run locally via: supabase test db  (requires Docker/local Postgres)
 --
--- These assertions mirror the checks that were run directly against the
--- live linked project during Stage 5 (see ddd-03-test-report.md) — kept
--- here as a durable, re-runnable regression suite for local/CI use.
+-- Updated for intent 004-account-model: dinners.household_id is NOT NULL and defaults to
+-- current_user_household_id(), and dinners.name is now unique per household. A founding-owner
+-- JWT is set so inserts self-assign and RLS shows the seeded catalog.
 
 begin;
 select plan(9);
+
+-- Run as the founding household's owner (created by migration 20260828234000 on db reset).
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-8000-0000000000f0","role":"authenticated"}';
 
 -- Schema shape
 select has_table('public', 'dinners', 'dinners table exists');
@@ -43,7 +46,7 @@ select throws_ok(
      select name, cuisine_type, cook_time_minutes, instructions from public.dinners limit 1 $$,
   '23505',
   null,
-  'rejects duplicate dinner name'
+  'rejects a duplicate dinner name within the same household'
 );
 
 -- Row Level Security
@@ -57,7 +60,7 @@ reset role;
 set local role authenticated;
 select isnt_empty(
   $$ select 1 from public.dinners $$,
-  'authenticated role can read dinners (RLS)'
+  'authenticated role can read its household''s dinners (RLS)'
 );
 reset role;
 

@@ -2,10 +2,11 @@
 id: 002-insert-site-audit-and-types-regen
 unit: 002-account-model-ui
 intent: 004-account-model
-status: planned
+status: complete
 priority: must
 created: '2026-08-28T00:00:00Z'
 assigned_bolt: 031-account-model-ui
+implemented: true
 ---
 
 # Story: 002-insert-site-audit-and-types-regen

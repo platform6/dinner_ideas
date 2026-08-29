@@ -1,5 +1,19 @@
 # Maintenance Log
 
+## 2026-08-29T00:00:00Z - Status Sync
+
+**Triggered by**: analyze-context integrity check (`/specsmd-master-agent` activation)
+
+**Context**: All 36 bolts, all 12 units, and all 6 intents are `status: complete`, and every story file carries `status: complete` / `implemented: true`. Only the global `story-index.md` roll-up was stale — the 15 stories under intents `004-account-model` and `006-dino-branding` were still shown as `✅ GENERATED` and the summary counters were never re-stamped after those bolts landed.
+
+| Artifact                                       | Old Status                  | New Status                 | Reason                                                                                                                                                                               |
+| ---------------------------------------------- | --------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| memory-bank/story-index.md (Overview counts)   | Completed 58 / Generated 15 | Completed 73 / Generated 0 | Every story file is `status: complete`; all 36 bolts, 12 units, 6 intents complete                                                                                                   |
+| memory-bank/story-index.md (Stories by Status) | Completed 58 / Generated 15 | Completed 73 / Generated 0 | Same                                                                                                                                                                                 |
+| memory-bank/story-index.md (15 story lines)    | `✅ GENERATED`              | `✅ COMPLETE`              | 12 under intent `004-account-model` (10 in unit `001-household-data-model`, 2 in `002-account-model-ui`), 3 under `006-dino-branding` — all backed by `status: complete` story files |
+
+---
+
 ## 2026-08-28T16:00:00Z - Status Sync
 
 **Triggered by**: analyze-context integrity check (`/specsmd-master-agent` activation)

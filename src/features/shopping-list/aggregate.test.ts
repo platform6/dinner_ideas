@@ -20,6 +20,7 @@ function ingredient(overrides: Partial<DinnerIngredient>): DinnerIngredient {
 function dinner(id: string, ingredients: DinnerIngredient[]): DinnerWithIngredients {
   return {
     id,
+    household_id: 'hh-test',
     name: `Dinner ${id}`,
     cuisine_type: 'Italian',
     cook_time_minutes: 30,

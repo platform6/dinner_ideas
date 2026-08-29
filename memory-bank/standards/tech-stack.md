@@ -18,9 +18,9 @@ No server-side rendering needed — Supabase handles data/API/auth directly from
 
 ## Authentication
 
-Supabase Auth, shared household password login
+Supabase Auth, per-user email/password accounts
 
-Single shared login for the household (not per-user accounts) — this is a private tool, not a multi-tenant app. No public signup flow.
+Public email/password registration. Each user gets a `profiles` row and belongs to exactly one `household` (`household_members`, `role` ∈ {`owner`, `member`}); all data is household-scoped via RLS. A new signup gets a fresh household seeded with the default catalog, unless their email has a pending `household_invites` row, in which case they join that household as a `member`. Provisioning runs in a `handle_new_user()` trigger on `auth.users` — still no backend server. Registration/invite **UI** ships in `007-auth-flows`; the model and DB provisioning landed in `004-account-model`. Multi-household membership is a future intent.
 
 ## Infrastructure & Deployment
 
@@ -34,5 +34,5 @@ pnpm
 
 ## Decision Relationships
 
-- SPA-only (no SSR) is viable *because* Supabase is the backend — there's no custom API layer to host.
-- Shared-password auth is intentionally minimal since this is a two-person household tool, not a multi-user product.
+- SPA-only (no SSR) is viable _because_ Supabase is the backend — there's no custom API layer to host.
+- Per-user accounts + household-scoped RLS (intent `004-account-model`) are enforced entirely in Postgres (policies + a `handle_new_user()` trigger), so "no backend server" still holds even with real multi-tenant auth.

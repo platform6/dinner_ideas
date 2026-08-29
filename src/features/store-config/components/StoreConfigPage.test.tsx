@@ -27,9 +27,9 @@ const mockedDeleteRow = vi.mocked(deleteRow);
 const mockedAssignCategory = vi.mocked(assignCategory);
 
 const rows: GroceryStoreRow[] = [
-  { id: 'r1', name: 'Dairy', position: 1 },
-  { id: 'r2', name: 'Produce', position: 2 },
-  { id: 'r3', name: 'Bakery', position: 3 },
+  { id: 'r1', household_id: 'hh-test', name: 'Dairy', position: 1 },
+  { id: 'r2', household_id: 'hh-test', name: 'Produce', position: 2 },
+  { id: 'r3', household_id: 'hh-test', name: 'Bakery', position: 3 },
 ];
 
 function renderPage() {
@@ -49,7 +49,7 @@ describe('StoreConfigPage', () => {
     // Deliberately distinct from the row names above, so text queries for a row (e.g. "Dairy")
     // never collide with a category-select option of the same name.
     mockedFetchCategories.mockResolvedValue(['Meat', 'Pantry']);
-    mockedAddRow.mockResolvedValue({ id: 'r4', name: 'New Row', position: 4 });
+    mockedAddRow.mockResolvedValue({ id: 'r4', household_id: 'hh-test', name: 'New Row', position: 4 });
     mockedReorderRow.mockResolvedValue(rows);
     mockedDeleteRow.mockResolvedValue(undefined);
     mockedAssignCategory.mockResolvedValue(undefined);

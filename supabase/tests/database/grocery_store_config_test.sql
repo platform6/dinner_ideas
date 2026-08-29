@@ -1,19 +1,28 @@
 -- pgTAP tests for the grocery-store-config schema/RPC (bolt 011-grocery-store-config)
 -- Run locally via: supabase test db  (requires Docker/local Postgres)
 --
--- These assertions mirror the checks that were run directly against the live linked
--- "dinner ideas" project during Stage 5 (see ddd-03-test-report.md) via `supabase db query`,
--- wrapped in its own rolled-back transaction. Kept here as a durable, re-runnable regression
--- suite for local/CI use.
+-- Updated for intent 004-account-model: grocery_store_rows / category_row_assignments carry a
+-- NOT NULL household_id; the row unique is now (household_id, position) and the assignment PK is
+-- (household_id, category). Run as the founding household's owner and start from a clean set of
+-- rows so the reorder assertions use known positions.
 
 begin;
-select plan(9);
+select plan(10);
+
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-8000-0000000000f0","role":"authenticated"}';
+
+-- Clear the founding household's default 5 rows so the reorder test below controls positions.
+-- (Whole test is rolled back, so this only affects this transaction.)
+delete from public.category_row_assignments;
+delete from public.grocery_store_rows;
 
 -- Schema shape
 select has_table('public', 'grocery_store_rows', 'grocery_store_rows table exists');
 select has_table('public', 'category_row_assignments', 'category_row_assignments table exists');
-select col_is_unique('public', 'grocery_store_rows', array['position'], 'grocery_store_rows.position is unique');
-select col_is_pk('public', 'category_row_assignments', array['category'], 'category_row_assignments.category is the primary key');
+select col_is_unique('public', 'grocery_store_rows', array['household_id', 'position'],
+  'grocery_store_rows is unique per household on (household_id, position)');
+select col_is_pk('public', 'category_row_assignments', array['household_id', 'category'],
+  'category_row_assignments PK is (household_id, category)');
 
 -- Reorder RPC behavior
 select lives_ok(
@@ -102,7 +111,7 @@ reset role;
 set local role authenticated;
 select lives_ok(
   $$ select 1 from public.grocery_store_rows $$,
-  'authenticated role can read grocery_store_rows (RLS)'
+  'authenticated role can read its household''s grocery_store_rows (RLS)'
 );
 reset role;
 

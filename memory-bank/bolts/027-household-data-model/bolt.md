@@ -3,7 +3,25 @@ id: 027-household-data-model
 unit: 001-household-data-model
 intent: 004-account-model
 type: ddd-construction-bolt
-status: planned
+status: complete
+started: '2026-08-29T00:00:00Z'
+current_stage: null
+stages_completed:
+  - name: domain-model
+    completed: '2026-08-29T00:05:00Z'
+    artifact: ddd-01-domain-model.md
+  - name: technical-design
+    completed: '2026-08-29T00:18:00Z'
+    artifact: ddd-02-technical-design.md
+  - name: adr-analysis
+    completed: '2026-08-29T00:22:00Z'
+    artifact: none — extends ADR-1; add-nullable/backfill/set-not-null staging documented in ddd-02
+  - name: implement
+    completed: '2026-08-29T00:40:00Z'
+    artifact: supabase/migrations/20260828231000_account_model_household_id_columns.sql
+  - name: test
+    completed: '2026-08-29T00:50:00Z'
+    artifact: ddd-03-test-report.md
 stories:
   - 003-household-id-on-domain-tables
   - 009-scoping-existing-functions
@@ -21,6 +39,7 @@ complexity:
   avg_uncertainty: 2
   max_dependencies: 2
   testing_scope: 2
+completed: '2026-08-28T23:33:44Z'
 ---
 
 # Bolt: 027-household-data-model

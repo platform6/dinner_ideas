@@ -1,12 +1,13 @@
 -- pgTAP tests for the dinner_steps schema (bolt 007-dinner-catalog)
 -- Run locally via: supabase test db  (requires Docker/local Postgres)
 --
--- These assertions mirror the checks that were run directly against the
--- live linked project during Stage 5 (see ddd-03-test-report.md) — kept
--- here as a durable, re-runnable regression suite for local/CI use.
+-- Updated for intent 004-account-model: a founding-owner JWT is set so RLS shows the seeded
+-- catalog (dinner_steps are gated through their parent dinner's household).
 
 begin;
 select plan(8);
+
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-8000-0000000000f0","role":"authenticated"}';
 
 -- Schema shape
 select has_table('public', 'dinner_steps', 'dinner_steps table exists');
@@ -42,7 +43,7 @@ reset role;
 set local role authenticated;
 select isnt_empty(
   $$ select 1 from public.dinner_steps $$,
-  'authenticated role can read dinner_steps (RLS)'
+  'authenticated role can read its household''s dinner_steps (RLS)'
 );
 reset role;
 

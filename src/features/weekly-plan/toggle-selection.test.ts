@@ -10,6 +10,7 @@ function selection(overrides: Partial<SelectionWithDinner>): SelectionWithDinner
     dinner_id: 'dinner-id',
     dinners: {
       id: 'dinner-id',
+      household_id: 'hh-test',
       name: 'Dinner',
       cuisine_type: 'Italian',
       cook_time_minutes: 30,
@@ -24,6 +25,7 @@ function selection(overrides: Partial<SelectionWithDinner>): SelectionWithDinner
 function plan(overrides: Partial<CurrentPlan>): CurrentPlan {
   return {
     id: 'plan-id',
+    household_id: 'hh-test',
     start_date: '2026-08-24',
     locked_at: null,
     created_at: '2026-08-24T00:00:00Z',

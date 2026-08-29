@@ -16,6 +16,7 @@ const mockedRemoveTag = vi.mocked(removeTagFromDinner);
 
 const dinner: CatalogDinner = {
   id: 'd1',
+  household_id: 'hh-test',
   name: 'Tacos',
   cuisine_type: 'Mexican',
   cook_time_minutes: 25,

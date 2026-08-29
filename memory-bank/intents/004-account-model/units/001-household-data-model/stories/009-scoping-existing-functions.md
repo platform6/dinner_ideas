@@ -2,10 +2,11 @@
 id: 009-scoping-existing-functions
 unit: 001-household-data-model
 intent: 004-account-model
-status: planned
+status: complete
 priority: must
 created: '2026-08-28T00:00:00Z'
 assigned_bolt: 027-household-data-model
+implemented: true
 ---
 
 # Story: 009-scoping-existing-functions

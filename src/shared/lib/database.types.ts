@@ -1,11 +1,6 @@
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+﻿export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: '14.17';
-  };
   graphql_public: {
     Tables: {
       [_ in never]: never;
@@ -36,17 +31,27 @@ export type Database = {
       category_row_assignments: {
         Row: {
           category: string;
+          household_id: string;
           row_id: string;
         };
         Insert: {
           category: string;
+          household_id?: string;
           row_id: string;
         };
         Update: {
           category?: string;
+          household_id?: string;
           row_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'category_row_assignments_household_id_fkey';
+            columns: ['household_id'];
+            isOneToOne: false;
+            referencedRelation: 'households';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'category_row_assignments_row_id_fkey';
             columns: ['row_id'];
@@ -176,6 +181,7 @@ export type Database = {
           cook_time_minutes: number;
           created_at: string;
           cuisine_type: string;
+          household_id: string;
           id: string;
           instructions: string;
           is_active: boolean;
@@ -185,6 +191,7 @@ export type Database = {
           cook_time_minutes: number;
           created_at?: string;
           cuisine_type: string;
+          household_id?: string;
           id?: string;
           instructions: string;
           is_active?: boolean;
@@ -194,46 +201,165 @@ export type Database = {
           cook_time_minutes?: number;
           created_at?: string;
           cuisine_type?: string;
+          household_id?: string;
           id?: string;
           instructions?: string;
           is_active?: boolean;
           name?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'dinners_household_id_fkey';
+            columns: ['household_id'];
+            isOneToOne: false;
+            referencedRelation: 'households';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       grocery_store_rows: {
         Row: {
+          household_id: string;
           id: string;
           name: string;
           position: number;
         };
         Insert: {
+          household_id?: string;
           id?: string;
           name: string;
           position: number;
         };
         Update: {
+          household_id?: string;
           id?: string;
           name?: string;
           position?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'grocery_store_rows_household_id_fkey';
+            columns: ['household_id'];
+            isOneToOne: false;
+            referencedRelation: 'households';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      household_invites: {
+        Row: {
+          created_at: string;
+          email: string;
+          household_id: string;
+          id: string;
+          invited_by: string | null;
+          status: string;
+        };
+        Insert: {
+          created_at?: string;
+          email: string;
+          household_id: string;
+          id?: string;
+          invited_by?: string | null;
+          status?: string;
+        };
+        Update: {
+          created_at?: string;
+          email?: string;
+          household_id?: string;
+          id?: string;
+          invited_by?: string | null;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'household_invites_household_id_fkey';
+            columns: ['household_id'];
+            isOneToOne: false;
+            referencedRelation: 'households';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'household_invites_invited_by_fkey';
+            columns: ['invited_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      household_members: {
+        Row: {
+          created_at: string;
+          household_id: string;
+          profile_id: string;
+          role: string;
+        };
+        Insert: {
+          created_at?: string;
+          household_id: string;
+          profile_id: string;
+          role: string;
+        };
+        Update: {
+          created_at?: string;
+          household_id?: string;
+          profile_id?: string;
+          role?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'household_members_household_id_fkey';
+            columns: ['household_id'];
+            isOneToOne: false;
+            referencedRelation: 'households';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'household_members_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: true;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      households: {
+        Row: {
+          created_at: string;
+          id: string;
+          name: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          name: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          name?: string;
         };
         Relationships: [];
       };
       meal_history: {
         Row: {
           dinner_id: string;
+          household_id: string;
           id: string;
           week_start_date: string;
           weekly_plan_id: string;
         };
         Insert: {
           dinner_id: string;
+          household_id?: string;
           id?: string;
           week_start_date: string;
           weekly_plan_id: string;
         };
         Update: {
           dinner_id?: string;
+          household_id?: string;
           id?: string;
           week_start_date?: string;
           weekly_plan_id?: string;
@@ -254,6 +380,13 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
+            foreignKeyName: 'meal_history_household_id_fkey';
+            columns: ['household_id'];
+            isOneToOne: false;
+            referencedRelation: 'households';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'meal_history_weekly_plan_id_fkey';
             columns: ['weekly_plan_id'];
             isOneToOne: false;
@@ -262,20 +395,49 @@ export type Database = {
           },
         ];
       };
+      profiles: {
+        Row: {
+          created_at: string;
+          display_name: string | null;
+          id: string;
+        };
+        Insert: {
+          created_at?: string;
+          display_name?: string | null;
+          id: string;
+        };
+        Update: {
+          created_at?: string;
+          display_name?: string | null;
+          id?: string;
+        };
+        Relationships: [];
+      };
       tags: {
         Row: {
+          household_id: string;
           id: string;
           name: string;
         };
         Insert: {
+          household_id?: string;
           id?: string;
           name: string;
         };
         Update: {
+          household_id?: string;
           id?: string;
           name?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'tags_household_id_fkey';
+            columns: ['household_id'];
+            isOneToOne: false;
+            referencedRelation: 'households';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       weekly_plan_selections: {
         Row: {
@@ -320,23 +482,34 @@ export type Database = {
       weekly_plans: {
         Row: {
           created_at: string;
+          household_id: string;
           id: string;
           locked_at: string | null;
           start_date: string;
         };
         Insert: {
           created_at?: string;
+          household_id?: string;
           id?: string;
           locked_at?: string | null;
           start_date: string;
         };
         Update: {
           created_at?: string;
+          household_id?: string;
           id?: string;
           locked_at?: string | null;
           start_date?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'weekly_plans_household_id_fkey';
+            columns: ['household_id'];
+            isOneToOne: false;
+            referencedRelation: 'households';
+            referencedColumns: ['id'];
+          },
+        ];
       };
     };
     Views: {
@@ -349,10 +522,12 @@ export type Database = {
       };
     };
     Functions: {
+      current_user_household_id: { Args: never; Returns: string };
       lock_weekly_plan: {
         Args: { p_plan_id: string };
         Returns: {
           created_at: string;
+          household_id: string;
           id: string;
           locked_at: string | null;
           start_date: string;
@@ -367,6 +542,7 @@ export type Database = {
       reorder_grocery_store_row: {
         Args: { p_new_position: number; p_row_id: string };
         Returns: {
+          household_id: string;
           id: string;
           name: string;
           position: number;
@@ -377,6 +553,10 @@ export type Database = {
           isOneToOne: false;
           isSetofReturn: true;
         };
+      };
+      seed_default_household_catalog: {
+        Args: { p_household_id: string };
+        Returns: undefined;
       };
     };
     Enums: {

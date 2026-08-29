@@ -44,11 +44,16 @@ export async function fetchAssignments(): Promise<CategoryRowAssignment[]> {
   return data;
 }
 
-/** Assigns (or reassigns) a category to a row — upsert, last write wins, no history kept. */
+/**
+ * Assigns (or reassigns) a category to a row — upsert, last write wins, no history kept.
+ * `household_id` is omitted from the payload: the column defaults to
+ * `current_user_household_id()`, so the row self-assigns to the caller's household. The conflict
+ * target is the composite PK `(household_id, category)` (bolt 030).
+ */
 export async function assignCategory(category: string, rowId: string): Promise<void> {
   const { error } = await supabase
     .from('category_row_assignments')
-    .upsert({ category, row_id: rowId }, { onConflict: 'category' });
+    .upsert({ category, row_id: rowId }, { onConflict: 'household_id,category' });
 
   if (error) throw error;
 }

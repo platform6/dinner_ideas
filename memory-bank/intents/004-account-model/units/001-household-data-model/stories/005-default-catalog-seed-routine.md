@@ -2,10 +2,11 @@
 id: 005-default-catalog-seed-routine
 unit: 001-household-data-model
 intent: 004-account-model
-status: planned
+status: complete
 priority: must
 created: '2026-08-28T00:00:00Z'
 assigned_bolt: 029-household-data-model
+implemented: true
 ---
 
 # Story: 005-default-catalog-seed-routine
