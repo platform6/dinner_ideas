@@ -78,10 +78,15 @@ app non-functional — nullable `household_id` + household-scoped RLS = nothing 
         -> follow-up migration 20260831120000_advisor_hardening.sql (+ pgTAP): pins
            search_path on the 6 funcs; drops rls_auto_enable() (+ any bound event trigger);
            leaves current_user_household_id grants as-is (documented). Local: db reset +
-           test db 174/174 green. NOT yet on prod — needs its own `supabase db push --linked`
-           + a dev->main PR; re-run advisors after.
-    [ ] apply 20260831120000 to prod + re-run advisors
-    [ ] enable leaked-password protection (dashboard) — before opening public signup
+           test db 174/174 green.
+    [x] 20260831120000 pushed to prod (2026-08-31). Verified from fresh schema dump:
+        remote ts present; rls_auto_enable absent (function + event trigger gone);
+        all 6 funcs now `SET search_path = ''`; current_user_household_id grants
+        (anon/authenticated/service_role) unchanged.
+    [ ] re-run dashboard advisors — expect the 6 search_path + 2 rls_auto_enable WARNs
+        cleared; current_user_household_id ×2 remain (accepted); leaked-password remains
+    [ ] enable leaked-password protection (dashboard Auth settings) — before public signup
+    [ ] git push origin dev; open dev->main PR (bundles d58c57f + d274ae5)
     [ ] optional: regen database.types.ts with current CLI + commit (cosmetic)
 ```
 
