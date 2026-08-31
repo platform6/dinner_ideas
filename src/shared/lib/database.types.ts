@@ -1,4 +1,4 @@
-﻿export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   graphql_public: {
@@ -28,6 +28,66 @@ export type Database = {
   };
   public: {
     Tables: {
+      ai_usage_log: {
+        Row: {
+          created_at: string;
+          error_code: string | null;
+          est_cost_usd: number | null;
+          feature: string;
+          household_id: string;
+          id: string;
+          input_tokens: number | null;
+          latency_ms: number | null;
+          model: string;
+          ok: boolean;
+          output_tokens: number | null;
+          profile_id: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          error_code?: string | null;
+          est_cost_usd?: number | null;
+          feature: string;
+          household_id: string;
+          id?: string;
+          input_tokens?: number | null;
+          latency_ms?: number | null;
+          model: string;
+          ok: boolean;
+          output_tokens?: number | null;
+          profile_id?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          error_code?: string | null;
+          est_cost_usd?: number | null;
+          feature?: string;
+          household_id?: string;
+          id?: string;
+          input_tokens?: number | null;
+          latency_ms?: number | null;
+          model?: string;
+          ok?: boolean;
+          output_tokens?: number | null;
+          profile_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'ai_usage_log_household_id_fkey';
+            columns: ['household_id'];
+            isOneToOne: false;
+            referencedRelation: 'households';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'ai_usage_log_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       category_row_assignments: {
         Row: {
           category: string;
@@ -242,6 +302,48 @@ export type Database = {
             columns: ['household_id'];
             isOneToOne: false;
             referencedRelation: 'households';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      household_ai_config: {
+        Row: {
+          daily_call_limit: number;
+          household_id: string;
+          key_secret_id: string | null;
+          model_override: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          daily_call_limit?: number;
+          household_id: string;
+          key_secret_id?: string | null;
+          model_override?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          daily_call_limit?: number;
+          household_id?: string;
+          key_secret_id?: string | null;
+          model_override?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'household_ai_config_household_id_fkey';
+            columns: ['household_id'];
+            isOneToOne: true;
+            referencedRelation: 'households';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'household_ai_config_updated_by_fkey';
+            columns: ['updated_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
             referencedColumns: ['id'];
           },
         ];
@@ -522,6 +624,7 @@ export type Database = {
       };
     };
     Functions: {
+      clear_household_ai_key: { Args: never; Returns: undefined };
       current_user_household_id: { Args: never; Returns: string };
       lock_weekly_plan: {
         Args: { p_plan_id: string };
@@ -554,10 +657,12 @@ export type Database = {
           isSetofReturn: true;
         };
       };
+      resolve_ai_key: { Args: { p_household_id: string }; Returns: string };
       seed_default_household_catalog: {
         Args: { p_household_id: string };
         Returns: undefined;
       };
+      set_household_ai_key: { Args: { p_key: string }; Returns: undefined };
     };
     Enums: {
       [_ in never]: never;

@@ -109,6 +109,7 @@ export function Layout({ children, wide }: LayoutProps) {
 
           <Flex direction="column" gap={1} pt={4} borderTopWidth="1px" borderColor="line.subtle">
             <RailLink to="/store-config" label="Store setup" Icon={uiIcons.storeConfig} />
+            <RailLink to="/settings" label="Settings" Icon={uiIcons.settings} />
             <Flex
               as="button"
               type="button"
@@ -159,6 +160,14 @@ export function Layout({ children, wide }: LayoutProps) {
             to="/store-config"
             aria-label="Store setup"
             icon={<uiIcons.storeConfig size={18} strokeWidth={2} />}
+            variant="ghost"
+            size="sm"
+          />
+          <IconButton
+            as={RouterLink}
+            to="/settings"
+            aria-label="Settings"
+            icon={<uiIcons.settings size={18} strokeWidth={2} />}
             variant="ghost"
             size="sm"
           />

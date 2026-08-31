@@ -56,5 +56,8 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
+    // App tests only. Supabase Edge Functions are Deno + npm: specifiers — run those with
+    // `deno task test` in supabase/functions/claude-proxy, not Vitest.
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
   },
 });

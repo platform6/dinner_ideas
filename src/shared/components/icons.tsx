@@ -36,6 +36,7 @@ import {
   RotateCcw,
   Salad,
   Search,
+  Settings,
   ShoppingBasket,
   SlidersHorizontal,
   Soup,
@@ -168,6 +169,8 @@ export const uiIcons = {
   storeConfig: Store,
   logOut: LogOut,
   overflowMenu: MoreVertical,
+  // Added in 007-claude-integration bolt 039 (the /settings route).
+  settings: Settings,
 } as const;
 
 export type { LucideIcon };

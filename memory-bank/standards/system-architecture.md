@@ -2,13 +2,18 @@
 
 ## Overview
 
-A client-heavy single-page app that talks directly to Supabase (Backend-as-a-Service) — no custom server layer. Business logic lives in the frontend; access control lives in Postgres.
+A client-heavy single-page app that talks directly to Supabase (Backend-as-a-Service). Business logic lives in the frontend; access control lives in Postgres. The one exception is **Supabase Edge Functions** — a thin serverless surface used only where a secret must never reach the browser (currently: the Claude API proxy).
 
 ## Architecture Style
 
-Client-heavy SPA over BaaS
+Client-heavy SPA over BaaS, with Edge Functions for secret-holding work
 
-The React app calls Supabase directly for all data access (dinner catalog, weekly selections). Logic like shopping-list ingredient aggregation and the "exactly 3 picks" rule runs client-side. This keeps the whole system to one deployable (the static frontend) with no server to operate.
+The React app calls Supabase directly for all data access (dinner catalog, weekly selections). Logic like shopping-list ingredient aggregation and the "exactly 3 picks" rule runs client-side. This keeps the whole system to one static deployable plus a handful of stateless Deno functions.
+
+### Backend surfaces
+
+1. **Supabase Postgres + RLS** — all data access; the single authorization boundary (below).
+2. **Supabase Edge Functions (Deno)** — stateless serverless handlers for work that cannot run in the browser because it holds a secret. Today just `claude-proxy` (intent `007-claude-integration`): it verifies the caller's Supabase JWT, resolves their household, enforces a per-household daily call cap, resolves that household's **own** Anthropic API key from **Supabase Vault** (via a `service_role`-only `resolve_ai_key()` — the key never reaches the client), calls Claude, and writes one `ai_usage_log` row per attempt. Both JWT verification _and_ RLS gate it. There is no shared Anthropic key. See `decision-index.md` ADR-4.
 
 ## Security Patterns
 
@@ -30,5 +35,6 @@ React Query's in-memory cache for data; the PWA service worker (`vite-plugin-pwa
 
 ## Decision Relationships
 
-- Architecture style is what makes the SPA-only tech-stack decision (`tech-stack.md`) viable — there's no server, so there's nothing else to host.
-- RLS is the direct consequence of having no backend layer to place authorization logic in — and, since intent `004-account-model`, the _only_ place multi-household isolation and new-account provisioning can live (see `decision-index.md` ADR-3).
+- Architecture style is what makes the SPA-first tech-stack decision (`tech-stack.md`) viable — there's no always-on server, just static hosting plus stateless Edge Functions.
+- RLS is the direct consequence of having no general backend layer to place authorization logic in — and, since intent `004-account-model`, the _only_ place multi-household isolation and new-account provisioning can live (see `decision-index.md` ADR-3).
+- Edge Functions exist only for secret-holding work: an API key can't ship in a static bundle, so the Claude call is proxied server-side (ADR-4). New server logic should default to an Edge Function, not a separate service.

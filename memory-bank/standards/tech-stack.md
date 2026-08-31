@@ -2,7 +2,7 @@
 
 ## Overview
 
-A TypeScript + Vite + React single-page app installed as a PWA, talking directly to Supabase (database, auth, RLS) from the browser. No custom backend server — deployed as a static site on Netlify.
+A TypeScript + Vite + React single-page app installed as a PWA, talking directly to Supabase (database, auth, RLS) from the browser, deployed as a static site on Netlify. No always-on backend server; the only server-side code is **Supabase Edge Functions** (Deno) for work that must hold a secret — currently the Claude API proxy.
 
 ## Languages
 
@@ -24,15 +24,20 @@ Public email/password registration. Each user gets a `profiles` row and belongs 
 
 ## Infrastructure & Deployment
 
-Netlify
+Netlify (frontend) + Supabase (database, auth, Edge Functions)
 
-Git-push deploys, zero-config static hosting for a Vite build, generous free tier for a low-traffic personal app.
+Git-push deploys, zero-config static hosting for a Vite build. Database changes ship as `supabase/migrations/`; Edge Functions ship with `supabase functions deploy`.
+
+## AI / LLM
+
+Anthropic Claude via `@anthropic-ai/sdk` (Deno, pinned in `supabase/functions/claude-proxy/deno.json`) — **only** inside the `claude-proxy` Edge Function; the frontend gains no Anthropic dependency. Default model `claude-sonnet-5` (`ANTHROPIC_MODEL`), non-streaming. Each household supplies its **own** API key, stored in **Supabase Vault** and read only by the `service_role` `resolve_ai_key()` function — there is no shared/project key (intent `007-claude-integration`, `decision-index.md` ADR-4).
 
 ## Package Manager
 
-pnpm
+pnpm (app). Edge Functions use Deno with its own `deno.json` import map (no pnpm).
 
 ## Decision Relationships
 
-- SPA-only (no SSR) is viable _because_ Supabase is the backend — there's no custom API layer to host.
-- Per-user accounts + household-scoped RLS (intent `004-account-model`) are enforced entirely in Postgres (policies + a `handle_new_user()` trigger), so "no backend server" still holds even with real multi-tenant auth.
+- SPA-first (no SSR) is viable _because_ Supabase is the backend — there's no general API layer to host, just narrow Edge Functions.
+- Per-user accounts + household-scoped RLS (intent `004-account-model`) are enforced entirely in Postgres (policies + a `handle_new_user()` trigger).
+- The Claude integration adds the first Edge Function purely to keep the API key off the client (ADR-4); it still touches Postgres only through RLS + a `service_role` function.

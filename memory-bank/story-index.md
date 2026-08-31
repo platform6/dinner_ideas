@@ -2,11 +2,11 @@
 
 ## Overview
 
-- **Total stories**: 73
-- **Completed**: 73
+- **Total stories**: 80
+- **Completed**: 80
 - **Generated**: 0
 - **Planned**: 0
-- **Last updated**: 2026-08-29
+- **Last updated**: 2026-08-31
 
 ---
 
@@ -127,6 +127,21 @@
 - [x] **002-dino-recipes-wordmark-and-title** (dino-branding-ui): "Dino Recipes" text on the five surfaces - Must - ✅ COMPLETE
 - [x] **003-dino-mark-in-chrome-login-and-icons** (dino-branding-ui): Mark in rail / header / login + favicon + PWA icons - Must - ✅ COMPLETE
 
+### 007-claude-integration
+
+**Unit: 001-claude-proxy-service**
+
+- [x] **001-ai-config-and-usage-tables** (claude-proxy-service): `household_ai_config` + `ai_usage_log` + RLS + indexes - Must - ✅ COMPLETE
+- [x] **002-household-key-storage-functions** (claude-proxy-service): Vault-backed set / clear / resolve household key functions - Must - ✅ COMPLETE
+- [x] **003-claude-proxy-edge-function** (claude-proxy-service): Deno function — auth, rate limit, key resolve, validate, Anthropic call, per-attempt logging, typed errors - Must - ✅ COMPLETE
+- [x] **004-config-and-standards-docs** (claude-proxy-service): Function README + secret setup; architecture / tech-stack / decision-index updates - Must - ✅ COMPLETE
+
+**Unit: 002-settings-ui**
+
+- [x] **001-claude-api-client** (settings-ui): `callClaude(...)` + `ClaudeError`, session-bearer auth, error mapping - Must - ✅ COMPLETE
+- [x] **002-settings-route-and-test-connection** (settings-ui): `/settings` route + nav link + Test Connection card - Must - ✅ COMPLETE
+- [x] **003-owner-ai-controls** (settings-ui): Owner-only key set/clear (enable path), model override, daily limit - Must - ✅ COMPLETE
+
 ---
 
 ## Stories by Status
@@ -134,4 +149,4 @@
 - **Planned**: 0
 - **Generated**: 0
 - **In Progress**: 0
-- **Completed**: 73
+- **Completed**: 80
