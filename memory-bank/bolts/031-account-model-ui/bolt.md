@@ -3,7 +3,19 @@ id: 031-account-model-ui
 unit: 002-account-model-ui
 intent: 004-account-model
 type: simple-construction-bolt
-status: planned
+status: complete
+started: '2026-08-29T04:00:00Z'
+current_stage: null
+stages_completed:
+  - name: plan
+    completed: '2026-08-29T04:06:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-08-29T04:30:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-08-29T04:40:00Z'
+    artifact: test-walkthrough.md
 stories:
   - 001-useauth-household-context
   - 002-insert-site-audit-and-types-regen
@@ -19,6 +31,7 @@ complexity:
   avg_uncertainty: 1
   max_dependencies: 2
   testing_scope: 2
+completed: '2026-08-28T23:58:46Z'
 ---
 
 # Bolt: 031-account-model-ui

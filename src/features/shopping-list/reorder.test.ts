@@ -5,11 +5,11 @@ import type { ShoppingListGroup } from '@/features/shopping-list/types';
 import type { CategoryRowAssignment, GroceryStoreRow } from '@/features/store-config/types';
 
 function row(overrides: Partial<GroceryStoreRow>): GroceryStoreRow {
-  return { id: 'row-id', name: 'Row', position: 1, ...overrides };
+  return { id: 'row-id', household_id: 'hh-test', name: 'Row', position: 1, ...overrides };
 }
 
 function assignment(overrides: Partial<CategoryRowAssignment>): CategoryRowAssignment {
-  return { category: 'Category', row_id: 'row-id', ...overrides };
+  return { category: 'Category', household_id: 'hh-test', row_id: 'row-id', ...overrides };
 }
 
 function group(category: string): ShoppingListGroup {

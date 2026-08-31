@@ -3,7 +3,25 @@ id: 029-household-data-model
 unit: 001-household-data-model
 intent: 004-account-model
 type: ddd-construction-bolt
-status: planned
+status: complete
+started: '2026-08-29T02:00:00Z'
+current_stage: null
+stages_completed:
+  - name: domain-model
+    completed: '2026-08-29T02:05:00Z'
+    artifact: ddd-01-domain-model.md
+  - name: technical-design
+    completed: '2026-08-29T02:18:00Z'
+    artifact: ddd-02-technical-design.md
+  - name: adr-analysis
+    completed: '2026-08-29T02:22:00Z'
+    artifact: none — standard Supabase handle_new_user pattern; seed re-expression is generated, not a decision
+  - name: implement
+    completed: '2026-08-29T02:45:00Z'
+    artifact: supabase/migrations/20260828233000_account_model_provisioning.sql
+  - name: test
+    completed: '2026-08-29T02:55:00Z'
+    artifact: ddd-03-test-report.md
 stories:
   - 005-default-catalog-seed-routine
   - 006-household-invites-table
@@ -20,6 +38,7 @@ complexity:
   avg_uncertainty: 2
   max_dependencies: 2
   testing_scope: 3
+completed: '2026-08-28T23:42:43Z'
 ---
 
 # Bolt: 029-household-data-model

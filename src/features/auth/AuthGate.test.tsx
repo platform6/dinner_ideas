@@ -11,12 +11,20 @@ const mockedUseAuth = vi.mocked(useAuth);
 
 describe('AuthGate', () => {
   it('shows only the login form when logged out', () => {
-    mockedUseAuth.mockReturnValue({ session: null, isLoading: false, signIn: vi.fn(), signOut: vi.fn() });
+    mockedUseAuth.mockReturnValue({
+      session: null,
+      isLoading: false,
+      profile: null,
+      householdId: null,
+      role: null,
+      signIn: vi.fn(),
+      signOut: vi.fn(),
+    });
 
     render(
       <AuthGate>
         <div>Protected content</div>
-      </AuthGate>
+      </AuthGate>,
     );
 
     expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument();
@@ -27,6 +35,9 @@ describe('AuthGate', () => {
     mockedUseAuth.mockReturnValue({
       session: {} as Session,
       isLoading: false,
+      profile: null,
+      householdId: null,
+      role: null,
       signIn: vi.fn(),
       signOut: vi.fn(),
     });
@@ -34,7 +45,7 @@ describe('AuthGate', () => {
     render(
       <AuthGate>
         <div>Protected content</div>
-      </AuthGate>
+      </AuthGate>,
     );
 
     expect(screen.getByText('Protected content')).toBeInTheDocument();
@@ -42,12 +53,20 @@ describe('AuthGate', () => {
   });
 
   it('shows a spinner instead of the login form while the initial session check is in flight', () => {
-    mockedUseAuth.mockReturnValue({ session: null, isLoading: true, signIn: vi.fn(), signOut: vi.fn() });
+    mockedUseAuth.mockReturnValue({
+      session: null,
+      isLoading: true,
+      profile: null,
+      householdId: null,
+      role: null,
+      signIn: vi.fn(),
+      signOut: vi.fn(),
+    });
 
     render(
       <AuthGate>
         <div>Protected content</div>
-      </AuthGate>
+      </AuthGate>,
     );
 
     expect(screen.queryByRole('button', { name: /log in/i })).not.toBeInTheDocument();

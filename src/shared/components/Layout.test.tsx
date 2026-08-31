@@ -9,7 +9,15 @@ vi.mock('@/features/auth/useAuth');
 const mockedUseAuth = vi.mocked(useAuth);
 
 function renderLayout(path: string, signOut = vi.fn()) {
-  mockedUseAuth.mockReturnValue({ session: null, isLoading: false, signIn: vi.fn(), signOut });
+  mockedUseAuth.mockReturnValue({
+    session: null,
+    isLoading: false,
+    profile: null,
+    householdId: null,
+    role: null,
+    signIn: vi.fn(),
+    signOut,
+  });
   renderWithProviders(
     <Layout>
       <div>Page content</div>

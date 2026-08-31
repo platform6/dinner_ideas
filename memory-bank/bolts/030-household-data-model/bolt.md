@@ -3,7 +3,25 @@ id: 030-household-data-model
 unit: 001-household-data-model
 intent: 004-account-model
 type: ddd-construction-bolt
-status: planned
+status: complete
+started: '2026-08-29T03:00:00Z'
+current_stage: null
+stages_completed:
+  - name: domain-model
+    completed: '2026-08-29T03:04:00Z'
+    artifact: ddd-01-domain-model.md
+  - name: technical-design
+    completed: '2026-08-29T03:14:00Z'
+    artifact: ddd-02-technical-design.md
+  - name: adr-analysis
+    completed: '2026-08-29T03:18:00Z'
+    artifact: adr-003-one-founding-household-model-cutover.md
+  - name: implement
+    completed: '2026-08-29T03:40:00Z'
+    artifact: supabase/migrations/20260828234000_account_model_founding_household.sql
+  - name: test
+    completed: '2026-08-29T03:50:00Z'
+    artifact: ddd-03-test-report.md
 stories:
   - 008-founding-household-migration
   - 010-update-standards-docs
@@ -19,6 +37,7 @@ complexity:
   avg_uncertainty: 2
   max_dependencies: 2
   testing_scope: 3
+completed: '2026-08-28T23:48:33Z'
 ---
 
 # Bolt: 030-household-data-model

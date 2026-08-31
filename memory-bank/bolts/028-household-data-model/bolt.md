@@ -3,7 +3,25 @@ id: 028-household-data-model
 unit: 001-household-data-model
 intent: 004-account-model
 type: ddd-construction-bolt
-status: planned
+status: complete
+started: '2026-08-29T01:00:00Z'
+current_stage: null
+stages_completed:
+  - name: domain-model
+    completed: '2026-08-29T01:04:00Z'
+    artifact: ddd-01-domain-model.md
+  - name: technical-design
+    completed: '2026-08-29T01:14:00Z'
+    artifact: ddd-02-technical-design.md
+  - name: adr-analysis
+    completed: '2026-08-29T01:18:00Z'
+    artifact: none — pure application of ADR-1 (RLS is the enforcement boundary)
+  - name: implement
+    completed: '2026-08-29T01:35:00Z'
+    artifact: supabase/migrations/20260828232000_account_model_household_scoped_rls.sql
+  - name: test
+    completed: '2026-08-29T01:45:00Z'
+    artifact: ddd-03-test-report.md
 stories:
   - 004-household-scoped-rls
 created: '2026-08-28T00:00:00Z'
@@ -20,6 +38,7 @@ complexity:
   avg_uncertainty: 2
   max_dependencies: 2
   testing_scope: 3
+completed: '2026-08-28T23:37:23Z'
 ---
 
 # Bolt: 028-household-data-model

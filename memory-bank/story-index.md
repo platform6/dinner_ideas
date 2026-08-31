@@ -3,10 +3,10 @@
 ## Overview
 
 - **Total stories**: 73
-- **Completed**: 58
-- **Generated**: 15
+- **Completed**: 73
+- **Generated**: 0
 - **Planned**: 0
-- **Last updated**: 2026-08-28
+- **Last updated**: 2026-08-29
 
 ---
 
@@ -89,21 +89,21 @@
 
 **Unit: 001-household-data-model**
 
-- [x] **001-household-profile-membership-schema** (household-data-model): Household / profile / membership tables + RLS - Must - ✅ GENERATED
-- [x] **002-current-household-helper** (household-data-model): `current_user_household_id()` helper function - Must - ✅ GENERATED
-- [x] **003-household-id-on-domain-tables** (household-data-model): Add `household_id` + rework constraints on all domain tables - Must - ✅ GENERATED
-- [x] **004-household-scoped-rls** (household-data-model): Rewrite all 35 policies to household-scoped - Must - ✅ GENERATED
-- [x] **005-default-catalog-seed-routine** (household-data-model): `seed_default_household_catalog()` routine - Must - ✅ GENERATED
-- [x] **006-household-invites-table** (household-data-model): `household_invites` table + RLS - Should - ✅ GENERATED
-- [x] **007-new-user-provisioning-trigger** (household-data-model): `handle_new_user()` on `auth.users` - Must - ✅ GENERATED
-- [x] **008-founding-household-migration** (household-data-model): One-time migration folding existing data into a founding household - Must - ✅ GENERATED
-- [x] **009-scoping-existing-functions** (household-data-model): Scope meal-history trigger, reorder RPC, last-chosen view - Must - ✅ GENERATED
-- [x] **010-update-standards-docs** (household-data-model): Update architecture / tech-stack / coding-standards / decision-index - Should - ✅ GENERATED
+- [x] **001-household-profile-membership-schema** (household-data-model): Household / profile / membership tables + RLS - Must - ✅ COMPLETE
+- [x] **002-current-household-helper** (household-data-model): `current_user_household_id()` helper function - Must - ✅ COMPLETE
+- [x] **003-household-id-on-domain-tables** (household-data-model): Add `household_id` + rework constraints on all domain tables - Must - ✅ COMPLETE
+- [x] **004-household-scoped-rls** (household-data-model): Rewrite all 35 policies to household-scoped - Must - ✅ COMPLETE
+- [x] **005-default-catalog-seed-routine** (household-data-model): `seed_default_household_catalog()` routine - Must - ✅ COMPLETE
+- [x] **006-household-invites-table** (household-data-model): `household_invites` table + RLS - Should - ✅ COMPLETE
+- [x] **007-new-user-provisioning-trigger** (household-data-model): `handle_new_user()` on `auth.users` - Must - ✅ COMPLETE
+- [x] **008-founding-household-migration** (household-data-model): One-time migration folding existing data into a founding household - Must - ✅ COMPLETE
+- [x] **009-scoping-existing-functions** (household-data-model): Scope meal-history trigger, reorder RPC, last-chosen view - Must - ✅ COMPLETE
+- [x] **010-update-standards-docs** (household-data-model): Update architecture / tech-stack / coding-standards / decision-index - Should - ✅ COMPLETE
 
 **Unit: 002-account-model-ui**
 
-- [x] **001-useauth-household-context** (account-model-ui): `useAuth` exposes profile / householdId / role - Must - ✅ GENERATED
-- [x] **002-insert-site-audit-and-types-regen** (account-model-ui): Insert-site audit, store-config upsert fix, types regen - Must - ✅ GENERATED
+- [x] **001-useauth-household-context** (account-model-ui): `useAuth` exposes profile / householdId / role - Must - ✅ COMPLETE
+- [x] **002-insert-site-audit-and-types-regen** (account-model-ui): Insert-site audit, store-config upsert fix, types regen - Must - ✅ COMPLETE
 
 ### 005-desktop-layout
 
@@ -123,15 +123,15 @@
 
 **Unit: 001-dino-branding-ui**
 
-- [x] **001-prepare-dino-mark-assets** (dino-branding-ui): Trimmed transparent dino-mark asset set - Must - ✅ GENERATED
-- [x] **002-dino-recipes-wordmark-and-title** (dino-branding-ui): "Dino Recipes" text on the five surfaces - Must - ✅ GENERATED
-- [x] **003-dino-mark-in-chrome-login-and-icons** (dino-branding-ui): Mark in rail / header / login + favicon + PWA icons - Must - ✅ GENERATED
+- [x] **001-prepare-dino-mark-assets** (dino-branding-ui): Trimmed transparent dino-mark asset set - Must - ✅ COMPLETE
+- [x] **002-dino-recipes-wordmark-and-title** (dino-branding-ui): "Dino Recipes" text on the five surfaces - Must - ✅ COMPLETE
+- [x] **003-dino-mark-in-chrome-login-and-icons** (dino-branding-ui): Mark in rail / header / login + favicon + PWA icons - Must - ✅ COMPLETE
 
 ---
 
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 15
+- **Generated**: 0
 - **In Progress**: 0
-- **Completed**: 58
+- **Completed**: 73

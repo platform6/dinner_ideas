@@ -8,6 +8,7 @@ Lightweight, low-friction standards suited to a small solo/personal project — 
 
 **Tool**: Prettier (defaults)
 **Key Settings**:
+
 - Indentation: 2 spaces
 - Semicolons: yes
 - Quotes: single
@@ -21,22 +22,24 @@ Lightweight, low-friction standards suited to a small solo/personal project — 
 **Strictness**: Balanced (not `strict` mode)
 
 **Key Rules**:
+
 - `any` type: discouraged (warn), not banned — pragmatic over rigorous for a hobby-scale project
 - Unused variables: error
 - React hooks rules (`rules-of-hooks`, `exhaustive-deps`): error
 
 ## Naming Conventions
 
-| Element | Convention | Example |
-|---------|------------|---------|
-| Variables | camelCase | `selectedDinners`, `isLoading` |
-| Functions | camelCase | `getShoppingList`, `filterDinners` |
-| Components | PascalCase | `DinnerCard`, `WeeklyPlanner` |
-| Types/Interfaces | PascalCase | `Dinner`, `ShoppingListItem` |
-| Constants | UPPER_SNAKE | `MAX_DINNERS_PER_WEEK` |
-| React hooks | camelCase with `use` | `useWeeklyPlan`, `useDinners` |
+| Element          | Convention           | Example                            |
+| ---------------- | -------------------- | ---------------------------------- |
+| Variables        | camelCase            | `selectedDinners`, `isLoading`     |
+| Functions        | camelCase            | `getShoppingList`, `filterDinners` |
+| Components       | PascalCase           | `DinnerCard`, `WeeklyPlanner`      |
+| Types/Interfaces | PascalCase           | `Dinner`, `ShoppingListItem`       |
+| Constants        | UPPER_SNAKE          | `MAX_DINNERS_PER_WEEK`             |
+| React hooks      | camelCase with `use` | `useWeeklyPlan`, `useDinners`      |
 
 **File Naming**:
+
 - Components: PascalCase (`DinnerCard.tsx`)
 - Utilities/hooks: kebab-case (`shopping-list.ts`, `use-dinners.ts`)
 - Tests: co-located, `*.test.ts(x)`
@@ -46,18 +49,20 @@ Lightweight, low-friction standards suited to a small solo/personal project — 
 **Pattern**: Feature-based
 
 **Structure**:
+
 ```text
 src/
   features/
     dinners/        # browsable/filterable dinner catalog
     weekly-plan/     # pick-3 flow + shopping list generation
-    auth/            # shared household login
+    auth/            # email/password auth + household context
   shared/
     components/      # cross-feature UI (buttons, layout)
     lib/             # supabase client, generated DB types
 ```
 
 **Conventions**:
+
 - Tests: co-located next to the code they cover
 - Types: co-located within each feature, shared types in `shared/lib`
 - Barrel exports (`index.ts`): only where it meaningfully reduces import noise, not mandatory
@@ -69,12 +74,13 @@ src/
 
 **Test Types**:
 
-| Type | Tool | When to Use |
-|------|------|-------------|
-| Unit | Vitest | Shopping-list ingredient aggregation/merging, "exactly 3 picks" validation, filter logic |
-| Component | React Testing Library | Key interactive flows (selecting a dinner, copying the shopping list) |
+| Type      | Tool                  | When to Use                                                                              |
+| --------- | --------------------- | ---------------------------------------------------------------------------------------- |
+| Unit      | Vitest                | Shopping-list ingredient aggregation/merging, "exactly 3 picks" validation, filter logic |
+| Component | React Testing Library | Key interactive flows (selecting a dinner, copying the shopping list)                    |
 
 **Conventions**:
+
 - Test naming: `describe`/`it('should ...')`
 - Mock strategy: mock Supabase client at the boundary; don't mock internal app logic
 - Skip exhaustive UI snapshot testing — low value at this scale
@@ -94,10 +100,11 @@ src/
 
 **Levels**:
 
-| Level | Usage |
-|-------|-------|
+| Level | Usage                                             |
+| ----- | ------------------------------------------------- |
 | error | Failed Supabase operations, unexpected exceptions |
-| warn | Recoverable but unexpected states |
+| warn  | Recoverable but unexpected states                 |
 
 **Rules**:
+
 - Never log: passwords, auth tokens, session data

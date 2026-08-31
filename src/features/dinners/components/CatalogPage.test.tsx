@@ -22,6 +22,7 @@ vi.mock('@/features/weekly-plan/api');
 function dinner(overrides: Partial<CatalogDinner>): CatalogDinner {
   return {
     id: 'id',
+    household_id: 'hh-test',
     name: 'Dinner',
     cuisine_type: 'Italian',
     cook_time_minutes: 30,
@@ -117,6 +118,7 @@ function selectionWithDinner(overrides: Partial<SelectionWithDinner>): Selection
 function plan(overrides: Partial<CurrentPlan>): CurrentPlan {
   return {
     id: 'plan-id',
+    household_id: 'hh-test',
     start_date: '2026-08-24',
     locked_at: null,
     created_at: '2026-08-24T00:00:00Z',

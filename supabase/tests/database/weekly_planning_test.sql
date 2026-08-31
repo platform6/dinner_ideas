@@ -7,6 +7,11 @@
 begin;
 select plan(10);
 
+-- account-model (intent 004): weekly_plans.household_id is NOT NULL (default
+-- current_user_household_id()). Run as the founding household's owner (migration 20260828234000)
+-- so plan inserts self-assign and the one-unlocked-per-household index behaves as before.
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-8000-0000000000f0","role":"authenticated"}';
+
 -- Schema shape
 select has_table('public', 'weekly_plans', 'weekly_plans table exists');
 select has_table('public', 'weekly_plan_selections', 'weekly_plan_selections table exists');

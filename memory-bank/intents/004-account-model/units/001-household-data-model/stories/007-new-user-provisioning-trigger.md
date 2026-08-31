@@ -2,10 +2,11 @@
 id: 007-new-user-provisioning-trigger
 unit: 001-household-data-model
 intent: 004-account-model
-status: planned
+status: complete
 priority: must
 created: '2026-08-28T00:00:00Z'
 assigned_bolt: 029-household-data-model
+implemented: true
 ---
 
 # Story: 007-new-user-provisioning-trigger

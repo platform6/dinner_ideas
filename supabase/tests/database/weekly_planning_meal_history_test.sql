@@ -10,6 +10,11 @@
 begin;
 select plan(9);
 
+-- account-model (intent 004): weekly_plans / meal_history carry a NOT NULL household_id
+-- (default current_user_household_id()). Run as the founding household's owner so the lock
+-- trigger stamps meal_history.household_id from the parent plan.
+set local request.jwt.claims = '{"sub":"00000000-0000-4000-8000-0000000000f0","role":"authenticated"}';
+
 -- Schema shape
 select has_table('public', 'meal_history', 'meal_history table exists');
 select has_column('public', 'meal_history', 'weekly_plan_id', 'meal_history has a weekly_plan_id column');

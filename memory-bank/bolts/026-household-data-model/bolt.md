@@ -3,7 +3,25 @@ id: 026-household-data-model
 unit: 001-household-data-model
 intent: 004-account-model
 type: ddd-construction-bolt
-status: planned
+status: complete
+started: '2026-08-28T23:25:00Z'
+current_stage: null
+stages_completed:
+  - name: domain-model
+    completed: '2026-08-28T23:28:00Z'
+    artifact: ddd-01-domain-model.md
+  - name: technical-design
+    completed: '2026-08-28T23:36:00Z'
+    artifact: ddd-02-technical-design.md
+  - name: adr-analysis
+    completed: '2026-08-28T23:40:00Z'
+    artifact: none — no ADR-worthy decisions (extends ADR-1)
+  - name: implement
+    completed: '2026-08-28T23:50:00Z'
+    artifact: supabase/migrations/20260828230000_account_model_identity_household.sql
+  - name: test
+    completed: '2026-08-28T23:56:00Z'
+    artifact: ddd-03-test-report.md
 stories:
   - 001-household-profile-membership-schema
   - 002-current-household-helper
@@ -19,6 +37,7 @@ complexity:
   avg_uncertainty: 1
   max_dependencies: 1
   testing_scope: 2
+completed: '2026-08-28T23:30:02Z'
 ---
 
 # Bolt: 026-household-data-model
@@ -34,7 +53,7 @@ column default depends on. Nothing here touches an existing table.
 - [ ] **001-household-profile-membership-schema**: `profiles` / `households` / `household_members`
       tables + RLS + one-household-per-user `unique (profile_id)` — Priority: Must
 - [ ] **002-current-household-helper**: `current_user_household_id()` — `stable` / `security
-    definer`, `search_path` pinned, returns caller's household or null — Priority: Must
+  definer`, `search_path` pinned, returns caller's household or null — Priority: Must
 
 ## Expected Outputs
 

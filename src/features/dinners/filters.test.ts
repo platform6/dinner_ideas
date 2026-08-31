@@ -9,6 +9,7 @@ const noFilters: CatalogFilterState = { cuisine: [], tags: [], sortByCookTime: f
 function dinner(overrides: Partial<CatalogDinner>): CatalogDinner {
   return {
     id: 'id',
+    household_id: 'hh-test',
     name: 'Dinner',
     cuisine_type: 'Italian',
     cook_time_minutes: 30,

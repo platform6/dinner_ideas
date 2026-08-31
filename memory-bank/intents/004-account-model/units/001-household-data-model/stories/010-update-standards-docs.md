@@ -2,10 +2,11 @@
 id: 010-update-standards-docs
 unit: 001-household-data-model
 intent: 004-account-model
-status: planned
+status: complete
 priority: should
 created: '2026-08-28T00:00:00Z'
 assigned_bolt: 030-household-data-model
+implemented: true
 ---
 
 # Story: 010-update-standards-docs
