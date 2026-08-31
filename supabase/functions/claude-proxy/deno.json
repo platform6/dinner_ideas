@@ -1,0 +1,11 @@
+{
+  "imports": {
+    "@anthropic-ai/sdk": "npm:@anthropic-ai/sdk@0.122.0",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.112.4",
+    "std/assert": "https://deno.land/std@0.224.0/assert/mod.ts"
+  },
+  "nodeModulesDir": "auto",
+  "tasks": {
+    "test": "deno test --allow-env"
+  }
+}

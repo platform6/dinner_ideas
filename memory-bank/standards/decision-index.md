@@ -1,6 +1,6 @@
 ---
-last_updated: 2026-08-29T03:50:00Z
-total_decisions: 3
+last_updated: 2026-08-31T17:40:00Z
+total_decisions: 4
 ---
 
 # Decision Index
@@ -44,3 +44,12 @@ Use this to find relevant prior decisions when working on related features.
 - **Path**: `bolts/030-household-data-model/adr-003-one-founding-household-model-cutover.md`
 - **Summary**: Intent 004 replaced the single shared login with a three-tier `auth.users → profiles → households` model and household-scoped RLS, leaving all pre-004 data with a null `household_id`. Decided on a single forward migration that resolves the founding owner by email (`garrett.peter.conn@gmail.com`) and aborts loudly if absent, creates one founding household with a fixed UUID, stamps (not re-seeds) `household_id` onto existing rows, then sets the columns `NOT NULL` — idempotent for dev, forward-only for production.
 - **Read when**: Writing a migration that folds pre-existing global/single-tenant data into a new ownership/tenancy model, backfilling a new not-null FK across live tables, or choosing how to pick an owner for legacy data — prefer an explicit lookup with a hard failure over guessing, use a fixed id for idempotency, and stamp existing rows rather than re-seeding. Also relevant when reasoning about the account model, `current_user_household_id()`, or why the `026→030` migrations must ship together.
+
+### ADR-4: Per-Household Anthropic Key in Supabase Vault, Resolved Only by a Service-Role Function
+
+- **Status**: accepted
+- **Date**: 2026-08-31
+- **Bolt**: 037-claude-proxy-service (claude-proxy-service)
+- **Path**: `bolts/037-claude-proxy-service/adr-004-per-household-anthropic-key-in-vault.md`
+- **Summary**: Intent 007 gives each household its own Anthropic API key (no shared key). Decided to store the key as a Supabase Vault secret named `ai_key:{household_id}`, keep only the opaque `key_secret_id` on `household_ai_config`, and mediate all access through three `security definer` functions — `set_household_ai_key` / `clear_household_ai_key` (owner-guarded, `authenticated`) and `resolve_ai_key` (`service_role` only, the single decrypt path). `key_secret_id` is column-revoked from `authenticated` so an owner cannot repoint it at another household's secret. Fallback if Vault is unusable from a definer function: a `pgsodium`-encrypted column with the same signatures.
+- **Read when**: Storing any per-tenant secret / credential (API keys, tokens, webhook secrets) in a Supabase-direct app with no server; deciding between Supabase Vault and a `pgsodium` column; designing a read path that must be reachable by an Edge Function (service role) but never by a JWT client; or reasoning about `household_ai_config`, `resolve_ai_key`, or why the `claude-proxy` function holds no env key.
