@@ -3,10 +3,11 @@ intent: 004-account-model
 build: v0.4.0-f819f32
 commit: f819f32
 created: '2026-08-29T20:33:00Z'
-updated: '2026-08-31T14:00:00Z'
-status: staging-verified-pending-recommit
-current_checkpoint: 2
-pr: 'https://github.com/platform6/dinner_ideas/pull/8'
+updated: '2026-08-31T14:25:00Z'
+status: production-live-fe-smoke-pending
+current_checkpoint: 4
+pr: 'https://github.com/platform6/dinner_ideas/pull/8 (merged -> main 9af3d99)'
+prod_commit: b1f86be
 environments:
   dev: { status: verified, target: 'local Docker Supabase + local vite build' }
   staging:
@@ -16,7 +17,13 @@ environments:
       db-rehearsal: 'green (prod-data, after fix)',
       target: 'Netlify deploy preview + local prod-data rehearsal',
     }
-  production: { status: not-started, target: 'Supabase linked gpkqsedtlzxczmarxjia + Netlify main' }
+  production:
+    {
+      status: 'live — DB pushed 2026-08-31T14:18Z, FE on main via Netlify',
+      db: 'all 5 migrations remote; founding household "Home" owner platform.six@gmail.com; row counts match rehearsal, 0 null household_id',
+      fe-smoke: pending,
+      target: 'Supabase linked gpkqsedtlzxczmarxjia + Netlify main',
+    }
 ---
 
 # Deployment Plan: 004-account-model
@@ -38,10 +45,32 @@ app non-functional — nullable `household_id` + household-scoped RLS = nothing 
              https://deploy-preview-8--dinnerideas.netlify.app
              build+bundle sanity only — preview points at prod Supabase (old schema)
     [x] 2a DB — prod-data rehearsal GREEN after 2 migration fixes (see below)
-[ ] Verify staging   — n/a (rehearsal IS the staging verify; no live staging env)
-[ ] Production — Checkpoint 3   ← NEXT.  needs: commit fixes -> PR #8 re-verify -> preflight
-[ ] Verify production
-[ ] Monitor  — Checkpoint 4
+[x] Verify staging   — n/a (rehearsal IS the staging verify; no live staging env)
+[x] Production — Checkpoint 3  (2026-08-31)
+    NOTE: PR #8 was merged to main (FE) BEFORE the DB push — ~short interim window of
+    new-FE-on-old-schema (household context load + add-tag + assign-category were broken;
+    reads unaffected). Closed by the DB push below.
+    - fixes committed b1f86be, pushed; PR #8 Netlify preview re-verified green
+    - preflight: prod auth.users = 1 row platform.six@gmail.com (matches retargeted migration);
+      5 migrations pending, nothing else drifted
+    - `supabase db push --linked` 2026-08-31T14:18Z — all 5 applied, migration 5 took the
+      real resolve-by-email path (no RAISE, no bootstrap)
+[x] Verify production  (2026-08-31)
+    - `supabase migration list --linked` — all 5 now remote
+    - fresh `supabase db dump --linked` (post-push): households=1 name "Home",
+      owner platform.six@gmail.com role owner; weekly_plans 3 (2 locked, incl. 8c0c1664
+      that broke the pre-fix migration) all on founding household; dashboard count check
+      = dinners 50 / tags 4 / weekly_plans 3 / meal_history 6 / grocery_store_rows 6 /
+      category_row_assignments 5, all 0 null household_id
+    - `supabase gen types typescript --linked` vs committed database.types.ts — no schema
+      drift (only quote-style + a new __InternalSupabase metadata block from a newer CLI)
+[~] Monitor  — Checkpoint 4
+    [ ] FE smoke on live site as platform.six@gmail.com (catalog/plan/shopping/cooking/
+        store-config render; add-tag + assign-category work again; no household-context
+        console error)
+    [ ] get_advisors (security+perf lint) — MCP can't reach this project's org; run from
+        the Supabase dashboard
+    [ ] optional: regen database.types.ts with current CLI + commit (cosmetic)
 ```
 
 > ## ✅ Checkpoint 2a — prod-data rehearsal (2026-08-31)

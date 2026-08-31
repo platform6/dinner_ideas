@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx supabase migration list *)",
+      "Bash(npx --yes supabase migration list *)",
+      "Bash(supabase migration list *)",
+      "Bash(npx supabase db dump *)",
+      "Bash(npx --yes supabase db dump *)",
+      "Bash(supabase db dump *)",
+      "Bash(npx supabase gen types *)",
+      "Bash(npx --yes supabase gen types *)",
+      "Bash(supabase gen types *)",
+      "Bash(npx supabase inspect db *)",
+      "Bash(npx --yes supabase inspect db *)",
+      "Bash(supabase inspect db *)",
+      "Bash(npx supabase projects list *)",
+      "Bash(npx --yes supabase projects list *)",
+      "Bash(supabase projects list *)",
+      "Bash(npx supabase branches list *)",
+      "Bash(npx --yes supabase branches list *)",
+      "Bash(supabase branches list *)"
+    ]
+  }
+}
