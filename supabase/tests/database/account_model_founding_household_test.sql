@@ -19,7 +19,7 @@ select is(
    from public.household_members hm
    join auth.users u on u.id = hm.profile_id
    where hm.household_id = '00000000-0000-4000-8000-000000000001'
-     and lower(u.email) = 'garrett.peter.conn@gmail.com'),
+     and lower(u.email) = 'platform.six@gmail.com'),
   'owner', 'the founding user is an owner of the founding household');
 
 select is(

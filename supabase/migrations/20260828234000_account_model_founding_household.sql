@@ -6,7 +6,7 @@
 -- adr-003-one-founding-household-model-cutover.md.
 --
 -- RUNS AGAINST REAL PRODUCTION DATA. One-shot forward migration. Folds every existing pre-intent
--- row into a single founding household owned by garrett.peter.conn@gmail.com, then flips every
+-- row into a single founding household owned by platform.six@gmail.com, then flips every
 -- direct household_id column to NOT NULL and promotes category_row_assignments to a composite PK.
 --
 -- Founding-owner resolution (ADR-3):
@@ -50,14 +50,14 @@ begin
 
   select id into v_user_id
   from auth.users
-  where lower(email) = 'garrett.peter.conn@gmail.com'
+  where lower(email) = 'platform.six@gmail.com'
   order by created_at asc
   limit 1;
 
   if v_user_id is null then
     if exists (select 1 from auth.users) then
       raise exception
-        'founding user garrett.peter.conn@gmail.com not found in auth.users (% other user(s) present) — aborting; create that user and re-run',
+        'founding user platform.six@gmail.com not found in auth.users (% other user(s) present) — aborting; create that user and re-run',
         (select count(*) from auth.users);
     end if;
 
@@ -71,7 +71,7 @@ begin
     insert into auth.users (instance_id, id, aud, role, email, encrypted_password,
                             email_confirmed_at, created_at, updated_at)
     values ('00000000-0000-0000-0000-000000000000', v_synthetic_user, 'authenticated',
-            'authenticated', 'garrett.peter.conn@gmail.com',
+            'authenticated', 'platform.six@gmail.com',
             -- not a real hash; this user never authenticates by password (tests set JWT claims).
             'local-dev-placeholder-not-a-real-credential',
             now(), now(), now());
@@ -81,7 +81,7 @@ begin
   end if;
 
   insert into public.households (id, name)
-  values (v_household_id, 'Conn household');
+  values (v_household_id, 'Home');
 
   insert into public.profiles (id, display_name)
   values (v_user_id, null)
@@ -91,12 +91,23 @@ begin
   values (v_household_id, v_user_id, 'owner')
   on conflict (profile_id) do nothing;
 
+  -- The backfill must touch every pre-existing row, including weekly_plans that are already
+  -- locked. trg_weekly_plans_block_edit_after_lock (migration 20260826192038) rejects any
+  -- UPDATE to a locked plan, so disable it for this one-shot household_id backfill. Unlike
+  -- auth.users above, public.weekly_plans is owned by postgres (created by migration), so
+  -- DISABLE TRIGGER needs no extra privilege. The whole migration runs in one transaction,
+  -- so an error before the ENABLE rolls the DISABLE back too; and a re-run after the founding
+  -- household exists returns early (above) without reaching this block.
+  alter table public.weekly_plans disable trigger trg_weekly_plans_block_edit_after_lock;
+
   update public.dinners                  set household_id = v_household_id where household_id is null;
   update public.tags                     set household_id = v_household_id where household_id is null;
   update public.grocery_store_rows       set household_id = v_household_id where household_id is null;
   update public.category_row_assignments set household_id = v_household_id where household_id is null;
   update public.weekly_plans             set household_id = v_household_id where household_id is null;
   update public.meal_history             set household_id = v_household_id where household_id is null;
+
+  alter table public.weekly_plans enable trigger trg_weekly_plans_block_edit_after_lock;
 
   raise notice 'founding household % created, owner %, data backfilled', v_household_id, v_user_id;
 end;
