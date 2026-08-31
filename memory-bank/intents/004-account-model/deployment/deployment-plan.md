@@ -68,8 +68,20 @@ app non-functional — nullable `household_id` + household-scoped RLS = nothing 
     [ ] FE smoke on live site as platform.six@gmail.com (catalog/plan/shopping/cooking/
         store-config render; add-tag + assign-category work again; no household-context
         console error)
-    [ ] get_advisors (security+perf lint) — MCP can't reach this project's org; run from
-        the Supabase dashboard
+    [x] advisors run from Supabase dashboard (2026-08-31T14:51Z): 0 ERROR, 0 perf.
+        12 WARN/security, all triaged:
+          - function_search_path_mutable ×6 — pre-004 funcs (weekly-planning + reorder).
+          - anon/authenticated_security_definer_function_executable ×4 —
+            current_user_household_id() (RLS resolver; grants intentional, kept) +
+            rls_auto_enable() (untracked prod-only event-trigger func).
+          - auth_leaked_password_protection — dashboard Auth toggle (do before public signup).
+        -> follow-up migration 20260831120000_advisor_hardening.sql (+ pgTAP): pins
+           search_path on the 6 funcs; drops rls_auto_enable() (+ any bound event trigger);
+           leaves current_user_household_id grants as-is (documented). Local: db reset +
+           test db 174/174 green. NOT yet on prod — needs its own `supabase db push --linked`
+           + a dev->main PR; re-run advisors after.
+    [ ] apply 20260831120000 to prod + re-run advisors
+    [ ] enable leaked-password protection (dashboard) — before opening public signup
     [ ] optional: regen database.types.ts with current CLI + commit (cosmetic)
 ```
 
