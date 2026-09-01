@@ -3,8 +3,10 @@ intent: 008-claude-proxy-review-remediation
 build: v0.8.0-1e20c9f
 commit: 1e20c9f
 created: '2026-09-01T02:30:00Z'
-updated: '2026-09-01T03:15:00Z'
+updated: '2026-09-01T17:25:00Z'
 status: production-live-smoke-pending
+post_deploy_fixes:
+  - '20260901120000_ai_config_write_rpc.sql — model/limit writes -> security-definer RPCs (fixes 42501 on .upsert). Committed; awaiting db push + FE rebuild.'
 current_checkpoint: 4
 pr: 'dev -> main merged 2026-09-01 (also carries 79ea34c — 009/010 inception drafts, no code)'
 environments:
@@ -110,6 +112,48 @@ ai_call_counter;`
     Both are non-destructive to existing data (`ai_call_counter` holds only per-day counters).
 - No down-migrations; roll **forward** (fix + re-push) unless a migration itself failed to
   apply.
+
+## Post-deploy fix (2026-09-01) — `.upsert()` on `household_ai_config` → 42501
+
+**Symptom (found during Checkpoint 4 smoke, S1/S2):** as a confirmed household **owner**
+(`platform.six@gmail.com`, founding household), changing **Model** or **Daily call limit** on
+`/settings` returned `403 { code: 42501, message: "permission denied for table
+household_ai_config", hint: "GRANT UPDATE ON public.household_ai_config TO authenticated" }`.
+Save key and Test connection were unaffected.
+
+**Cause (latent since intent 007, not introduced by 008):** `updateAiConfig` did a PostgREST
+`.upsert()` = `INSERT … ON CONFLICT DO UPDATE`. `household_ai_config` has **column-level
+grants only** for `authenticated` (no table-level `INSERT`/`UPDATE`) so an owner cannot
+repoint `key_secret_id` (ADR-4); 008 then revoked `UPDATE(updated_at, updated_by)` on top. On
+prod's PostgREST, the `ON CONFLICT DO UPDATE` form needs **table-level `UPDATE`** privilege,
+which the role lacks → 42501. (Locally it happened to pass — a PostgREST-version difference.)
+The write path was never exercised end-to-end against real grants: `007`/`008` tests mock
+`updateAiConfig` or use `security definer` RPCs.
+
+**Fix — `20260901120000_ai_config_write_rpc.sql` + `settings/api.ts`:** move model/limit
+writes to two `security definer` RPCs, `set_ai_model_override(text)` /
+`set_ai_daily_call_limit(integer)` — same pattern as `set_household_ai_key`. Each resolves the
+household server-side, checks the caller is `owner` (`raise 42501` otherwise), validates
+(allowlist / non-negative → `22023`), and does the `insert … on conflict do update`; the
+`stamp_household_ai_config_provenance` trigger still records provenance. `execute` granted to
+`authenticated` only. `updateAiConfig` now `.rpc(...)` (no client `householdId` arg);
+`ClaudeAiCard` drops the unused `householdId`. The `20260901000000` column-revoke stays (now
+pure defense — the client no longer touches those columns).
+
+Verified (local, `dev`):
+
+| Check                                | Result                                                                                  | When              |
+| ------------------------------------ | --------------------------------------------------------------------------------------- | ----------------- |
+| `npx supabase test db`               | ✅ PASS — 256 tests / 17 files (new `ai_config_write_rpc_test` 16/16)                   | 2026-09-01T17:20Z |
+| `npx vitest run`                     | ✅ 180/180 / 25 files                                                                   | 2026-09-01T17:20Z |
+| `npx tsc -b` / `eslint` / `prettier` | ✅ clean                                                                                | 2026-09-01T17:20Z |
+| `deno test` (claude-proxy)           | ✅ 33/33 (untouched)                                                                    | 2026-09-01T17:20Z |
+| `database.types.ts`                  | regen (`--local`) — adds `set_ai_model_override` / `set_ai_daily_call_limit` signatures |                   |
+
+Deploy: `npx --yes supabase db push --linked` (migration `20260901120000`) + Netlify rebuild
+on the `main` merge. No Edge Function change. Rollback: `drop function
+set_ai_model_override(text), set_ai_daily_call_limit(integer)` + revert `settings/api.ts` to
+the `.upsert()` form.
 
 ## Notes / deviations
 

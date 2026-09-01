@@ -1,11 +1,6 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: '14.5';
-  };
   graphql_public: {
     Tables: {
       [_ in never]: never;
@@ -697,6 +692,8 @@ export type Database = {
         Args: { p_household_id: string };
         Returns: undefined;
       };
+      set_ai_daily_call_limit: { Args: { p_limit: number }; Returns: undefined };
+      set_ai_model_override: { Args: { p_model: string }; Returns: undefined };
       set_household_ai_key: { Args: { p_key: string }; Returns: undefined };
     };
     Enums: {

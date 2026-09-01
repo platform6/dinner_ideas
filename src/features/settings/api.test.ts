@@ -4,36 +4,38 @@ import { updateAiConfig } from '@/features/settings/api';
 import { supabase } from '@/shared/lib/supabase';
 
 vi.mock('@/shared/lib/supabase', () => ({
-  supabase: { from: vi.fn(), rpc: vi.fn() },
+  supabase: { rpc: vi.fn() },
 }));
 
-const mockedFrom = vi.mocked(supabase.from);
+const mockedRpc = vi.mocked(supabase.rpc);
 
 describe('updateAiConfig', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedRpc.mockResolvedValue({ error: null } as never);
   });
 
-  it('upserts only { household_id, ...patch } — no client updated_at (server trigger stamps it)', async () => {
-    const upsert = vi.fn().mockResolvedValue({ error: null });
-    mockedFrom.mockReturnValue({ upsert } as never);
-
-    await updateAiConfig('hh-1', { daily_call_limit: 7 });
-
-    expect(mockedFrom).toHaveBeenCalledWith('household_ai_config');
-    expect(upsert).toHaveBeenCalledWith(
-      { household_id: 'hh-1', daily_call_limit: 7 },
-      { onConflict: 'household_id' },
-    );
-    const [payload] = upsert.mock.calls[0];
-    expect(payload).not.toHaveProperty('updated_at');
-    expect(payload).not.toHaveProperty('updated_by');
+  it('a model change calls set_ai_model_override, not a table upsert', async () => {
+    await updateAiConfig({ model_override: 'claude-opus-5' });
+    expect(mockedRpc).toHaveBeenCalledTimes(1);
+    expect(mockedRpc).toHaveBeenCalledWith('set_ai_model_override', { p_model: 'claude-opus-5' });
   });
 
-  it('throws when the upsert returns an error', async () => {
-    const upsert = vi.fn().mockResolvedValue({ error: new Error('rls') });
-    mockedFrom.mockReturnValue({ upsert } as never);
+  it('clearing the model override sends p_model: null', async () => {
+    await updateAiConfig({ model_override: null });
+    expect(mockedRpc).toHaveBeenCalledWith('set_ai_model_override', { p_model: null });
+  });
 
-    await expect(updateAiConfig('hh-1', { model_override: 'claude-opus-5' })).rejects.toThrow('rls');
+  it('a daily-limit change calls set_ai_daily_call_limit', async () => {
+    await updateAiConfig({ daily_call_limit: 7 });
+    expect(mockedRpc).toHaveBeenCalledTimes(1);
+    expect(mockedRpc).toHaveBeenCalledWith('set_ai_daily_call_limit', { p_limit: 7 });
+  });
+
+  it('throws when the RPC returns an error', async () => {
+    mockedRpc.mockResolvedValue({
+      error: new Error('only a household owner can change AI settings'),
+    } as never);
+    await expect(updateAiConfig({ daily_call_limit: 7 })).rejects.toThrow('only a household owner');
   });
 });

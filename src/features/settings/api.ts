@@ -43,16 +43,29 @@ export async function clearHouseholdKey(): Promise<void> {
 }
 
 /**
- * Owner-only. `key_secret_id` is not writable here (column-revoked) — use the RPCs above.
- * `updated_by` / `updated_at` are stamped by a server-side trigger
- * (`stamp_household_ai_config_provenance`); the client no longer sends them.
+ * Owner-only. Writes go through `security definer` RPCs (like the key RPCs above), not a
+ * PostgREST upsert: `household_ai_config` has column-level grants only (to protect
+ * `key_secret_id` — ADR-4), which an `INSERT ... ON CONFLICT DO UPDATE` can't satisfy. The
+ * RPCs resolve the household server-side and check the caller is an owner; the
+ * `stamp_household_ai_config_provenance` trigger records `updated_by` / `updated_at`.
+ * Callers pass exactly one key.
  */
-export async function updateAiConfig(
-  householdId: string,
-  patch: { model_override?: ClaudeModel | null; daily_call_limit?: number },
-): Promise<void> {
-  const { error } = await supabase
-    .from('household_ai_config')
-    .upsert({ household_id: householdId, ...patch }, { onConflict: 'household_id' });
-  if (error) throw error;
+export async function updateAiConfig(patch: {
+  model_override?: ClaudeModel | null;
+  daily_call_limit?: number;
+}): Promise<void> {
+  if (patch.model_override !== undefined) {
+    const { error } = await supabase.rpc('set_ai_model_override', {
+      // the RPC accepts null (= clear the override, use the server default); the generated
+      // arg type is string-only because it can't see the function's null handling.
+      p_model: (patch.model_override ?? null) as string,
+    });
+    if (error) throw error;
+  }
+  if (patch.daily_call_limit !== undefined) {
+    const { error } = await supabase.rpc('set_ai_daily_call_limit', {
+      p_limit: patch.daily_call_limit,
+    });
+    if (error) throw error;
+  }
 }
