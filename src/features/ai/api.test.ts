@@ -115,6 +115,29 @@ describe('callClaude', () => {
     ).rejects.toMatchObject({ code: 'upstream_error' });
   });
 
+  it('maps an aborted fetch (client timeout) to ClaudeError timeout', async () => {
+    withSession();
+    const abort = new Error('The operation was aborted.');
+    abort.name = 'AbortError';
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(abort));
+    await expect(
+      callClaude({ feature: 'x', messages: [{ role: 'user', content: 'hi' }] }),
+    ).rejects.toMatchObject({ code: 'timeout' });
+  });
+
+  it('passes an AbortSignal to fetch', async () => {
+    withSession();
+    const fetchFn = mockFetch(200, {
+      text: 'pong',
+      model: 'claude-sonnet-5',
+      usage: { input_tokens: 1, output_tokens: 1 },
+      latency_ms: 1,
+    });
+    await callClaude({ feature: 'x', messages: [{ role: 'user', content: 'hi' }] });
+    const [, init] = fetchFn.mock.calls[0];
+    expect((init as RequestInit).signal).toBeInstanceOf(AbortSignal);
+  });
+
   it('rejects a 200 with a malformed body', async () => {
     withSession();
     mockFetch(200, { model: 'claude-sonnet-5' }); // no `text`

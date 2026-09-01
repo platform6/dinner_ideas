@@ -142,6 +142,20 @@
 - [x] **002-settings-route-and-test-connection** (settings-ui): `/settings` route + nav link + Test Connection card - Must - ✅ COMPLETE
 - [x] **003-owner-ai-controls** (settings-ui): Owner-only key set/clear (enable path), model override, daily limit - Must - ✅ COMPLETE
 
+### 008-claude-proxy-review-remediation
+
+**Unit: 001-claude-proxy-hardening** — ✅ COMPLETE (bolts 040, 041)
+
+- [x] **001-fail-closed-daily-cap** (claude-proxy-hardening): `countToday` propagates its query error; non-numeric `AI_DAILY_CALL_LIMIT` → default, never `NaN`; unverifiable count → `502 upstream_error` + one row - Must - ✅ COMPLETE
+- [x] **002-count-genuine-usage-atomic-cap** (claude-proxy-hardening): cap counts only genuine-usage rows; atomic insert-iff-under-limit so concurrency / invalid-request floods can't evade it - Must - ✅ COMPLETE
+- [x] **003-surface-resolver-errors** (claude-proxy-hardening): `resolveHousehold` / `loadConfig` / `resolveKey` errors → `502 upstream_error`, not `no_household` / `no_api_key` - Must - ✅ COMPLETE
+- [x] **004-sdk-timeout-and-metering-isolation** (claude-proxy-hardening): explicit SDK `timeout` + `maxRetries: 0` so `timeout` path is reachable + logged; metering-write failure no longer turns a paid 200 into a 502 - Must - ✅ COMPLETE
+
+**Unit: 002-settings-ai-remediation** — ✅ COMPLETE (bolt 042)
+
+- [x] **001-settings-ui-reflects-config-no-hang** (settings-ai-remediation): daily-limit field shows the saved value; `callClaude` `AbortController` timeout; drop the dead `useEffect` - Should - ✅ COMPLETE
+- [x] **002-ai-config-write-provenance** (settings-ai-remediation): `BEFORE INSERT OR UPDATE` trigger stamps `updated_by` / `updated_at`; client drops client-clock `updated_at` - Should - ✅ COMPLETE
+
 ---
 
 ## Stories by Status
@@ -149,4 +163,4 @@
 - **Planned**: 0
 - **Generated**: 0
 - **In Progress**: 0
-- **Completed**: 80
+- **Completed**: 86

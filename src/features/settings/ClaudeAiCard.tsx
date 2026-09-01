@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   Alert,
   AlertIcon,
@@ -50,7 +50,10 @@ export function ClaudeAiCard() {
 
   const [test, setTest] = useState<TestState>({ status: 'idle' });
   const [keyInput, setKeyInput] = useState('');
-  useEffect(() => () => setKeyInput(''), []); // never keep the entered key around
+  // null until the owner edits the field; before that it tracks the loaded config so the
+  // input shows the saved limit once the query resolves (not a mount-time fallback).
+  const [limitEdit, setLimitEdit] = useState<string | null>(null);
+  const limitValue = limitEdit ?? (config.data ? String(config.data.dailyCallLimit) : '');
 
   async function runTest() {
     setTest({ status: 'loading' });
@@ -182,41 +185,47 @@ export function ClaudeAiCard() {
               )}
             </Box>
 
-            <Box>
-              <Text fontSize="sm" fontWeight={600} mb={2}>
-                Model
-              </Text>
-              <Select
-                size="sm"
-                maxW="260px"
-                aria-label="Model"
-                value={config.data?.modelOverride ?? ''}
-                onChange={(e) => saveModel.mutate(e.target.value)}
-              >
-                <option value="">Default (Sonnet 5)</option>
-                <option value="claude-sonnet-5">claude-sonnet-5</option>
-                <option value="claude-haiku-4-5">claude-haiku-4-5</option>
-                <option value="claude-opus-5">claude-opus-5</option>
-              </Select>
-            </Box>
+            {/* Model + limit are bound to the loaded config — render them only once it's in. */}
+            {config.isSuccess && (
+              <>
+                <Box>
+                  <Text fontSize="sm" fontWeight={600} mb={2}>
+                    Model
+                  </Text>
+                  <Select
+                    size="sm"
+                    maxW="260px"
+                    aria-label="Model"
+                    value={config.data.modelOverride ?? ''}
+                    onChange={(e) => saveModel.mutate(e.target.value)}
+                  >
+                    <option value="">Default (Sonnet 5)</option>
+                    <option value="claude-sonnet-5">claude-sonnet-5</option>
+                    <option value="claude-haiku-4-5">claude-haiku-4-5</option>
+                    <option value="claude-opus-5">claude-opus-5</option>
+                  </Select>
+                </Box>
 
-            <Box>
-              <Text fontSize="sm" fontWeight={600} mb={2}>
-                Daily call limit
-              </Text>
-              <Input
-                type="number"
-                size="sm"
-                maxW="120px"
-                min={0}
-                aria-label="Daily call limit"
-                defaultValue={config.data?.dailyCallLimit ?? 25}
-                onBlur={(e) => {
-                  const n = Number(e.target.value);
-                  if (Number.isInteger(n) && n >= 0) saveLimit.mutate(n);
-                }}
-              />
-            </Box>
+                <Box>
+                  <Text fontSize="sm" fontWeight={600} mb={2}>
+                    Daily call limit
+                  </Text>
+                  <Input
+                    type="number"
+                    size="sm"
+                    maxW="120px"
+                    min={0}
+                    aria-label="Daily call limit"
+                    value={limitValue}
+                    onChange={(e) => setLimitEdit(e.target.value)}
+                    onBlur={(e) => {
+                      const n = Number(e.target.value);
+                      if (Number.isInteger(n) && n >= 0) saveLimit.mutate(n);
+                    }}
+                  />
+                </Box>
+              </>
+            )}
           </Stack>
         </>
       ) : (

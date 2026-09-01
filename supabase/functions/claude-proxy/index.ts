@@ -1,6 +1,7 @@
-// claude-proxy — the app's only path to the Anthropic API. (intent 007, bolt 038)
+// claude-proxy — the app's only path to the Anthropic API. (intent 007, bolt 038;
+// hardened in intent 008, bolt 040)
 //
-// FROZEN CONTRACT (bolt 039 + intent 008 build against this):
+// FROZEN CONTRACT (bolt 039 + intent 009 recipe-import build against this):
 //   POST  Authorization: Bearer <supabase access token>
 //   body  { feature: string, system?: string,
 //           messages: {role:'user'|'assistant', content:string}[],
@@ -11,12 +12,15 @@
 //           no_household(403) no_api_key(409) rate_limited(429)
 //           bad_request(400) upstream_error(502) timeout(502)  | 401 has no error_code
 //
-// See ./README.md for env, limits, and deploy.
+// A backend-side failure (household/config/key lookup, or the daily-cap reserve) fails
+// CLOSED and surfaces as upstream_error(502) — never a misleading no_household/no_api_key
+// and never an unbounded run of paid calls. See ./README.md for env, limits, and deploy.
 
 import { createClient } from '@supabase/supabase-js';
 import { corsHeaders } from './cors.ts';
 import { callAnthropic } from './anthropic.ts';
 import { handleProxy, type Deps } from './pipeline.ts';
+import { parsePositiveInt } from './rates.ts';
 
 Deno.serve(async (req: Request) => {
   const cors = corsHeaders(req.headers.get('origin'));
@@ -46,37 +50,40 @@ Deno.serve(async (req: Request) => {
       return { id: data.user.id };
     },
     async resolveHousehold(profileId) {
-      const { data } = await service
+      const { data, error } = await service
         .from('household_members')
         .select('household_id')
         .eq('profile_id', profileId)
         .limit(1)
         .maybeSingle();
-      return data?.household_id ?? null;
+      if (error) return { data: null, error: true };
+      return { data: data?.household_id ?? null, error: false };
     },
     async loadConfig(householdId) {
-      const { data } = await service
+      const { data, error } = await service
         .from('household_ai_config')
         .select('model_override, daily_call_limit')
         .eq('household_id', householdId)
         .maybeSingle();
-      return data ?? null;
+      if (error) return { data: null, error: true };
+      return { data: data ?? null, error: false };
     },
-    async countToday(householdId) {
-      const since = new Date();
-      since.setUTCHours(0, 0, 0, 0);
-      const { count } = await service
-        .from('ai_usage_log')
-        .select('id', { count: 'exact', head: true })
-        .eq('household_id', householdId)
-        .gte('created_at', since.toISOString());
-      return count ?? 0;
+    async reserveCall(householdId, limit) {
+      const { data, error } = await service.rpc('reserve_ai_call', {
+        p_household_id: householdId,
+        p_limit: limit,
+      });
+      if (error) return { ok: false, reason: 'error' };
+      const n = data as number | null;
+      if (n === null || n === undefined) return { ok: false, reason: 'over_limit' };
+      return { ok: true, n };
     },
     async resolveKey(householdId) {
-      const { data } = await service.rpc('resolve_ai_key', {
+      const { data, error } = await service.rpc('resolve_ai_key', {
         p_household_id: householdId,
       });
-      return (data as string | null) ?? null;
+      if (error) return { data: null, error: true };
+      return { data: (data as string | null) ?? null, error: false };
     },
     callAnthropic,
     async insertUsage(row) {
@@ -84,9 +91,7 @@ Deno.serve(async (req: Request) => {
     },
     now: () => Date.now(),
     envModel: Deno.env.get('ANTHROPIC_MODEL') ?? undefined,
-    envDailyLimit: Deno.env.get('AI_DAILY_CALL_LIMIT')
-      ? Number(Deno.env.get('AI_DAILY_CALL_LIMIT'))
-      : undefined,
+    envDailyLimit: parsePositiveInt(Deno.env.get('AI_DAILY_CALL_LIMIT')),
   };
 
   const raw = await req.text();

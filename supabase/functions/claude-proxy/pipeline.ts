@@ -1,6 +1,6 @@
-// The testable core of claude-proxy: auth -> household -> rate-limit -> key -> validate ->
+// The testable core of claude-proxy: auth -> household -> config -> key -> rate-limit ->
 // Anthropic -> meter -> respond. No I/O of its own — everything is injected via `Deps`.
-// (intent 007, bolt 038, story 003)
+// (intent 007, bolt 038; hardened in intent 008, bolt 040 — FR-1/FR-2/FR-3)
 
 import { ProxyFailure, type ErrorCode } from './errors.ts';
 import type { Message } from './anthropic.ts';
@@ -37,14 +37,32 @@ export interface UsageRow {
   latency_ms: number;
 }
 
+export interface ConfigRow {
+  model_override: string | null;
+  daily_call_limit: number;
+}
+
+/**
+ * Result of a dependency lookup that must distinguish "query failed" from "no such row".
+ * `error: true` → the underlying query errored (→ upstream_error, fail closed).
+ * `error: false` with `data: null` → the query succeeded and there is genuinely no row.
+ */
+export type Loaded<T> = { data: T; error: false } | { data: null; error: true };
+
+/**
+ * Outcome of atomically reserving one daily call slot.
+ * `ok: true` → slot reserved (n = new count). `reason: 'over_limit'` → at/over the cap.
+ * `reason: 'error'` → the reserve query failed (→ upstream_error, fail closed).
+ */
+export type Reservation = { ok: true; n: number } | { ok: false; reason: 'over_limit' | 'error' };
+
 export interface Deps {
   getUser(authHeader: string | null): Promise<{ id: string } | null>;
-  resolveHousehold(profileId: string): Promise<string | null>;
-  loadConfig(
-    householdId: string,
-  ): Promise<{ model_override: string | null; daily_call_limit: number } | null>;
-  countToday(householdId: string): Promise<number>;
-  resolveKey(householdId: string): Promise<string | null>;
+  resolveHousehold(profileId: string): Promise<Loaded<string | null>>;
+  loadConfig(householdId: string): Promise<Loaded<ConfigRow | null>>;
+  /** Atomically claim one call slot for today, enforcing `limit` (the effective daily cap). */
+  reserveCall(householdId: string, limit: number): Promise<Reservation>;
+  resolveKey(householdId: string): Promise<Loaded<string | null>>;
   callAnthropic(
     key: string,
     model: string,
@@ -136,7 +154,7 @@ export async function handleProxy(
 ): Promise<PipelineResult> {
   const t0 = deps.now();
 
-  // ── Authentication — no usage row on failure ──────────────────────────────
+  // ── Authentication — no usage row on failure ─────────────────────────────
   const user = await deps.getUser(authHeader);
   if (!user) {
     return {
@@ -145,8 +163,16 @@ export async function handleProxy(
     };
   }
 
-  const householdId = await deps.resolveHousehold(user.id);
-  if (!householdId) {
+  // ── Household resolution — still before the "one row" boundary ───────────
+  // A query *failure* here is a transient backend error, NOT "you have no household".
+  const hh = await deps.resolveHousehold(user.id);
+  if (hh.error) {
+    return {
+      status: 502,
+      body: { error_code: 'upstream_error', message: 'could not resolve your household' },
+    };
+  }
+  if (hh.data === null) {
     return {
       status: 403,
       body: {
@@ -155,8 +181,9 @@ export async function handleProxy(
       },
     };
   }
+  const householdId = hh.data;
 
-  // ── From here: exactly one ai_usage_log row per request ───────────────────
+  // ── From here: exactly one ai_usage_log row per request ─────────────────
   let logged = false;
   const write = async (r: {
     feature: string;
@@ -194,23 +221,42 @@ export async function handleProxy(
     }
     const v = validate(parsed);
 
-    const cfg = (await deps.loadConfig(householdId)) ?? {
+    // ── Config — a query failure is transient, not "use the defaults" ──────
+    const cfgRes = await deps.loadConfig(householdId);
+    if (cfgRes.error) {
+      await write({ feature: v.feature, model: fallbackModel, ok: false, error_code: 'upstream_error' });
+      return {
+        status: 502,
+        body: { error_code: 'upstream_error', message: 'could not load AI configuration' },
+      };
+    }
+    const cfg: ConfigRow = cfgRes.data ?? {
       model_override: null,
       daily_call_limit: deps.envDailyLimit ?? DEFAULT_DAILY_LIMIT,
     };
     const model = v.model ?? cfg.model_override ?? fallbackModel;
 
-    const used = await deps.countToday(householdId);
-    if (used >= cfg.daily_call_limit) {
-      await write({ feature: v.feature, model, ok: false, error_code: 'rate_limited' });
+    // Defence in depth: never let a non-finite limit read as "no cap".
+    const limit = cfg.daily_call_limit;
+    if (!Number.isFinite(limit) || limit < 0) {
+      await write({ feature: v.feature, model, ok: false, error_code: 'upstream_error' });
       return {
-        status: 429,
-        body: { error_code: 'rate_limited', message: 'daily call limit reached' },
+        status: 502,
+        body: { error_code: 'upstream_error', message: 'invalid daily call limit configuration' },
       };
     }
 
-    const key = await deps.resolveKey(householdId);
-    if (!key) {
+    // ── Key — checked BEFORE reserving a slot, so a no_api_key attempt never
+    //    consumes the daily cap. A query failure is transient, not "no key". ──
+    const keyRes = await deps.resolveKey(householdId);
+    if (keyRes.error) {
+      await write({ feature: v.feature, model, ok: false, error_code: 'upstream_error' });
+      return {
+        status: 502,
+        body: { error_code: 'upstream_error', message: 'could not resolve the household API key' },
+      };
+    }
+    if (keyRes.data === null) {
       await write({ feature: v.feature, model, ok: false, error_code: 'no_api_key' });
       return {
         status: 409,
@@ -220,10 +266,41 @@ export async function handleProxy(
         },
       };
     }
+    const key = keyRes.data;
 
+    // ── Rate limit — atomic reserve-one-slot. Fail closed on a query error. ──
+    const reservation = await deps.reserveCall(householdId, limit);
+    if (!reservation.ok && reservation.reason === 'error') {
+      await write({ feature: v.feature, model, ok: false, error_code: 'upstream_error' });
+      return {
+        status: 502,
+        body: { error_code: 'upstream_error', message: 'could not verify the daily call limit' },
+      };
+    }
+    if (!reservation.ok) {
+      await write({ feature: v.feature, model, ok: false, error_code: 'rate_limited' });
+      return {
+        status: 429,
+        body: { error_code: 'rate_limited', message: 'daily call limit reached' },
+      };
+    }
+
+    // ── Anthropic call. A failure here is mapped to a typed error + one row. ──
+    let r: { text: string; usage: { input_tokens: number; output_tokens: number } };
     try {
-      const r = await deps.callAnthropic(key, model, v.maxTokens ?? DEFAULT_MAX_TOKENS, v.system, v.messages);
-      const est_cost_usd = estCostUsd(model, r.usage);
+      r = await deps.callAnthropic(key, model, v.maxTokens ?? DEFAULT_MAX_TOKENS, v.system, v.messages);
+    } catch (err) {
+      const pf =
+        err instanceof ProxyFailure ? err : new ProxyFailure('upstream_error', 'Claude upstream error', 502);
+      await write({ feature: v.feature, model, ok: false, error_code: pf.code });
+      return { status: pf.httpStatus, body: { error_code: pf.code, message: pf.message } };
+    }
+
+    // ── The call succeeded and is billed. A metering-write failure must NOT turn it
+    //    into a client error — log it and still return 200. This is the one documented
+    //    exception to "exactly one ai_usage_log row per resolved-household request". ──
+    const est_cost_usd = estCostUsd(model, r.usage);
+    try {
       await write({
         feature: v.feature,
         model,
@@ -233,21 +310,18 @@ export async function handleProxy(
         output_tokens: r.usage.output_tokens,
         est_cost_usd,
       });
-      return {
-        status: 200,
-        body: {
-          text: r.text,
-          model,
-          usage: r.usage,
-          latency_ms: deps.now() - t0,
-        },
-      };
     } catch (err) {
-      const pf =
-        err instanceof ProxyFailure ? err : new ProxyFailure('upstream_error', 'Claude upstream error', 502);
-      await write({ feature: v.feature, model, ok: false, error_code: pf.code });
-      return { status: pf.httpStatus, body: { error_code: pf.code, message: pf.message } };
+      console.error('claude-proxy: metering write failed after a successful Claude call', err);
     }
+    return {
+      status: 200,
+      body: {
+        text: r.text,
+        model,
+        usage: r.usage,
+        latency_ms: deps.now() - t0,
+      },
+    };
   } catch (err) {
     // JSON / validation failures — the request may not even have a valid feature.
     const pf = err instanceof ProxyFailure ? err : new ProxyFailure('bad_request', 'bad request', 400);

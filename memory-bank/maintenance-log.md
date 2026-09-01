@@ -130,3 +130,15 @@
 | memory-bank\intents\001-weekly-dinner-planner\requirements.md | construction | units-defined | Intent has 4 units (3/4 complete) |
 
 ---
+
+## 2026-08-31T21:31:36.007Z - Status Sync
+
+**Triggered by**: status-integrity script
+
+| Artifact                                                                                                | Old Status  | New Status      | Reason                            |
+| ------------------------------------------------------------------------------------------------------- | ----------- | --------------- | --------------------------------- |
+| memory-bank\intents\008-claude-proxy-review-remediation\units\001-claude-proxy-hardening\unit-brief.md  | draft       | stories-defined | Unit has 2 bolts (0/2 complete)   |
+| memory-bank\intents\008-claude-proxy-review-remediation\units\002-settings-ai-remediation\unit-brief.md | draft       | stories-defined | Unit has 1 bolts (0/1 complete)   |
+| memory-bank\intents\008-claude-proxy-review-remediation\requirements.md                                 | in-progress | units-defined   | Intent has 2 units (0/2 complete) |
+
+---

@@ -21,6 +21,17 @@ export function isAllowedModel(m: unknown): m is ModelId {
   return typeof m === 'string' && (ALLOWLIST as readonly string[]).includes(m);
 }
 
+/**
+ * Parse an env value that must be a positive integer (e.g. AI_DAILY_CALL_LIMIT).
+ * Returns `undefined` for a missing OR non-numeric value ("25/day", "", "abc", "0", "-1")
+ * so callers fall back to a real default — never `NaN`, which would silently disable a cap.
+ */
+export function parsePositiveInt(raw: string | undefined | null): number | undefined {
+  if (raw === undefined || raw === null) return undefined;
+  const n = Number(raw);
+  return Number.isInteger(n) && n > 0 ? n : undefined;
+}
+
 /** est_cost_usd rounded to 6 decimals; 0 for an unknown model. */
 export function estCostUsd(model: string, usage: { input_tokens: number; output_tokens: number }): number {
   const rate = MODEL_RATES[model as ModelId];

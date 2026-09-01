@@ -101,9 +101,18 @@ describe('ClaudeAiCard', () => {
     asRole('owner');
     renderCard();
     expect(await screen.findByLabelText(/anthropic api key/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^model$/i)).toBeInTheDocument();
+    // model + limit render once the ai-config query resolves (they are bound to its data)
+    expect(await screen.findByLabelText(/^model$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/daily call limit/i)).toBeInTheDocument();
     expect(screen.getByText(/no key set — claude is off/i)).toBeInTheDocument();
+  });
+
+  it('daily-limit field shows the saved value once the config query resolves', async () => {
+    asRole('owner');
+    mockedFetchConfig.mockResolvedValue({ modelOverride: null, dailyCallLimit: 5, keySet: false });
+    renderCard();
+    const limit = await screen.findByLabelText(/daily call limit/i);
+    await waitFor(() => expect(limit).toHaveValue(5));
   });
 
   it('owner saves a key: calls the RPC, clears the input, then shows "Key set ✓"', async () => {
