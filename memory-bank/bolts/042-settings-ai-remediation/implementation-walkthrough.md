@@ -6,6 +6,15 @@ created: '2026-09-01T00:55:00Z'
 
 ## Implementation Walkthrough: settings-ai-remediation (bolt 042)
 
+> **Post-bolt fix (2026-09-01, `ec41f22`).** FR-6 as built here kept `updateAiConfig` on a
+> PostgREST `.upsert()`. That `42501`'d on prod (`household_ai_config` has column-only grants
+> — ADR-4 — and prod's PostgREST needs table-level `UPDATE` for `ON CONFLICT DO UPDATE`).
+> Replaced by migration `20260901120000_ai_config_write_rpc.sql` + `security definer` RPCs
+> `set_ai_model_override` / `set_ai_daily_call_limit`; `updateAiConfig` now `.rpc(...)`. The
+> provenance trigger and everything else in this bolt are unchanged. See
+> `../../intents/008-claude-proxy-review-remediation/deployment/deployment-plan.md` and
+> `../../standards/decision-index.md` ADR-6.
+
 ### Summary
 
 The `/settings` "Claude / AI" card no longer shows a stale daily-limit, `callClaude` can no
@@ -34,13 +43,13 @@ them, and they are column-revoked from `authenticated`.
       `useEffect` dropped from the `react` import. - **Finding 1**: the Model `<Select>` and the "Daily call limit" `<Input>` are wrapped
       in `{config.isSuccess && (…)}` so they mount once, with data present. The limit input
       is now **controlled** — `value={limitValue}` where `limitValue = limitEdit ??
-      String(config.data.dailyCallLimit)`; `limitEdit` (a `string | null`) starts `null`
+    String(config.data.dailyCallLimit)`; `limitEdit` (a `string | null`) starts `null`
       (field tracks the loaded value) and holds the user's text once they type (so a
       background refetch can't clobber an in-progress edit). `onBlur` mutation unchanged.
 - [x] `src/features/ai/api.ts` — - **Finding 8**: `CLAUDE_FETCH_TIMEOUT_MS = 60_000`; a `new AbortController()` whose
       `signal` is passed to `fetch`, aborted by a `setTimeout`, `clearTimeout` in
       `finally`. A caught error with `name === 'AbortError'` → `new ClaudeError('timeout',
-      'The AI service took too long to respond.')`; any other caught error still →
+    'The AI service took too long to respond.')`; any other caught error still →
       `upstream_error`.
 - [x] `src/features/settings/api.ts` — - **Finding 9**: `updateAiConfig` upserts `{ household_id, ...patch }` only — the
       `updated_at: new Date().toISOString()` field is removed. Doc comment notes the

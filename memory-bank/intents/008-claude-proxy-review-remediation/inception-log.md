@@ -107,14 +107,23 @@ findings map to FRs as:
 - [x] Open questions OQ-1 / OQ-2 / OQ-3 resolved by the user
 - [ ] Human review of the full artifact set (Checkpoint 3) — pending
 
-## Next Steps
+## Status (2026-09-01) — DONE, production-live
 
-1. **Checkpoint 3**: user skims the 2 unit briefs + 6 stories + 3 bolts, then approve.
-2. Begin Construction with Unit `001-claude-proxy-hardening`, bolt `040-claude-proxy-hardening`:
-   `/specsmd-construction-agent --intent="008-claude-proxy-review-remediation"`.
-3. Bolt `041` after `040` (shared `pipeline.ts`); bolt `042` any time (independent).
-4. Per OQ-5, redeploy `claude-proxy` + verify after unit `001`, following `007`'s
-   `deployment/` pattern; then it is safe to start `009-recipe-import`.
+Inception → construction → deployment all complete.
+
+- Construction: units `001` (bolts 040, 041) + `002` (bolt 042) complete; all 6 stories
+  `implemented: true`. See each unit's `construction-log.md`.
+- Deployment: `deployment/build.md` + `deployment/deployment-plan.md`. Prod (`gpkqsedtlzxczmarxjia`):
+  migrations `20260831213000`, `20260901000000`, `20260901120000` applied; `claude-proxy`
+  Edge Function deployed; FE on Netlify `main`. Verified on prod 2026-09-01 (model/limit
+  edits 200, Test connection OK).
+- Post-deploy fix (`ec41f22`, migration `20260901120000`): model/limit writes moved from a
+  broken `.upsert()` to `security definer` RPCs — **ADR-6**; see the deployment-plan
+  "Post-deploy fix" and its "Outstanding / cleanup" list for the remaining non-blocking
+  smoke spot-checks + `get_advisors`.
+
+_(The recipe-import intent referenced in the old OQ-5 note is not yet created; it takes a
+later intent number. `009` / `010` are `clear-picks-reset` / `grocery-store-location-model`.)_
 
 ## Dependencies
 

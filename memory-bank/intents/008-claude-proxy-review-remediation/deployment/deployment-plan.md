@@ -103,22 +103,57 @@ Not manually reproducible (covered by automated tests): transient-DB-error fail-
 metering-write failure (FR-4). If the proxy ever is slow, the expected outcome is `502
 timeout` **with** an `ai_usage_log` row, before the platform kills the function.
 
+## Outstanding / cleanup
+
+Intent 008 is **production-live** and its blocking defect (the settings-write `42501`) is
+fixed and verified on prod. The rest is non-blocking:
+
+- [ ] **Smoke S3** — cap trips at limit+1: set `daily_call_limit = 3`, delete today's
+      `ai_call_counter` row, press Test connection 4× → 3 OK then "Daily limit reached";
+      counter row `(HH, today, 3)`; `ai_usage_log` = 3 `ok=true` + 1 `rate_limited`.
+- [ ] **Smoke S4** — raw PostgREST PATCH of `updated_at` on `household_ai_config` → 403.
+- [ ] **Smoke S5** — clear the key → Test connection → "No Claude API key set…".
+- [ ] **Smoke S2 DB check** — after a model/limit edit, `updated_by` = the owner's uid and
+      `updated_at` ≈ now (the `20260901120000` RPCs go through the provenance trigger).
+- [ ] **`get_advisors`** (security + performance) from the Supabase **dashboard** → Advisors
+      (MCP path is permission-denied). Expect no new ERROR: the 4 new `security definer`
+      functions (`reserve_ai_call`, `stamp_household_ai_config_provenance`,
+      `set_ai_model_override`, `set_ai_daily_call_limit`) all `set search_path = ''` and grant
+      `execute` narrowly, mirroring `007`'s functions — so no new
+      `function_search_path_mutable` / definer-executable WARN expected.
+- [ ] **Branch housekeeping** — `dev` is several commits ahead of `main` after the fix
+      merges; keep merging `dev → main` per the existing PR flow, or leave `dev` as the
+      integration branch. (No open work items block on this.)
+
+Non-008 follow-ups (parked, not part of this intent):
+
+- Intents **009-clear-picks-reset** (OQ-1) and **010-grocery-store-location-model**
+  (OQ-A..OQ-E for Chandler) sit at inception Checkpoint 2 awaiting answers.
+
 ## Rollback (emergency only — no data loss)
 
-- **FE**: redeploy the previous Netlify production deploy (instant). Old FE + new schema
-  works for reads/Test connection; only model/limit edits 403 (see Ordering hazard).
+- **FE**: redeploy the previous Netlify production deploy (instant). ⚠️ the pre-`ec41f22` FE
+  does model/limit writes via `.upsert()` and will `42501` — only Test connection / key
+  set-clear stay usable. Prefer rolling forward.
 - **Edge Function**: `supabase functions deploy` the previous `claude-proxy` from the
   pre-008 commit. Old function + new schema is fine — it simply doesn't call
   `reserve_ai_call` (falls back to the old `count(*)` cap).
 - **DB**: per each migration's header —
+  - `20260901120000`: `drop function set_ai_model_override(text), set_ai_daily_call_limit(integer);`
+    (then the FE must also revert to a working write path — there is no bare `.upsert()` that
+    works against the column-only grants, so roll forward instead).
   - `20260901000000`: `drop trigger trg_household_ai_config_provenance …; drop function
 stamp_household_ai_config_provenance(); grant insert/update (updated_at, updated_by) …
 to authenticated;`
   - `20260831213000`: `drop function reserve_ai_call(uuid,integer); drop table
 ai_call_counter;`
-    Both are non-destructive to existing data (`ai_call_counter` holds only per-day counters).
+    All are non-destructive to existing data (`ai_call_counter` holds only per-day counters).
 - No down-migrations; roll **forward** (fix + re-push) unless a migration itself failed to
   apply.
+
+> The "Ordering hazard" section above is historical — it was closed 2026-09-01 when the
+> Netlify `main` build went live, and superseded by the "Post-deploy fix" (the `.upsert()`
+> path was broken for owners regardless of ordering).
 
 ## Post-deploy fix (2026-09-01) — `.upsert()` on `household_ai_config` → 42501
 

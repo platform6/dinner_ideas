@@ -11,6 +11,13 @@ implemented: true
 
 # Story: 002-ai-config-write-provenance
 
+> **Post-deploy amendment (2026-09-01, `ec41f22`).** The provenance trigger below shipped and
+> works. But keeping `updateAiConfig` on a `.upsert()` (this story's "no switch to `.rpc`,
+> OQ-2") `42501`'d on prod — `household_ai_config` has column-only grants (ADR-4) and
+> `ON CONFLICT DO UPDATE` needs table-level `UPDATE`. Fixed by migration `20260901120000`:
+> model/limit writes now go through `security definer` RPCs (`set_ai_model_override` /
+> `set_ai_daily_call_limit`). See ADR-6 and `../../../deployment/deployment-plan.md`.
+
 ## User Story
 
 **As** a household owner (and anyone later auditing config changes)
@@ -28,7 +35,7 @@ implemented: true
 
 - [ ] **Given** an owner changes `model_override` or `daily_call_limit` on `/settings`,
       **When** the write completes, **Then** the row has `updated_by = <the owner's profile
-    id>` and `updated_at` within a few seconds of server `now()`.
+  id>` and `updated_at` within a few seconds of server `now()`.
 - [ ] **Given** `updateAiConfig`, **When** it issues the write, **Then** it no longer sends
       `updated_at` (and does not send `updated_by`); it keeps using
       `supabase.from('household_ai_config').upsert(..., { onConflict: 'household_id' })`.
