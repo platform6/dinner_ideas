@@ -6,7 +6,7 @@ created: '2026-09-01T02:30:00Z'
 updated: '2026-09-01T17:25:00Z'
 status: production-live-smoke-pending
 post_deploy_fixes:
-  - '20260901120000_ai_config_write_rpc.sql — model/limit writes -> security-definer RPCs (fixes 42501 on .upsert). Committed; awaiting db push + FE rebuild.'
+  - '20260901120000_ai_config_write_rpc.sql — model/limit writes -> security-definer RPCs (fixes 42501 on .upsert). DB pushed to prod 2026-09-01T17:35Z (supabase db push --linked). FE fix in commit ec41f22 on dev — awaiting merge to main -> Netlify rebuild.'
 current_checkpoint: 4
 pr: 'dev -> main merged 2026-09-01 (also carries 79ea34c — 009/010 inception drafts, no code)'
 environments:
