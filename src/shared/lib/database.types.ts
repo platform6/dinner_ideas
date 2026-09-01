@@ -28,6 +28,32 @@ export type Database = {
   };
   public: {
     Tables: {
+      ai_call_counter: {
+        Row: {
+          day: string;
+          household_id: string;
+          n: number;
+        };
+        Insert: {
+          day: string;
+          household_id: string;
+          n?: number;
+        };
+        Update: {
+          day?: string;
+          household_id?: string;
+          n?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'ai_call_counter_household_id_fkey';
+            columns: ['household_id'];
+            isOneToOne: false;
+            referencedRelation: 'households';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       ai_usage_log: {
         Row: {
           created_at: string;
@@ -657,11 +683,17 @@ export type Database = {
           isSetofReturn: true;
         };
       };
+      reserve_ai_call: {
+        Args: { p_household_id: string; p_limit: number };
+        Returns: number;
+      };
       resolve_ai_key: { Args: { p_household_id: string }; Returns: string };
       seed_default_household_catalog: {
         Args: { p_household_id: string };
         Returns: undefined;
       };
+      set_ai_daily_call_limit: { Args: { p_limit: number }; Returns: undefined };
+      set_ai_model_override: { Args: { p_model: string }; Returns: undefined };
       set_household_ai_key: { Args: { p_key: string }; Returns: undefined };
     };
     Enums: {

@@ -145,9 +145,7 @@ describe('ClaudeAiCard', () => {
     asRole('owner');
     renderCard();
     await userEvent.selectOptions(await screen.findByLabelText(/^model$/i), 'claude-opus-5');
-    await waitFor(() =>
-      expect(mockedUpdateConfig).toHaveBeenCalledWith('hh-1', { model_override: 'claude-opus-5' }),
-    );
+    await waitFor(() => expect(mockedUpdateConfig).toHaveBeenCalledWith({ model_override: 'claude-opus-5' }));
   });
 
   it('owner changing the daily limit on blur calls updateAiConfig', async () => {
@@ -157,6 +155,6 @@ describe('ClaudeAiCard', () => {
     await userEvent.clear(limit);
     await userEvent.type(limit, '5');
     await userEvent.tab();
-    await waitFor(() => expect(mockedUpdateConfig).toHaveBeenCalledWith('hh-1', { daily_call_limit: 5 }));
+    await waitFor(() => expect(mockedUpdateConfig).toHaveBeenCalledWith({ daily_call_limit: 5 }));
   });
 });

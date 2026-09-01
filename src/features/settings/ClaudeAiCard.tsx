@@ -41,7 +41,7 @@ type TestState =
  * (RLS + `security definer` owner checks) is the real gate, this is just the UI gate.
  */
 export function ClaudeAiCard() {
-  const { role, householdId } = useAuth();
+  const { role } = useAuth();
   const isOwner = role === 'owner';
   const queryClient = useQueryClient();
 
@@ -79,14 +79,11 @@ export function ClaudeAiCard() {
   });
   const clearKey = useMutation({ mutationFn: clearHouseholdKey, onSuccess: invalidate });
   const saveModel = useMutation({
-    mutationFn: (value: string) =>
-      updateAiConfig(householdId ?? '', {
-        model_override: value === '' ? null : (value as never),
-      }),
+    mutationFn: (value: string) => updateAiConfig({ model_override: value === '' ? null : (value as never) }),
     onSuccess: invalidate,
   });
   const saveLimit = useMutation({
-    mutationFn: (n: number) => updateAiConfig(householdId ?? '', { daily_call_limit: n }),
+    mutationFn: (n: number) => updateAiConfig({ daily_call_limit: n }),
     onSuccess: invalidate,
   });
 
