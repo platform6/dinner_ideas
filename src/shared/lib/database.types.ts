@@ -1,6 +1,11 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: '14.5';
+  };
   graphql_public: {
     Tables: {
       [_ in never]: never;
@@ -28,6 +33,32 @@ export type Database = {
   };
   public: {
     Tables: {
+      ai_call_counter: {
+        Row: {
+          day: string;
+          household_id: string;
+          n: number;
+        };
+        Insert: {
+          day: string;
+          household_id: string;
+          n?: number;
+        };
+        Update: {
+          day?: string;
+          household_id?: string;
+          n?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'ai_call_counter_household_id_fkey';
+            columns: ['household_id'];
+            isOneToOne: false;
+            referencedRelation: 'households';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       ai_usage_log: {
         Row: {
           created_at: string;
@@ -656,6 +687,10 @@ export type Database = {
           isOneToOne: false;
           isSetofReturn: true;
         };
+      };
+      reserve_ai_call: {
+        Args: { p_household_id: string; p_limit: number };
+        Returns: number;
       };
       resolve_ai_key: { Args: { p_household_id: string }; Returns: string };
       seed_default_household_catalog: {

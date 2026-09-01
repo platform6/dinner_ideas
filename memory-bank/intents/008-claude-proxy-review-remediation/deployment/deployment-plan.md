@@ -3,7 +3,7 @@ intent: 008-claude-proxy-review-remediation
 build: v0.8.0-1e20c9f
 commit: 1e20c9f
 created: '2026-09-01T02:30:00Z'
-updated: '2026-09-01T02:30:00Z'
+updated: '2026-09-01T03:15:00Z'
 status: production-live-smoke-pending
 current_checkpoint: 4
 pr: 'dev -> main merged 2026-09-01 (also carries 79ea34c — 009/010 inception drafts, no code)'
@@ -15,7 +15,7 @@ environments:
     status: 'live — DB + Edge Function pushed 2026-09-01; FE via Netlify on main'
     db: 'both migrations applied to gpkqsedtlzxczmarxjia (supabase db push --linked, 2026-09-01) — ai_call_counter + reserve_ai_call; provenance trigger + updated_at/updated_by revoke'
     edge_function: 'claude-proxy deployed to gpkqsedtlzxczmarxjia 2026-09-01 (script ~1.6 MB)'
-    fe: 'Netlify build on main — CONFIRM green'
+    fe: 'live — Netlify main deploy green 2026-09-01 (ordering hazard window closed)'
     smoke: pending
     target: 'Supabase linked gpkqsedtlzxczmarxjia + Netlify main'
 ---
@@ -49,7 +49,8 @@ the Netlify `main` build going live.
   window is minutes. If the merge preceded the DB push (it did — "just merged" then push),
   the reverse order also leaves a short window (new FE would still work — it doesn't send
   `updated_at` — so merge-first is actually the safer order here).
-- Fully closed once the Netlify `main` build is live.
+- Fully closed once the Netlify `main` build is live. **Closed 2026-09-01** — `main` deployed
+  on Netlify (user-confirmed).
 
 ## Progression
 
@@ -62,8 +63,8 @@ the Netlify `main` build going live.
         output: {"migrations":["20260831213000_ai_call_counter.sql","20260901000000_ai_config_provenance.sql"],"message":"Finished supabase db push."}
     [x] `npx --yes supabase functions deploy claude-proxy --project-ref gpkqsedtlzxczmarxjia`
         output: {"functions":["claude-proxy"],"message":"Deployed Functions."}
-[~] Verify production — Checkpoint 4  (pending)
-    [ ] Netlify `main` build GREEN and live
+[~] Verify production — Checkpoint 4  (in progress)
+    [x] Netlify `main` build GREEN and live  (2026-09-01, user-confirmed)
     [ ] `supabase migration list --linked` — both new timestamps show remote
     [ ] Smoke (see below)
     [ ] `get_advisors` (security + perf) on the linked project — expect no new ERROR;
