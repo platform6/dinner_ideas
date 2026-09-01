@@ -3,10 +3,10 @@ intent: 008-claude-proxy-review-remediation
 build: v0.8.0-1e20c9f
 commit: 1e20c9f
 created: '2026-09-01T02:30:00Z'
-updated: '2026-09-01T17:25:00Z'
-status: production-live-smoke-pending
+updated: '2026-09-01T18:10:00Z'
+status: production-live
 post_deploy_fixes:
-  - '20260901120000_ai_config_write_rpc.sql — model/limit writes -> security-definer RPCs (fixes 42501 on .upsert). DB pushed to prod 2026-09-01T17:35Z (supabase db push --linked). FE fix in commit ec41f22 on dev — awaiting merge to main -> Netlify rebuild.'
+  - '20260901120000_ai_config_write_rpc.sql — model/limit writes -> security-definer RPCs (fixes 42501 on .upsert). DB pushed to prod 2026-09-01T17:35Z; FE fix ec41f22 merged to main -> Netlify rebuilt. Verified on prod 2026-09-01: model change 200, daily-limit change 200, Test connection OK.'
 current_checkpoint: 4
 pr: 'dev -> main merged 2026-09-01 (also carries 79ea34c — 009/010 inception drafts, no code)'
 environments:
@@ -67,14 +67,21 @@ the Netlify `main` build going live.
         output: {"functions":["claude-proxy"],"message":"Deployed Functions."}
 [~] Verify production — Checkpoint 4  (in progress)
     [x] Netlify `main` build GREEN and live  (2026-09-01, user-confirmed)
-    [ ] `supabase migration list --linked` — both new timestamps show remote
-    [ ] Smoke (see below)
-    [ ] `get_advisors` (security + perf) on the linked project — expect no new ERROR;
-        `reserve_ai_call` / `stamp_household_ai_config_provenance` are `security definer`
-        with pinned `search_path = ''` and targeted `execute` grants (mirrors 007's fns), so
-        no new `function_search_path_mutable` / definer-executable WARN expected.
-    [ ] `supabase gen types typescript --linked` vs committed `database.types.ts` — the new
-        `ai_call_counter` table means a real diff this time; regen + commit if so.
+    [x] `supabase migration list --linked` — 20260831213000 / 20260901000000 / 20260901120000
+        all remote  (2026-09-01)
+    [x] database.types.ts regenerated + committed (ai_call_counter, reserve_ai_call,
+        set_ai_model_override, set_ai_daily_call_limit)
+    [~] Smoke (see below)
+        [x] Model change -> 200; Daily call limit change -> 200; Test connection OK
+            (2026-09-01, user-confirmed — the S1/S2/S6 paths + the 42501 fix)
+        [ ] S3 cap: set limit 3, clear today's ai_call_counter, press Test connection 4x
+            -> 3 OK + "Daily limit reached"; counter row (HH, today, 3)
+        [ ] S4 raw PATCH updated_at -> 403  ·  S5 clear key -> "No Claude API key set…"
+        [ ] S2 DB check: updated_by = owner uid, updated_at ~ now
+    [ ] `get_advisors` (security + perf) from the Supabase dashboard — expect no new ERROR;
+        the 4 new `security definer` fns pin `search_path = ''` + grant `execute` narrowly
+        (mirrors 007), so no new `function_search_path_mutable` / definer-executable WARN
+        expected.
 ```
 
 ## Smoke (Checkpoint 4)
