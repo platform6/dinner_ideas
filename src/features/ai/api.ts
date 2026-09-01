@@ -53,6 +53,13 @@ const KNOWN_CODES: ClaudeErrorCode[] = [
   'timeout',
 ];
 
+/**
+ * Client-side ceiling on a claude-proxy round trip. Sits above the Edge Function's own SDK
+ * timeout (~45 s) so the server's typed `timeout` is the normal path; this is the backstop
+ * for a function that never responds at all, so "Test connection" can't spin forever.
+ */
+const CLAUDE_FETCH_TIMEOUT_MS = 60_000;
+
 function functionUrl(): string {
   const base = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? '';
   return `${base.replace(/\/$/, '')}/functions/v1/claude-proxy`;
@@ -66,6 +73,8 @@ export async function callClaude(args: CallClaudeArgs): Promise<CallClaudeResult
     throw new ClaudeError('no_session', 'You are not signed in.');
   }
 
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), CLAUDE_FETCH_TIMEOUT_MS);
   let res: Response;
   try {
     res = await fetch(functionUrl(), {
@@ -81,9 +90,15 @@ export async function callClaude(args: CallClaudeArgs): Promise<CallClaudeResult
         model: args.model,
         max_tokens: args.maxTokens,
       }),
+      signal: controller.signal,
     });
-  } catch {
+  } catch (e) {
+    if ((e as Error)?.name === 'AbortError') {
+      throw new ClaudeError('timeout', 'The AI service took too long to respond.');
+    }
     throw new ClaudeError('upstream_error', 'Could not reach the AI service.');
+  } finally {
+    clearTimeout(timer);
   }
 
   let body: unknown = null;

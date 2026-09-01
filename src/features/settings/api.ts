@@ -42,18 +42,17 @@ export async function clearHouseholdKey(): Promise<void> {
   if (error) throw error;
 }
 
-/** Owner-only. `key_secret_id` is not writable here (column-revoked) — use the RPCs above. */
+/**
+ * Owner-only. `key_secret_id` is not writable here (column-revoked) — use the RPCs above.
+ * `updated_by` / `updated_at` are stamped by a server-side trigger
+ * (`stamp_household_ai_config_provenance`); the client no longer sends them.
+ */
 export async function updateAiConfig(
   householdId: string,
   patch: { model_override?: ClaudeModel | null; daily_call_limit?: number },
 ): Promise<void> {
-  const { error } = await supabase.from('household_ai_config').upsert(
-    {
-      household_id: householdId,
-      ...patch,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'household_id' },
-  );
+  const { error } = await supabase
+    .from('household_ai_config')
+    .upsert({ household_id: householdId, ...patch }, { onConflict: 'household_id' });
   if (error) throw error;
 }

@@ -4,19 +4,32 @@
 // `handleProxy` is pure over its `Deps`, so every branch is covered without network or a DB.
 
 import { assertEquals } from 'std/assert';
-import { handleProxy, type Deps, type UsageRow } from './pipeline.ts';
+import {
+  handleProxy,
+  type ConfigRow,
+  type Deps,
+  type Loaded,
+  type Reservation,
+  type UsageRow,
+} from './pipeline.ts';
 import { ProxyFailure } from './errors.ts';
-import { estCostUsd } from './rates.ts';
+import { estCostUsd, parsePositiveInt } from './rates.ts';
+
+/** A successful dependency lookup. */
+const loaded = <T>(data: T): Loaded<T> => ({ data, error: false });
+/** A failed dependency lookup (query errored). */
+const loadErr = <T>(): Loaded<T> => ({ data: null, error: true });
 
 function makeDeps(over: Partial<Deps> = {}): { deps: Deps; rows: UsageRow[] } {
   const rows: UsageRow[] = [];
   let clock = 1000;
   const deps: Deps = {
     getUser: () => Promise.resolve({ id: 'profile-1' }),
-    resolveHousehold: () => Promise.resolve('hh-1'),
-    loadConfig: () => Promise.resolve({ model_override: null, daily_call_limit: 25 }),
-    countToday: () => Promise.resolve(0),
-    resolveKey: () => Promise.resolve('sk-ant-key'),
+    resolveHousehold: () => Promise.resolve(loaded<string | null>('hh-1')),
+    loadConfig: () =>
+      Promise.resolve(loaded<ConfigRow | null>({ model_override: null, daily_call_limit: 25 })),
+    reserveCall: () => Promise.resolve<Reservation>({ ok: true, n: 1 }),
+    resolveKey: () => Promise.resolve(loaded<string | null>('sk-ant-key')),
     callAnthropic: () =>
       Promise.resolve({
         text: 'pong',
@@ -55,7 +68,9 @@ Deno.test('401 when getUser returns null', async () => {
 });
 
 Deno.test('403 no_household — no usage row', async () => {
-  const { deps, rows } = makeDeps({ resolveHousehold: () => Promise.resolve(null) });
+  const { deps, rows } = makeDeps({
+    resolveHousehold: () => Promise.resolve(loaded<string | null>(null)),
+  });
   const r = await handleProxy(REQ, 'Bearer ok', deps);
   assertEquals(r.status, 403);
   assertEquals((r.body as { error_code: string }).error_code, 'no_household');
@@ -80,7 +95,7 @@ Deno.test('happy path — 200 + one ok=true row with cost', async () => {
 Deno.test('rate_limited — 429, one ok=false row, Anthropic not called', async () => {
   let called = false;
   const { deps, rows } = makeDeps({
-    countToday: () => Promise.resolve(25),
+    reserveCall: () => Promise.resolve<Reservation>({ ok: false, reason: 'over_limit' }),
     callAnthropic: () => {
       called = true;
       return Promise.resolve({ text: '', usage: { input_tokens: 0, output_tokens: 0 } });
@@ -96,7 +111,7 @@ Deno.test('rate_limited — 429, one ok=false row, Anthropic not called', async 
 });
 
 Deno.test('no_api_key — 409, one ok=false row', async () => {
-  const { deps, rows } = makeDeps({ resolveKey: () => Promise.resolve(null) });
+  const { deps, rows } = makeDeps({ resolveKey: () => Promise.resolve(loaded<string | null>(null)) });
   const r = await handleProxy(REQ, 'Bearer ok', deps);
   assertEquals(r.status, 409);
   assertEquals((r.body as { error_code: string }).error_code, 'no_api_key');
@@ -166,7 +181,8 @@ Deno.test('timeout — 502 timeout', async () => {
 Deno.test('model resolution: request > config override > env > fallback', async () => {
   // request wins
   let d = makeDeps({
-    loadConfig: () => Promise.resolve({ model_override: 'claude-opus-5', daily_call_limit: 25 }),
+    loadConfig: () =>
+      Promise.resolve(loaded<ConfigRow | null>({ model_override: 'claude-opus-5', daily_call_limit: 25 })),
     envModel: 'claude-haiku-4-5',
   });
   let r = await handleProxy(
@@ -182,7 +198,8 @@ Deno.test('model resolution: request > config override > env > fallback', async 
 
   // config override wins when request omits model
   d = makeDeps({
-    loadConfig: () => Promise.resolve({ model_override: 'claude-opus-5', daily_call_limit: 25 }),
+    loadConfig: () =>
+      Promise.resolve(loaded<ConfigRow | null>({ model_override: 'claude-opus-5', daily_call_limit: 25 })),
     envModel: 'claude-haiku-4-5',
   });
   r = await handleProxy(
@@ -209,3 +226,246 @@ Deno.test('estCostUsd for each model', () => {
   assertEquals(estCostUsd('claude-opus-5', u), 30);
   assertEquals(estCostUsd('unknown', u), 0);
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// intent 008 / bolt 040 — fail-closed daily cap, atomic reserve, surfaced
+// resolver errors. (stories 001, 002, 003)
+// ─────────────────────────────────────────────────────────────────────────────
+
+Deno.test('parsePositiveInt — non-numeric / zero / negative / fractional → undefined', () => {
+  for (const bad of ['25/day', 'abc', '', '0', '-1', '3.5', ' ', 'NaN']) {
+    assertEquals(parsePositiveInt(bad), undefined, `"${bad}"`);
+  }
+  assertEquals(parsePositiveInt('10'), 10);
+  assertEquals(parsePositiveInt('1'), 1);
+  assertEquals(parsePositiveInt(undefined), undefined);
+  assertEquals(parsePositiveInt(null), undefined);
+});
+
+Deno.test('FR-1: reserveCall error → 502 upstream_error, one row, Anthropic not called', async () => {
+  let called = false;
+  const { deps, rows } = makeDeps({
+    reserveCall: () => Promise.resolve<Reservation>({ ok: false, reason: 'error' }),
+    callAnthropic: () => {
+      called = true;
+      return Promise.resolve({ text: '', usage: { input_tokens: 0, output_tokens: 0 } });
+    },
+  });
+  const r = await handleProxy(REQ, 'Bearer ok', deps);
+  assertEquals(r.status, 502);
+  assertEquals((r.body as { error_code: string }).error_code, 'upstream_error');
+  assertEquals(called, false);
+  assertEquals(rows.length, 1);
+  assertEquals(rows[0].ok, false);
+  assertEquals(rows[0].error_code, 'upstream_error');
+});
+
+Deno.test('FR-1: non-finite effective daily_call_limit → 502 upstream_error, one row', async () => {
+  let reserved = false;
+  const { deps, rows } = makeDeps({
+    loadConfig: () =>
+      Promise.resolve(loaded<ConfigRow | null>({ model_override: null, daily_call_limit: NaN })),
+    reserveCall: () => {
+      reserved = true;
+      return Promise.resolve<Reservation>({ ok: true, n: 1 });
+    },
+  });
+  const r = await handleProxy(REQ, 'Bearer ok', deps);
+  assertEquals(r.status, 502);
+  assertEquals((r.body as { error_code: string }).error_code, 'upstream_error');
+  assertEquals(reserved, false);
+  assertEquals(rows.length, 1);
+});
+
+Deno.test(
+  'FR-1: config-less household uses DEFAULT_DAILY_LIMIT (25) when envDailyLimit is undefined',
+  async () => {
+    let seenLimit = -1;
+    const { deps } = makeDeps({
+      loadConfig: () => Promise.resolve(loaded<ConfigRow | null>(null)),
+      envDailyLimit: undefined,
+      reserveCall: (_hh, limit) => {
+        seenLimit = limit;
+        return Promise.resolve<Reservation>({ ok: true, n: 1 });
+      },
+    });
+    await handleProxy(REQ, 'Bearer ok', deps);
+    assertEquals(seenLimit, 25);
+  },
+);
+
+Deno.test('FR-1: config-less household uses envDailyLimit when set', async () => {
+  let seenLimit = -1;
+  const { deps } = makeDeps({
+    loadConfig: () => Promise.resolve(loaded<ConfigRow | null>(null)),
+    envDailyLimit: 10,
+    reserveCall: (_hh, limit) => {
+      seenLimit = limit;
+      return Promise.resolve<Reservation>({ ok: true, n: 1 });
+    },
+  });
+  await handleProxy(REQ, 'Bearer ok', deps);
+  assertEquals(seenLimit, 10);
+});
+
+Deno.test('FR-3: resolveHousehold error → 502 upstream_error, NO usage row', async () => {
+  const { deps, rows } = makeDeps({ resolveHousehold: () => Promise.resolve(loadErr<string | null>()) });
+  const r = await handleProxy(REQ, 'Bearer ok', deps);
+  assertEquals(r.status, 502);
+  assertEquals((r.body as { error_code: string }).error_code, 'upstream_error');
+  assertEquals(rows.length, 0);
+});
+
+Deno.test('FR-3: resolveHousehold genuine null → 403 no_household (unchanged)', async () => {
+  const { deps, rows } = makeDeps({
+    resolveHousehold: () => Promise.resolve(loaded<string | null>(null)),
+  });
+  const r = await handleProxy(REQ, 'Bearer ok', deps);
+  assertEquals(r.status, 403);
+  assertEquals((r.body as { error_code: string }).error_code, 'no_household');
+  assertEquals(rows.length, 0);
+});
+
+Deno.test('FR-3: loadConfig error → 502 upstream_error, one row, no silent defaults', async () => {
+  let reserved = false;
+  const { deps, rows } = makeDeps({
+    loadConfig: () => Promise.resolve(loadErr<ConfigRow | null>()),
+    reserveCall: () => {
+      reserved = true;
+      return Promise.resolve<Reservation>({ ok: true, n: 1 });
+    },
+  });
+  const r = await handleProxy(REQ, 'Bearer ok', deps);
+  assertEquals(r.status, 502);
+  assertEquals((r.body as { error_code: string }).error_code, 'upstream_error');
+  assertEquals(reserved, false);
+  assertEquals(rows.length, 1);
+  assertEquals(rows[0].error_code, 'upstream_error');
+});
+
+Deno.test('FR-3: resolveKey error → 502 upstream_error (distinct from data:null → 409)', async () => {
+  const err = makeDeps({ resolveKey: () => Promise.resolve(loadErr<string | null>()) });
+  const re = await handleProxy(REQ, 'Bearer ok', err.deps);
+  assertEquals(re.status, 502);
+  assertEquals((re.body as { error_code: string }).error_code, 'upstream_error');
+  assertEquals(err.rows.length, 1);
+  assertEquals(err.rows[0].error_code, 'upstream_error');
+
+  const none = makeDeps({ resolveKey: () => Promise.resolve(loaded<string | null>(null)) });
+  const rn = await handleProxy(REQ, 'Bearer ok', none.deps);
+  assertEquals(rn.status, 409);
+  assertEquals((rn.body as { error_code: string }).error_code, 'no_api_key');
+});
+
+Deno.test('FR-2: bad_request never calls reserveCall (cap not consumed by invalid input)', async () => {
+  let reserved = false;
+  const { deps, rows } = makeDeps({
+    reserveCall: () => {
+      reserved = true;
+      return Promise.resolve<Reservation>({ ok: true, n: 1 });
+    },
+  });
+  const r = await handleProxy(
+    JSON.stringify({ feature: 'x', model: 'gpt-4', messages: [{ role: 'user', content: 'hi' }] }),
+    'Bearer ok',
+    deps,
+  );
+  assertEquals(r.status, 400);
+  assertEquals(reserved, false);
+  assertEquals(rows.length, 1);
+  assertEquals(rows[0].error_code, 'bad_request');
+});
+
+Deno.test('FR-2: happy path reserves exactly one slot before calling Anthropic', async () => {
+  let reserveCalls = 0;
+  let reservedBeforeCall = false;
+  const { deps } = makeDeps({
+    reserveCall: () => {
+      reserveCalls += 1;
+      return Promise.resolve<Reservation>({ ok: true, n: reserveCalls });
+    },
+    callAnthropic: () => {
+      reservedBeforeCall = reserveCalls === 1;
+      return Promise.resolve({ text: 'pong', usage: { input_tokens: 1, output_tokens: 1 } });
+    },
+  });
+  const r = await handleProxy(REQ, 'Bearer ok', deps);
+  assertEquals(r.status, 200);
+  assertEquals(reserveCalls, 1);
+  assertEquals(reservedBeforeCall, true);
+});
+
+Deno.test('ordering: no_api_key preempts rate_limit — reserveCall not reached', async () => {
+  let reserved = false;
+  const { deps, rows } = makeDeps({
+    resolveKey: () => Promise.resolve(loaded<string | null>(null)),
+    reserveCall: () => {
+      reserved = true;
+      return Promise.resolve<Reservation>({ ok: false, reason: 'over_limit' });
+    },
+  });
+  const r = await handleProxy(REQ, 'Bearer ok', deps);
+  assertEquals(r.status, 409);
+  assertEquals((r.body as { error_code: string }).error_code, 'no_api_key');
+  assertEquals(reserved, false);
+  assertEquals(rows.length, 1);
+  assertEquals(rows[0].error_code, 'no_api_key');
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// intent 008 / bolt 041 — a metering-write failure must not corrupt a billed 200.
+// (story 004-sdk-timeout-and-metering-isolation)
+// ─────────────────────────────────────────────────────────────────────────────
+
+Deno.test('FR-4: insertUsage throws after a successful call → still 200, logged, no row', async () => {
+  const origErr = console.error;
+  let logged = 0;
+  console.error = () => {
+    logged += 1;
+  };
+  try {
+    const { deps, rows } = makeDeps({
+      insertUsage: () => Promise.reject(new Error('PostgREST 503')),
+    });
+    const r = await handleProxy(REQ, 'Bearer ok', deps);
+    assertEquals(r.status, 200);
+    const body = r.body as { text: string; model: string };
+    assertEquals(body.text, 'pong');
+    assertEquals(body.model, 'claude-sonnet-5');
+    assertEquals(rows.length, 0);
+    assertEquals(logged, 1);
+  } finally {
+    console.error = origErr;
+  }
+});
+
+Deno.test('FR-4: generic (non-ProxyFailure) callAnthropic throw → 502 upstream_error, one row', async () => {
+  const { deps, rows } = makeDeps({
+    callAnthropic: () => {
+      throw new Error('socket hang up');
+    },
+  });
+  const r = await handleProxy(REQ, 'Bearer ok', deps);
+  assertEquals(r.status, 502);
+  assertEquals((r.body as { error_code: string }).error_code, 'upstream_error');
+  assertEquals(rows.length, 1);
+  assertEquals(rows[0].ok, false);
+  assertEquals(rows[0].error_code, 'upstream_error');
+});
+
+Deno.test(
+  'FR-4: ProxyFailure("timeout") from callAnthropic → 502 timeout + one row (path reachable)',
+  async () => {
+    const { deps, rows } = makeDeps({
+      callAnthropic: () => {
+        throw new ProxyFailure('timeout', 'Claude request timed out', 502);
+      },
+    });
+    const r = await handleProxy(REQ, 'Bearer ok', deps);
+    assertEquals(r.status, 502);
+    assertEquals((r.body as { error_code: string }).error_code, 'timeout');
+    assertEquals(rows.length, 1);
+    assertEquals(rows[0].ok, false);
+    assertEquals(rows[0].error_code, 'timeout');
+  },
+);

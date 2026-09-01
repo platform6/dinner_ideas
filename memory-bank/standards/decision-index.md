@@ -1,6 +1,6 @@
 ---
-last_updated: 2026-08-31T17:40:00Z
-total_decisions: 4
+last_updated: 2026-08-31T22:30:00Z
+total_decisions: 5
 ---
 
 # Decision Index
@@ -53,3 +53,12 @@ Use this to find relevant prior decisions when working on related features.
 - **Path**: `bolts/037-claude-proxy-service/adr-004-per-household-anthropic-key-in-vault.md`
 - **Summary**: Intent 007 gives each household its own Anthropic API key (no shared key). Decided to store the key as a Supabase Vault secret named `ai_key:{household_id}`, keep only the opaque `key_secret_id` on `household_ai_config`, and mediate all access through three `security definer` functions — `set_household_ai_key` / `clear_household_ai_key` (owner-guarded, `authenticated`) and `resolve_ai_key` (`service_role` only, the single decrypt path). `key_secret_id` is column-revoked from `authenticated` so an owner cannot repoint it at another household's secret. Fallback if Vault is unusable from a definer function: a `pgsodium`-encrypted column with the same signatures.
 - **Read when**: Storing any per-tenant secret / credential (API keys, tokens, webhook secrets) in a Supabase-direct app with no server; deciding between Supabase Vault and a `pgsodium` column; designing a read path that must be reachable by an Edge Function (service role) but never by a JWT client; or reasoning about `household_ai_config`, `resolve_ai_key`, or why the `claude-proxy` function holds no env key.
+
+### ADR-5: Enforce the `claude-proxy` Daily Cap With an Atomic Counter Row, Not a Live `count(*)`
+
+- **Status**: accepted
+- **Date**: 2026-08-31
+- **Bolt**: 040-claude-proxy-hardening (claude-proxy-hardening)
+- **Path**: `bolts/040-claude-proxy-hardening/implementation-plan.md` (simple-construction bolt — no standalone ADR file)
+- **Summary**: Intent 007 enforced the per-household daily call cap by `select count(*) from ai_usage_log where … < daily_call_limit` and inserting the usage row much later. That is not atomic under READ COMMITTED (concurrent requests all read the same count and all proceed — review finding 6), and every logged row counted, so a flood of `bad_request` rows consumed the cap (finding 5). Decided (intent 008 OQ-4) to add a dedicated `ai_call_counter (household_id, day, n)` table and a `service_role`-only `reserve_ai_call(household_id, limit)` `security definer` function that does a single `INSERT … ON CONFLICT (household_id, day) DO UPDATE SET n = n + 1 WHERE n < limit RETURNING n` — the `ON CONFLICT` row-lock serialises concurrent callers, a `NULL` return means at/over limit. The counter is bumped only immediately before a real Anthropic attempt, so `bad_request` / `no_api_key` / `rate_limited` structurally never consume it, and `ai_usage_log` stays purely an append-only audit trail (no UPDATE). Backend-side failures (the reserve, or the household/config/key lookups) fail **closed** as `upstream_error` (502) rather than proceeding as "0 used" (OQ-1: reuse the frozen `error_code` enum). Accepted cost: the counter and `ai_usage_log` row counts diverge (they measure reserved attempts vs. logged outcomes), and a function crash between reserve and call loses one slot for the day (fail-safe).
+- **Read when**: Enforcing any per-tenant/per-window quota or rate limit in a Supabase-direct app with no server; deciding whether a live aggregate query is safe under concurrency (it usually isn't — reach for `INSERT … ON CONFLICT DO UPDATE … WHERE`); deciding whether to keep an audit table append-only vs. mutate it for bookkeeping; or reasoning about `ai_call_counter`, `reserve_ai_call`, why `claude-proxy` fails closed, or why an over-limit request with no key returns `no_api_key` rather than `rate_limited`.
