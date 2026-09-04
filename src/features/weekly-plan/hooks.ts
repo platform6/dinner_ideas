@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   addSelection,
+  clearSelections,
   createPlan,
   fetchCurrentPlan,
   fetchPlanByStartDate,
@@ -9,13 +10,27 @@ import {
   removeSelection,
 } from '@/features/weekly-plan/api';
 import { decideToggleAction } from '@/features/weekly-plan/toggle-selection';
-import { shiftWeek, todayIsoDate } from '@/features/weekly-plan/date';
+import { currentPlanningWeekStart, shiftWeek } from '@/features/weekly-plan/date';
+import { useWeekStartDay } from '@/features/settings/hooks';
 import type { CurrentPlan } from '@/features/weekly-plan/types';
 
 const currentPlanKey = ['weekly-plan', 'current'] as const;
 
+/**
+ * The plan for the *current planning week* (intent 011) — resolved from today's local date +
+ * the household's `week_start_day`, not "the newest plan". Returns `data: null` (not an older
+ * plan) when this week has no plan yet, so the catalog shows a clean 0-of-3. Disabled until
+ * `week_start_day` has loaded; keyed on the planning-week start so a rollover or a settings
+ * change refetches.
+ */
 export function useCurrentPlan() {
-  return useQuery({ queryKey: currentPlanKey, queryFn: fetchCurrentPlan });
+  const weekStart = useWeekStartDay();
+  const startDate = weekStart.data != null ? currentPlanningWeekStart(weekStart.data) : null;
+  return useQuery({
+    queryKey: [...currentPlanKey, startDate],
+    queryFn: () => fetchCurrentPlan(startDate as string),
+    enabled: startDate != null,
+  });
 }
 
 /**
@@ -27,7 +42,10 @@ export function useCurrentPlan() {
  */
 export function useWeekByOffset(offset: number) {
   const currentPlan = useCurrentPlan();
-  const anchorDate = currentPlan.data?.start_date ?? todayIsoDate();
+  const weekStart = useWeekStartDay();
+  // Fall back to the current planning-week start (not raw "today"), so offset 0 is that week
+  // even before any plan exists and negative offsets step in true week increments (intent 011).
+  const anchorDate = currentPlan.data?.start_date ?? currentPlanningWeekStart(weekStart.data ?? 0);
   const targetDate = offset === 0 ? anchorDate : shiftWeek(anchorDate, offset);
 
   const pastQuery = useQuery({
@@ -59,6 +77,7 @@ interface ToggleSelectionArgs {
  */
 export function useToggleSelection() {
   const queryClient = useQueryClient();
+  const weekStart = useWeekStartDay();
 
   return useMutation({
     mutationFn: async ({ dinnerId, currentPlan }: ToggleSelectionArgs) => {
@@ -69,8 +88,56 @@ export function useToggleSelection() {
         return;
       }
 
-      const planId = action.type === 'create-and-add' ? (await createPlan(todayIsoDate())).id : action.planId;
+      // A brand-new plan is filed under the *current planning week* (intent 011), so the pick
+      // reappears on the next load and the week rolls over cleanly — not under today's date.
+      const planId =
+        action.type === 'create-and-add'
+          ? (await createPlan(currentPlanningWeekStart(weekStart.data ?? 0))).id
+          : action.planId;
       await addSelection(planId, dinnerId);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: currentPlanKey });
+    },
+  });
+}
+
+/**
+ * Clears the whole week's selection in one keyed `delete` (intent 009). Reads the removed
+ * `dinner_id`s from the passed plan snapshot *before* deleting and returns them (in selection
+ * order) so the caller can offer Undo without re-reading the now-empty plan. Deliberately not
+ * N × `useToggleSelection` — that derives add/remove from a caller snapshot, the exact
+ * stale-snapshot hazard `selectionDisabled` guards against.
+ */
+export function useClearSelections() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (plan: CurrentPlan | null): Promise<string[]> => {
+      if (!plan) return [];
+      const dinnerIds = plan.weekly_plan_selections.map((s) => s.dinner_id);
+      await clearSelections(plan.id);
+      return dinnerIds;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: currentPlanKey });
+    },
+  });
+}
+
+/**
+ * Undo for `useClearSelections`: re-adds the given `dinnerIds` **sequentially, in order**
+ * (awaited `for` loop, not `Promise.all`) so the 1 / 2 / 3 badges on `/plan` come back in
+ * their original order.
+ */
+export function useRestoreSelections() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ planId, dinnerIds }: { planId: string; dinnerIds: string[] }) => {
+      for (const dinnerId of dinnerIds) {
+        await addSelection(planId, dinnerId);
+      }
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: currentPlanKey });

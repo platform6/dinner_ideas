@@ -1,9 +1,18 @@
 ---
 intent: 009-clear-picks-reset
 phase: inception
-status: draft
-updated: '2026-09-01T02:00:00Z'
+status: complete
+updated: '2026-09-04T02:36:10Z'
 ---
+
+> **Stories + bolts generated 2026-09-04.** 10 FRs → 6 stories in the one unit
+> `001-clear-picks-ui`, grouped into 2 simple-construction bolts:
+>
+> - **048-clear-picks-ui**: `001-clear-picks-control`, `002-clear-selections-hooks`
+> - **049-clear-picks-ui**: `003-catalog-mount-and-undo-bar`, `004-in-flight-and-error-handling`,
+>   `005-keyboard-and-a11y`, `006-clear-picks-tests`
+>
+> Sequence `048 → 049`. `ClearPicksControl` mirrors `LockWeekControl` (intent 012, bolt 043).
 
 # Clear Picks — Unit Decomposition
 

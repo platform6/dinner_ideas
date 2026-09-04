@@ -7,7 +7,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ShoppingListPage } from '@/features/shopping-list/components/ShoppingListPage';
 import { fetchDinnersByIds } from '@/features/dinners/api';
-import { fetchCurrentPlan, lockPlan } from '@/features/weekly-plan/api';
+import { fetchCurrentPlan } from '@/features/weekly-plan/api';
+import { fetchWeekStartDay } from '@/features/settings/api';
 import { fetchAssignments, fetchRows } from '@/features/store-config/api';
 import { theme } from '@/shared/theme';
 import type { DinnerWithIngredients } from '@/features/dinners/types';
@@ -16,6 +17,7 @@ import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/ty
 vi.mock('@/features/dinners/api');
 vi.mock('@/features/weekly-plan/api');
 vi.mock('@/features/store-config/api');
+vi.mock('@/features/settings/api');
 
 function selection(overrides: Partial<SelectionWithDinner>): SelectionWithDinner {
   return {
@@ -79,7 +81,6 @@ const threeDinners = [
 describe('ShoppingListPage', () => {
   const mockedFetchCurrentPlan = vi.mocked(fetchCurrentPlan);
   const mockedFetchDinnersByIds = vi.mocked(fetchDinnersByIds);
-  const mockedLockPlan = vi.mocked(lockPlan);
   const mockedFetchRows = vi.mocked(fetchRows);
   const mockedFetchAssignments = vi.mocked(fetchAssignments);
   const mockedWriteText = vi.fn();
@@ -111,8 +112,8 @@ describe('ShoppingListPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(fetchWeekStartDay).mockResolvedValue(0);
     mockedFetchDinnersByIds.mockResolvedValue(threeDinners);
-    mockedLockPlan.mockResolvedValue(plan({ locked_at: '2026-08-27T12:00:00Z' }));
     mockedFetchRows.mockResolvedValue([]);
     mockedFetchAssignments.mockResolvedValue([]);
     mockedWriteText.mockResolvedValue(undefined);
@@ -134,45 +135,31 @@ describe('ShoppingListPage', () => {
     expect(screen.getByText('onion')).toBeInTheDocument();
   });
 
-  it('copies and locks by default when Copy is tapped', async () => {
+  it('copies the list and never locks — no "also lock" checkbox exists', async () => {
     mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: threeSelections }));
     const user = setupUser();
     renderPage();
 
     await screen.findByText('Produce');
-    expect(screen.getByRole('checkbox', { name: /also lock/i })).toBeChecked();
+    expect(screen.queryByRole('checkbox', { name: /also lock/i })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /copy shopping list/i }));
 
     await waitFor(() => expect(mockedWriteText).toHaveBeenCalledWith(expect.stringContaining('onion')));
-    await waitFor(() => expect(mockedLockPlan).toHaveBeenCalledWith('plan-id'));
-    expect(await screen.findByText(/copied! this week.s plan is locked in/i)).toBeInTheDocument();
-  });
-
-  it('copies without locking when the checkbox is unchecked', async () => {
-    mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: threeSelections }));
-    const user = setupUser();
-    renderPage();
-
-    await screen.findByText('Produce');
-    await user.click(screen.getByRole('checkbox', { name: /also lock/i }));
-    await user.click(screen.getByRole('button', { name: /copy shopping list/i }));
-
-    await waitFor(() => expect(mockedWriteText).toHaveBeenCalled());
     expect(await screen.findByText(/^copied!$/i)).toBeInTheDocument();
-    expect(mockedLockPlan).not.toHaveBeenCalled();
   });
 
-  it('shows a lock-specific error when locking fails', async () => {
+  it('shows a non-blocking "not locked in yet" note linking to This Week for an unlocked plan', async () => {
     mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: threeSelections }));
-    mockedLockPlan.mockRejectedValue(new Error('selection count is not 3'));
     const user = setupUser();
     renderPage();
 
     await screen.findByText('Produce');
-    await user.click(screen.getByRole('button', { name: /copy shopping list/i }));
+    expect(screen.getByText(/this week isn’t locked in yet/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /lock it on this week/i })).toHaveAttribute('href', '/plan');
 
-    expect(await screen.findByText(/couldn.t lock the plan/i)).toBeInTheDocument();
-    expect(mockedWriteText).toHaveBeenCalled();
+    // The note never blocks copying.
+    await user.click(screen.getByRole('button', { name: /copy shopping list/i }));
+    expect(await screen.findByText(/^copied!$/i)).toBeInTheDocument();
   });
 
   it('falls back to a selectable text block when the clipboard API fails', async () => {
@@ -188,7 +175,7 @@ describe('ShoppingListPage', () => {
     expect((screen.getByRole('textbox') as HTMLTextAreaElement).value).toContain('onion');
   });
 
-  it('disables the lock checkbox (checked) once the plan is already locked', async () => {
+  it('hides the "not locked in yet" note once the plan is locked; copy still shows plain "Copied!"', async () => {
     mockedFetchCurrentPlan.mockResolvedValue(
       plan({ locked_at: '2026-08-27T12:00:00Z', weekly_plan_selections: threeSelections }),
     );
@@ -196,14 +183,12 @@ describe('ShoppingListPage', () => {
     renderPage();
 
     await screen.findByText('Produce');
-    const checkbox = screen.getByRole('checkbox', { name: /also lock/i });
-    expect(checkbox).toBeChecked();
-    expect(checkbox).toBeDisabled();
+    expect(screen.queryByText(/not locked in yet/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /also lock/i })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /copy shopping list/i }));
 
     await waitFor(() => expect(mockedWriteText).toHaveBeenCalled());
-    expect(mockedLockPlan).not.toHaveBeenCalled();
-    expect(await screen.findByText(/copied! this week.s plan is locked in/i)).toBeInTheDocument();
+    expect(await screen.findByText(/^copied!$/i)).toBeInTheDocument();
   });
 });

@@ -7,11 +7,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CookingViewPage } from '@/features/cooking-view/components/CookingViewPage';
 import { fetchDinnersWithStepsByIds } from '@/features/dinners/api';
 import { fetchCurrentPlan } from '@/features/weekly-plan/api';
+import { fetchWeekStartDay } from '@/features/settings/api';
 import type { DinnerWithSteps } from '@/features/dinners/types';
 import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/types';
 
 vi.mock('@/features/dinners/api');
 vi.mock('@/features/weekly-plan/api');
+vi.mock('@/features/settings/api');
 
 function selection(overrides: Partial<SelectionWithDinner>): SelectionWithDinner {
   return {
@@ -82,6 +84,7 @@ describe('CookingViewPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(fetchWeekStartDay).mockResolvedValue(0);
   });
 
   it('shows a gate message when fewer than 3 dinners are picked', async () => {

@@ -17,7 +17,7 @@ import {
   useBreakpointValue,
 } from '@chakra-ui/react';
 
-import { useCurrentPlan, useLockPlan } from '@/features/weekly-plan/hooks';
+import { useCurrentPlan } from '@/features/weekly-plan/hooks';
 import { useShoppingListDinners } from '@/features/shopping-list/hooks';
 import { buildShoppingList } from '@/features/shopping-list/aggregate';
 import { reorderGroupsByRows } from '@/features/shopping-list/reorder';
@@ -36,21 +36,17 @@ export function ShoppingListPage() {
   const dinnerIds = useMemo(() => (plan?.weekly_plan_selections ?? []).map((s) => s.dinner_id), [plan]);
 
   const dinners = useShoppingListDinners(dinnerIds);
-  const lockPlan = useLockPlan();
   const rows = useRows();
   const assignments = useAssignments();
 
-  const isAlreadyLocked = plan?.locked_at != null;
-  const [lockChecked, setLockChecked] = useState(true);
-  const shouldLock = isAlreadyLocked || lockChecked;
+  const isLocked = plan?.locked_at != null;
 
-  // md+: the lock + Copy controls sit in the page header and the list flows into two columns;
+  // md+: the Copy control sits in the page header and the list flows into two columns;
   // phone keeps the sticky footer and a single column (a phone affordance — review finding 3).
   const actionsInHeader = useBreakpointValue({ base: false, md: true }, { ssr: false }) ?? false;
 
   const [isCopying, setIsCopying] = useState(false);
   const [copyOutcome, setCopyOutcome] = useState<{ clipboardOk: boolean } | null>(null);
-  const [lockErrorMessage, setLockErrorMessage] = useState<string | null>(null);
   // Purely local "picked up in the store" state — never persisted, resets on remount.
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
 
@@ -102,7 +98,6 @@ export function ShoppingListPage() {
   async function handleCopy() {
     if (!plan) return;
     setIsCopying(true);
-    setLockErrorMessage(null);
     setCopyOutcome(null);
 
     let clipboardOk = true;
@@ -112,29 +107,9 @@ export function ShoppingListPage() {
       clipboardOk = false;
     }
 
-    if (shouldLock && !isAlreadyLocked) {
-      try {
-        await lockPlan.mutateAsync(plan.id);
-      } catch {
-        setLockErrorMessage("Couldn't lock the plan, try again.");
-        setIsCopying(false);
-        return;
-      }
-    }
-
     setCopyOutcome({ clipboardOk });
     setIsCopying(false);
   }
-
-  const lockCheckbox = (
-    <Checkbox
-      isChecked={shouldLock}
-      isDisabled={isAlreadyLocked}
-      onChange={(e) => setLockChecked(e.target.checked)}
-    >
-      Also lock this week’s plan
-    </Checkbox>
-  );
 
   const copyButton = (
     <Button
@@ -148,6 +123,17 @@ export function ShoppingListPage() {
     </Button>
   );
 
+  // Locking is a deliberate action on /plan now (intent 012) — copying no longer locks.
+  const lockNudge = !isLocked ? (
+    <Text textStyle="meta" color="ink.400">
+      This week isn’t locked in yet —{' '}
+      <ChakraLink as={RouterLink} to="/plan">
+        lock it on This Week
+      </ChakraLink>{' '}
+      to save it to your history.
+    </Text>
+  ) : null;
+
   return (
     <Stack gap={4}>
       <HStack justify="space-between" gap={3}>
@@ -160,10 +146,10 @@ export function ShoppingListPage() {
           </Heading>
         </Box>
         {actionsInHeader ? (
-          <HStack gap={4} flexShrink={0}>
-            {lockCheckbox}
+          <Stack align="flex-end" gap={1} flexShrink={0}>
             {copyButton}
-          </HStack>
+            {lockNudge}
+          </Stack>
         ) : (
           <Center w="40px" h="40px" borderRadius="control" bg="brand.100" color="brand.500" flexShrink={0}>
             <uiIcons.copy size={18} strokeWidth={1.8} />
@@ -241,25 +227,17 @@ export function ShoppingListPage() {
             })}
           </Box>
 
-          {lockErrorMessage && (
-            <Alert status="error" borderRadius="field">
-              <AlertIcon />
-              {lockErrorMessage}
-            </Alert>
-          )}
-
-          {!lockErrorMessage && copyOutcome?.clipboardOk && (
+          {copyOutcome?.clipboardOk && (
             <Alert status="success" borderRadius="field">
               <AlertIcon />
-              {shouldLock ? 'Copied! This week’s plan is locked in.' : 'Copied!'}
+              Copied!
             </Alert>
           )}
 
-          {!lockErrorMessage && copyOutcome && !copyOutcome.clipboardOk && (
+          {copyOutcome && !copyOutcome.clipboardOk && (
             <Stack gap={2}>
               <Text textStyle="faint">
                 Couldn’t copy automatically — select the text below to copy manually.
-                {shouldLock ? ' This week’s plan is locked in.' : ''}
               </Text>
               <Textarea
                 readOnly
@@ -282,9 +260,9 @@ export function ShoppingListPage() {
               borderTopWidth="1px"
               borderColor="line.subtle"
             >
-              <Stack gap={3}>
-                {lockCheckbox}
+              <Stack gap={2}>
                 {copyButton}
+                {lockNudge}
               </Stack>
             </Box>
           )}

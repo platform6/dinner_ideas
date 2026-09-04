@@ -3,10 +3,10 @@ intent: 008-claude-proxy-review-remediation
 build: v0.8.0-1e20c9f
 commit: 1e20c9f
 created: '2026-09-01T02:30:00Z'
-updated: '2026-09-01T17:25:00Z'
-status: production-live-smoke-pending
+updated: '2026-09-01T18:10:00Z'
+status: production-live
 post_deploy_fixes:
-  - '20260901120000_ai_config_write_rpc.sql — model/limit writes -> security-definer RPCs (fixes 42501 on .upsert). DB pushed to prod 2026-09-01T17:35Z (supabase db push --linked). FE fix in commit ec41f22 on dev — awaiting merge to main -> Netlify rebuild.'
+  - '20260901120000_ai_config_write_rpc.sql — model/limit writes -> security-definer RPCs (fixes 42501 on .upsert). DB pushed to prod 2026-09-01T17:35Z; FE fix ec41f22 merged to main -> Netlify rebuilt. Verified on prod 2026-09-01: model change 200, daily-limit change 200, Test connection OK.'
 current_checkpoint: 4
 pr: 'dev -> main merged 2026-09-01 (also carries 79ea34c — 009/010 inception drafts, no code)'
 environments:
@@ -67,14 +67,21 @@ the Netlify `main` build going live.
         output: {"functions":["claude-proxy"],"message":"Deployed Functions."}
 [~] Verify production — Checkpoint 4  (in progress)
     [x] Netlify `main` build GREEN and live  (2026-09-01, user-confirmed)
-    [ ] `supabase migration list --linked` — both new timestamps show remote
-    [ ] Smoke (see below)
-    [ ] `get_advisors` (security + perf) on the linked project — expect no new ERROR;
-        `reserve_ai_call` / `stamp_household_ai_config_provenance` are `security definer`
-        with pinned `search_path = ''` and targeted `execute` grants (mirrors 007's fns), so
-        no new `function_search_path_mutable` / definer-executable WARN expected.
-    [ ] `supabase gen types typescript --linked` vs committed `database.types.ts` — the new
-        `ai_call_counter` table means a real diff this time; regen + commit if so.
+    [x] `supabase migration list --linked` — 20260831213000 / 20260901000000 / 20260901120000
+        all remote  (2026-09-01)
+    [x] database.types.ts regenerated + committed (ai_call_counter, reserve_ai_call,
+        set_ai_model_override, set_ai_daily_call_limit)
+    [~] Smoke (see below)
+        [x] Model change -> 200; Daily call limit change -> 200; Test connection OK
+            (2026-09-01, user-confirmed — the S1/S2/S6 paths + the 42501 fix)
+        [ ] S3 cap: set limit 3, clear today's ai_call_counter, press Test connection 4x
+            -> 3 OK + "Daily limit reached"; counter row (HH, today, 3)
+        [ ] S4 raw PATCH updated_at -> 403  ·  S5 clear key -> "No Claude API key set…"
+        [ ] S2 DB check: updated_by = owner uid, updated_at ~ now
+    [ ] `get_advisors` (security + perf) from the Supabase dashboard — expect no new ERROR;
+        the 4 new `security definer` fns pin `search_path = ''` + grant `execute` narrowly
+        (mirrors 007), so no new `function_search_path_mutable` / definer-executable WARN
+        expected.
 ```
 
 ## Smoke (Checkpoint 4)
@@ -96,22 +103,57 @@ Not manually reproducible (covered by automated tests): transient-DB-error fail-
 metering-write failure (FR-4). If the proxy ever is slow, the expected outcome is `502
 timeout` **with** an `ai_usage_log` row, before the platform kills the function.
 
+## Outstanding / cleanup
+
+Intent 008 is **production-live** and its blocking defect (the settings-write `42501`) is
+fixed and verified on prod. The rest is non-blocking:
+
+- [ ] **Smoke S3** — cap trips at limit+1: set `daily_call_limit = 3`, delete today's
+      `ai_call_counter` row, press Test connection 4× → 3 OK then "Daily limit reached";
+      counter row `(HH, today, 3)`; `ai_usage_log` = 3 `ok=true` + 1 `rate_limited`.
+- [ ] **Smoke S4** — raw PostgREST PATCH of `updated_at` on `household_ai_config` → 403.
+- [ ] **Smoke S5** — clear the key → Test connection → "No Claude API key set…".
+- [ ] **Smoke S2 DB check** — after a model/limit edit, `updated_by` = the owner's uid and
+      `updated_at` ≈ now (the `20260901120000` RPCs go through the provenance trigger).
+- [ ] **`get_advisors`** (security + performance) from the Supabase **dashboard** → Advisors
+      (MCP path is permission-denied). Expect no new ERROR: the 4 new `security definer`
+      functions (`reserve_ai_call`, `stamp_household_ai_config_provenance`,
+      `set_ai_model_override`, `set_ai_daily_call_limit`) all `set search_path = ''` and grant
+      `execute` narrowly, mirroring `007`'s functions — so no new
+      `function_search_path_mutable` / definer-executable WARN expected.
+- [ ] **Branch housekeeping** — `dev` is several commits ahead of `main` after the fix
+      merges; keep merging `dev → main` per the existing PR flow, or leave `dev` as the
+      integration branch. (No open work items block on this.)
+
+Non-008 follow-ups (parked, not part of this intent):
+
+- Intents **009-clear-picks-reset** (OQ-1) and **010-grocery-store-location-model**
+  (OQ-A..OQ-E for Chandler) sit at inception Checkpoint 2 awaiting answers.
+
 ## Rollback (emergency only — no data loss)
 
-- **FE**: redeploy the previous Netlify production deploy (instant). Old FE + new schema
-  works for reads/Test connection; only model/limit edits 403 (see Ordering hazard).
+- **FE**: redeploy the previous Netlify production deploy (instant). ⚠️ the pre-`ec41f22` FE
+  does model/limit writes via `.upsert()` and will `42501` — only Test connection / key
+  set-clear stay usable. Prefer rolling forward.
 - **Edge Function**: `supabase functions deploy` the previous `claude-proxy` from the
   pre-008 commit. Old function + new schema is fine — it simply doesn't call
   `reserve_ai_call` (falls back to the old `count(*)` cap).
 - **DB**: per each migration's header —
+  - `20260901120000`: `drop function set_ai_model_override(text), set_ai_daily_call_limit(integer);`
+    (then the FE must also revert to a working write path — there is no bare `.upsert()` that
+    works against the column-only grants, so roll forward instead).
   - `20260901000000`: `drop trigger trg_household_ai_config_provenance …; drop function
 stamp_household_ai_config_provenance(); grant insert/update (updated_at, updated_by) …
 to authenticated;`
   - `20260831213000`: `drop function reserve_ai_call(uuid,integer); drop table
 ai_call_counter;`
-    Both are non-destructive to existing data (`ai_call_counter` holds only per-day counters).
+    All are non-destructive to existing data (`ai_call_counter` holds only per-day counters).
 - No down-migrations; roll **forward** (fix + re-push) unless a migration itself failed to
   apply.
+
+> The "Ordering hazard" section above is historical — it was closed 2026-09-01 when the
+> Netlify `main` build went live, and superseded by the "Post-deploy fix" (the `.upsert()`
+> path was broken for owners regardless of ordering).
 
 ## Post-deploy fix (2026-09-01) — `.upsert()` on `household_ai_config` → 42501
 

@@ -457,16 +457,19 @@ export type Database = {
           created_at: string;
           id: string;
           name: string;
+          week_start_day: number;
         };
         Insert: {
           created_at?: string;
           id?: string;
           name: string;
+          week_start_day?: number;
         };
         Update: {
           created_at?: string;
           id?: string;
           name?: string;
+          week_start_day?: number;
         };
         Relationships: [];
       };

@@ -72,3 +72,14 @@ one operational risk is the deploy **ordering** (see deployment-plan), not the S
 
 Before this build: remote current through `20260831130000_ai_config_and_key_vault` (intent 007).
 Pending: `20260831213000`, `20260901000000` — pushed 2026-09-01 (see deployment-plan).
+
+## Post-build addition (2026-09-01) — commit `ec41f22`
+
+A **third** migration, `20260901120000_ai_config_write_rpc.sql`, landed after this build as a
+Checkpoint-4 fix: model/limit settings writes → `security definer` RPCs
+(`set_ai_model_override` / `set_ai_daily_call_limit`), because the as-built `.upsert()`
+`42501`'d on prod against `household_ai_config`'s column-only grants. Verified local
+(`supabase test db` 256/256, `vitest` 180/180, `tsc`/`eslint`/`prettier` clean, `deno` 33/33),
+pushed to prod, FE merged to `main`, verified on the live site. Synthetic label for the fix:
+`v0.8.1-ec41f22`. See `deployment-plan.md` → "Post-deploy fix" and `standards/decision-index.md`
+ADR-6.

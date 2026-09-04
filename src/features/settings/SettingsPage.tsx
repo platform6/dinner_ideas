@@ -1,10 +1,11 @@
 import { Heading, Stack } from '@chakra-ui/react';
 
 import { ClaudeAiCard } from '@/features/settings/ClaudeAiCard';
+import { PlanningWeekCard } from '@/features/settings/PlanningWeekCard';
 
 /**
- * `/settings` — a routed page (not a modal) so later household settings (e.g. `dinners_per_week`)
- * have a home. For intent 007 it holds a single "Claude / AI" card.
+ * `/settings` — a routed page (not a modal) so household settings have a home. Holds the
+ * "Claude / AI" card (intent 007) and the "Planning week" card (intent 011).
  */
 export function SettingsPage() {
   return (
@@ -13,6 +14,7 @@ export function SettingsPage() {
         Settings
       </Heading>
       <ClaudeAiCard />
+      <PlanningWeekCard />
     </Stack>
   );
 }

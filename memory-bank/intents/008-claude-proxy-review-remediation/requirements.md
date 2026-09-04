@@ -216,12 +216,23 @@ defaultValue={config.data?.dailyCallLimit ?? 25}>` is uncontrolled — `defaultV
     `now()`.
   - The client no longer sends `updated_at` (and does not send `updated_by`) — both are set
     server-side by a **`BEFORE INSERT OR UPDATE` trigger** on `household_ai_config` (OQ-2)
-    that stamps `updated_by = auth.uid()`, `updated_at = now()` unconditionally. `updateAiConfig`
-    keeps using `.upsert(...)`, just without the `updated_at` field.
-  - Owner-only enforcement (RLS) and the "`key_secret_id` not writable here" guarantee from
-    `007` are preserved — the trigger does not touch the write-authorization path.
-  - New migration file under `supabase/migrations/` (append-only); the `007` settings tests
-    for model / limit writes still pass (same `.upsert` call shape, minus `updated_at`).
+    that stamps `updated_by = auth.uid()`, `updated_at = now()` unconditionally.
+  - Owner-only enforcement and the "`key_secret_id` not writable here" guarantee from `007`
+    are preserved.
+  - New migration file(s) under `supabase/migrations/` (append-only).
+
+> **Post-deployment amendment (2026-09-01, commit `ec41f22`).** The as-shipped plan had
+> `updateAiConfig` keep its PostgREST `.upsert(...)` (INSERT … ON CONFLICT DO UPDATE). That
+> **404'd/403'd on prod with `42501 "permission denied for table household_ai_config"`** even
+> for an owner: `household_ai_config` has column-level grants only (to protect `key_secret_id`
+> — ADR-4), and prod's PostgREST needs table-level `UPDATE` for the `ON CONFLICT DO UPDATE`
+> form. Fixed by migration `20260901120000_ai_config_write_rpc.sql`: model/limit writes now go
+> through **`security definer` RPCs** `set_ai_model_override(text)` / `set_ai_daily_call_limit(integer)`
+> (own owner-check + validation; the provenance trigger still stamps). `updateAiConfig` calls
+> `.rpc(...)` and no longer takes a `householdId`. The `20260901000000` column-revoke stays as
+> pure defense. See `deployment/deployment-plan.md` → "Post-deploy fix". Decision recorded as
+> **ADR-6**.
+
 - **Priority**: Should
 - **Source**: finding 9
 

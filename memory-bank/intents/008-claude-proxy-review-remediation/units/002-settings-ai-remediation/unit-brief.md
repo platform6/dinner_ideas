@@ -11,6 +11,14 @@ default_bolt_type: simple-construction-bolt
 
 # Unit Brief: Settings AI Remediation
 
+> **Post-deploy amendment (2026-09-01, commit `ec41f22` / migration `20260901120000`).** FR-6
+> as built kept `updateAiConfig` on a PostgREST `.upsert()`; that `42501`'d on prod (column-only
+> grants + `ON CONFLICT DO UPDATE` needs table-level `UPDATE`). Model/limit writes now go
+> through `security definer` RPCs `set_ai_model_override` / `set_ai_daily_call_limit`; the
+> provenance trigger is unchanged. See `../../deployment/deployment-plan.md` → "Post-deploy fix"
+> and `standards/decision-index.md` ADR-6. The `.upsert` / `keeps .upsert` mentions below are
+> the as-planned record.
+
 ## Purpose
 
 Fix the four settings-client defects from the `007` review: the "Daily call limit" field shows
