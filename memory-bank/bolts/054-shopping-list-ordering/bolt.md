@@ -3,22 +3,29 @@ id: 054-shopping-list-ordering
 unit: 003-shopping-list-ordering
 intent: 010-grocery-store-location-model
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-shopping-list-sort-by-location
   - 002-shopping-list-ordering-tests
 created: '2026-09-04T14:30:00Z'
-started: null
-completed: null
+started: '2026-09-04T23:10:00Z'
+completed: '2026-09-04T23:26:58Z'
 current_stage: null
-stages_completed: []
-
+stages_completed:
+  - name: plan
+    completed: '2026-09-04T23:12:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-04T23:15:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-04T23:20:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 051-location-item-model
 enables_bolts: []
 requires_units: []
 blocks: false
-
 complexity:
   avg_complexity: 1
   avg_uncertainty: 1
@@ -51,9 +58,11 @@ unlocated-last-alphabetical fallback.
 
 ## Stages
 
-- [ ] **1. plan**: Pending → implementation-plan.md
-- [ ] **2. implement**: Pending → src/features/shopping-list/
-- [ ] **3. test**: Pending → test-walkthrough.md
+Per `simple-construction-bolt` v1.0.0 (3 stages):
+
+- ✅ **1. Plan**: Complete → implementation-plan.md
+- ✅ **2. Implement**: Complete → src/features/shopping-list/ + implementation-walkthrough.md
+- ✅ **3. Test**: Complete → 10 new tests (290/290 green) + test-walkthrough.md
 
 ## Dependencies
 

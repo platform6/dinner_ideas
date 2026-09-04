@@ -19,9 +19,10 @@ import {
 
 import { useCurrentPlan } from '@/features/weekly-plan/hooks';
 import { buildShoppingList } from '@/features/shopping-list/aggregate';
-import { reorderGroupsByRows } from '@/features/shopping-list/reorder';
+import { reorderGroupsByLocation } from '@/features/shopping-list/reorder';
 import { formatShoppingListText } from '@/features/shopping-list/format';
-import { useAssignments, useRows, useShoppingListDinners } from '@/features/shopping-list/hooks';
+import { useShoppingListDinners } from '@/features/shopping-list/hooks';
+import { useActiveStore, useResolvedItems } from '@/features/store-config/hooks';
 import { categoryIcon, uiIcons } from '@/shared/components/icons';
 
 function itemKey(category: string, name: string, unit: string) {
@@ -35,8 +36,10 @@ export function ShoppingListPage() {
   const dinnerIds = useMemo(() => (plan?.weekly_plan_selections ?? []).map((s) => s.dinner_id), [plan]);
 
   const dinners = useShoppingListDinners(dinnerIds);
-  const rows = useRows();
-  const assignments = useAssignments();
+  // The shopping list reads the SAME resolution view the store-config page does (unit 1,
+  // story 004) — one definition of where an ingredient sorts, two consumers.
+  const store = useActiveStore();
+  const resolved = useResolvedItems(store.data?.id);
 
   const isLocked = plan?.locked_at != null;
 
@@ -51,8 +54,8 @@ export function ShoppingListPage() {
 
   const groups = useMemo(() => {
     const built = buildShoppingList(dinners.data ?? []);
-    return reorderGroupsByRows(built, rows.data ?? [], assignments.data ?? []);
-  }, [dinners.data, rows.data, assignments.data]);
+    return reorderGroupsByLocation(built, resolved.data ?? []);
+  }, [dinners.data, resolved.data]);
   const text = useMemo(() => formatShoppingListText(groups), [groups]);
   const itemCount = useMemo(() => groups.reduce((sum, group) => sum + group.items.length, 0), [groups]);
 

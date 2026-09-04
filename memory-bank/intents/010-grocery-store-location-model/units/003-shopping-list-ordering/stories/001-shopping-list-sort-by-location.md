@@ -2,11 +2,11 @@
 id: 001-shopping-list-sort-by-location
 unit: 003-shopping-list-ordering
 intent: 010-grocery-store-location-model
-status: draft
+status: complete
 priority: must
 created: '2026-09-04T14:30:00Z'
 assigned_bolt: 054-shopping-list-ordering
-implemented: false
+implemented: true
 ---
 
 # Story: 001-shopping-list-sort-by-location
