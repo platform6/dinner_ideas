@@ -20,6 +20,7 @@ environments:
     fe: 'LIVE 2026-09-04 — PR #14 merged (origin/main 664d78c); Netlify main build green (user-confirmed)'
     edge_function: 'n/a — no function change'
     smoke: 'S1–S8 all pass on prod (2026-09-04, user-confirmed) — planning-week card + owner gate, window label parity, fresh-week empty state, week-aligned pick persistence, lock flow + history, shopping-list decoupling, clear picks + ordered undo'
+    advisors: 'get_advisors reviewed 2026-09-04 — no critical issues'
 ---
 
 # Deployment Plan: intents 012 + 011 + 009 (release v0.9.0)
@@ -71,7 +72,7 @@ default 0 check (week_start_day between 0 and 6)` + a column comment. **No new R
     [x] pnpm run build (Netlify's exact command)  clean         2026-09-04
 [x] Staging   — n/a. One additive column + FE. `pnpm test` + `pnpm run build` locally is the
               rehearsal (same call as intent 008's additive migrations).
-[ ] Production — Checkpoint 3 (user approval required)
+[x] Production — Checkpoint 3  (deployed 2026-09-04)
     [x] 0. push local dev  →  `git push origin dev`   (done 2026-09-04 — e14b51b..58579d7)
     [x] 1. DB:  `npx --yes supabase db push --linked`   (done 2026-09-04)
            output: {"migrations":["20260904020000_households_week_start_day.sql"],"message":"Finished supabase db push."}
@@ -87,9 +88,8 @@ default 0 check (week_start_day between 0 and 6)` + a column comment. **No new R
         `migration list` showed it local-only before the push
     [x] Netlify `main` build GREEN and live  (2026-09-04, user-confirmed)
     [x] Smoke S1–S8 — all pass on prod (2026-09-04, user-confirmed)
-    [ ] `get_advisors` (security + performance) from the Supabase dashboard — recommended,
-        non-blocking. One additive column on an already-RLS'd table; no advisory expected.
-        Not yet run.
+    [x] `get_advisors` (security + performance) — no critical issues (2026-09-04, user-confirmed).
+        As expected: one additive column on an already-RLS'd table adds no advisory.
 ```
 
 ## Smoke (Checkpoint 4)
