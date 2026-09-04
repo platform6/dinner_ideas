@@ -3,7 +3,7 @@ intent: 008-claude-proxy-review-remediation
 build: v0.8.0-1e20c9f
 commit: 1e20c9f
 created: '2026-09-01T02:30:00Z'
-updated: '2026-09-01T18:10:00Z'
+updated: '2026-09-03T22:10:00Z'
 status: production-live
 post_deploy_fixes:
   - '20260901120000_ai_config_write_rpc.sql — model/limit writes -> security-definer RPCs (fixes 42501 on .upsert). DB pushed to prod 2026-09-01T17:35Z; FE fix ec41f22 merged to main -> Netlify rebuilt. Verified on prod 2026-09-01: model change 200, daily-limit change 200, Test connection OK.'
@@ -18,7 +18,7 @@ environments:
     db: 'both migrations applied to gpkqsedtlzxczmarxjia (supabase db push --linked, 2026-09-01) — ai_call_counter + reserve_ai_call; provenance trigger + updated_at/updated_by revoke'
     edge_function: 'claude-proxy deployed to gpkqsedtlzxczmarxjia 2026-09-01 (script ~1.6 MB)'
     fe: 'live — Netlify main deploy green 2026-09-01 (ordering hazard window closed)'
-    smoke: pending
+    smoke: 'confirmed — S1-S6 all pass (2026-09-03); get_advisors reviewed, no action required'
     target: 'Supabase linked gpkqsedtlzxczmarxjia + Netlify main'
 ---
 
@@ -65,23 +65,17 @@ the Netlify `main` build going live.
         output: {"migrations":["20260831213000_ai_call_counter.sql","20260901000000_ai_config_provenance.sql"],"message":"Finished supabase db push."}
     [x] `npx --yes supabase functions deploy claude-proxy --project-ref gpkqsedtlzxczmarxjia`
         output: {"functions":["claude-proxy"],"message":"Deployed Functions."}
-[~] Verify production — Checkpoint 4  (in progress)
+[x] Verify production — Checkpoint 4  (complete 2026-09-03)
     [x] Netlify `main` build GREEN and live  (2026-09-01, user-confirmed)
     [x] `supabase migration list --linked` — 20260831213000 / 20260901000000 / 20260901120000
         all remote  (2026-09-01)
     [x] database.types.ts regenerated + committed (ai_call_counter, reserve_ai_call,
         set_ai_model_override, set_ai_daily_call_limit)
-    [~] Smoke (see below)
-        [x] Model change -> 200; Daily call limit change -> 200; Test connection OK
-            (2026-09-01, user-confirmed — the S1/S2/S6 paths + the 42501 fix)
-        [ ] S3 cap: set limit 3, clear today's ai_call_counter, press Test connection 4x
-            -> 3 OK + "Daily limit reached"; counter row (HH, today, 3)
-        [ ] S4 raw PATCH updated_at -> 403  ·  S5 clear key -> "No Claude API key set…"
-        [ ] S2 DB check: updated_by = owner uid, updated_at ~ now
-    [ ] `get_advisors` (security + perf) from the Supabase dashboard — expect no new ERROR;
-        the 4 new `security definer` fns pin `search_path = ''` + grant `execute` narrowly
-        (mirrors 007), so no new `function_search_path_mutable` / definer-executable WARN
-        expected.
+    [x] Smoke (see below) — S1-S6 all pass (2026-09-01 + 2026-09-03, user-confirmed)
+    [x] `get_advisors` (security + perf) from the Supabase dashboard — reviewed 2026-09-03.
+        No ERROR-level findings. 4 WARNs seen; all reviewed and explained below — no fix
+        required. (One pre-existing gap noted as a non-blocking backlog item — see
+        "Outstanding / cleanup".)
 ```
 
 ## Smoke (Checkpoint 4)
@@ -98,6 +92,9 @@ manual acceptance tests (session note); the deploy-confirmation subset:
 | S5  | Clear the household key -> **Test connection**                                                                                                                                                                    | "No Claude API key set…" — contract regression check                                                                                   |
 | S6  | Normal **Test connection** with key                                                                                                                                                                               | 200; body has `{ text, model, usage, latency_ms }`; exactly one `ai_usage_log` row per press                                           |
 
+All six confirmed by the user 2026-09-03 (S1/S2/S6 first confirmed 2026-09-01 against the
+42501 fix).
+
 Not manually reproducible (covered by automated tests): transient-DB-error fail-closed
 (FR-1/FR-3 resolver paths), concurrent cap race (FR-2), real SDK timeout + post-billing
 metering-write failure (FR-4). If the proxy ever is slow, the expected outcome is `502
@@ -106,24 +103,41 @@ timeout` **with** an `ai_usage_log` row, before the platform kills the function.
 ## Outstanding / cleanup
 
 Intent 008 is **production-live** and its blocking defect (the settings-write `42501`) is
-fixed and verified on prod. The rest is non-blocking:
+fixed and verified on prod. Checkpoint 4 (smoke + advisors) is now closed:
 
-- [ ] **Smoke S3** — cap trips at limit+1: set `daily_call_limit = 3`, delete today's
-      `ai_call_counter` row, press Test connection 4× → 3 OK then "Daily limit reached";
-      counter row `(HH, today, 3)`; `ai_usage_log` = 3 `ok=true` + 1 `rate_limited`.
-- [ ] **Smoke S4** — raw PostgREST PATCH of `updated_at` on `household_ai_config` → 403.
-- [ ] **Smoke S5** — clear the key → Test connection → "No Claude API key set…".
-- [ ] **Smoke S2 DB check** — after a model/limit edit, `updated_by` = the owner's uid and
-      `updated_at` ≈ now (the `20260901120000` RPCs go through the provenance trigger).
-- [ ] **`get_advisors`** (security + performance) from the Supabase **dashboard** → Advisors
-      (MCP path is permission-denied). Expect no new ERROR: the 4 new `security definer`
-      functions (`reserve_ai_call`, `stamp_household_ai_config_provenance`,
-      `set_ai_model_override`, `set_ai_daily_call_limit`) all `set search_path = ''` and grant
-      `execute` narrowly, mirroring `007`'s functions — so no new
-      `function_search_path_mutable` / definer-executable WARN expected.
-- [ ] **Branch housekeeping** — `dev` is several commits ahead of `main` after the fix
-      merges; keep merging `dev → main` per the existing PR flow, or leave `dev` as the
-      integration branch. (No open work items block on this.)
+- [x] **Smoke S1-S6** — all confirmed by the user 2026-09-03 (S1/S2/S6 first confirmed
+      2026-09-01 against the 42501 fix). See the smoke table above.
+- [x] **`get_advisors`** (security + performance) — run from the Supabase **dashboard**
+      2026-09-03 (MCP path is permission-denied). **No ERROR-level findings.** 4 WARNs
+      reviewed: - `current_user_household_id()` — anon + authenticated executable. **Pre-existing,
+      intentional since intent `004`** (`20260828230000` grants both roles). Not part of 008. - `set_household_ai_key` / `clear_household_ai_key` — authenticated executable.
+      **Pre-existing, intentional since intent `007`** — each does its own owner-role check
+      internally (`raise 42501` if not owner) before touching the vault secret. - `set_ai_model_override` / `set_ai_daily_call_limit` — authenticated executable. **New
+      in 008, by design** — same pattern as the row above (`20260901120000` explicitly
+      revokes `public`/`anon` and grants `authenticated` only; each function checks
+      household-owner role internally). This intent's original expectation of "no new
+      definer-executable WARN" was wrong on **count** (predicted 0 new, got 2) but not on
+      **risk** — same already-accepted class as `007`'s functions. No fix needed; corrected
+      here so it isn't mistaken for a regression later. - `auth_leaked_password_protection` — unrelated project-wide Auth setting, not part of
+      this intent.
+- [x] **Branch housekeeping** — `dev` → `main` merged 2026-09-01 (carries the 42501 fix);
+      continue merging `dev → main` per the existing PR flow.
+
+**Backlog (non-blocking, not fixed as part of this intent):**
+
+- [ ] `stamp_household_ai_config_provenance()` (`20260901000000_ai_config_provenance.sql`) is
+      the one function in this intent that never revokes its default `EXECUTE` grants, so
+      `anon` + `authenticated` can call it directly via
+      `/rest/v1/rpc/stamp_household_ai_config_provenance` — flagged by both
+      `anon_security_definer_function_executable` and
+      `authenticated_security_definer_function_executable`. It's a `BEFORE INSERT/UPDATE`
+      trigger function only (`returns trigger`); a direct RPC call errors rather than doing
+      anything ("trigger functions can only be called as triggers"), so real exploitability is
+      low, but it's inconsistent with every sibling function in `007`/`008`, which all
+      explicitly `revoke ... from public, anon` (see `20260901120000`,
+      `20260831130000`). **Fix**: a small follow-up migration —
+      `revoke execute on function public.stamp_household_ai_config_provenance() from public, anon, authenticated;`
+      — no `grant` needed, since only the trigger mechanism ever invokes it.
 
 Non-008 follow-ups (parked, not part of this intent):
 
