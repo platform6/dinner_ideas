@@ -3,7 +3,7 @@ id: 050-location-item-model
 unit: 001-location-item-model
 intent: 010-grocery-store-location-model
 type: ddd-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-stores-and-locations-schema
   - 002-items-registry-and-sync-trigger
@@ -12,11 +12,25 @@ stories:
   - 005-suggestion-dismissals
   - 006-reorder-location-rpc
 created: '2026-09-04T14:30:00Z'
-started: null
-completed: null
+started: '2026-09-04T17:17:34Z'
+completed: '2026-09-04T19:54:30Z'
 current_stage: null
-stages_completed: []
-
+stages_completed:
+  - name: model
+    completed: '2026-09-04T17:24:49Z'
+    artifact: ddd-01-domain-model.md
+  - name: design
+    completed: '2026-09-04T17:29:03Z'
+    artifact: ddd-02-technical-design.md
+  - name: adr-analysis
+    completed: '2026-09-04T17:35:00Z'
+    artifact: adr-007-items-registry-derived-entity.md, adr-008-composite-fks-for-containment.md
+  - name: implement
+    completed: '2026-09-04T17:48:08Z'
+    artifact: supabase/migrations/20260904180000_location_item_model.sql
+  - name: test
+    completed: '2026-09-04T17:51:59Z'
+    artifact: ddd-03-test-report.md
 requires_bolts: []
 enables_bolts:
   - 051-location-item-model
@@ -25,7 +39,6 @@ enables_bolts:
   - 054-shopping-list-ordering
 requires_units: []
 blocks: false
-
 complexity:
   avg_complexity: 3
   avg_uncertainty: 2
@@ -65,10 +78,13 @@ sort will read from.
 
 ## Stages
 
-- [ ] **1. model**: Pending → ddd-01-domain-model.md
-- [ ] **2. design**: Pending → ddd-02-technical-design.md
-- [ ] **3. implement**: Pending → supabase/migrations/
-- [ ] **4. test**: Pending → ddd-03-test-report.md
+Per `ddd-construction-bolt` v2.0.0 (5 stages; stage 3 optional):
+
+- ✅ **1. Domain Model**: Complete → ddd-01-domain-model.md
+- ✅ **2. Technical Design**: Complete → ddd-02-technical-design.md
+- ✅ **3. ADR Analysis**: Complete → adr-007, adr-008
+- ✅ **4. Implement**: Complete → supabase/migrations/20260904180000_location_item_model.sql
+- ✅ **5. Test**: Complete → location_item_model_test.sql (53/53) + ddd-03-test-report.md
 
 ## Dependencies
 

@@ -2,11 +2,11 @@
 id: 002-items-registry-and-sync-trigger
 unit: 001-location-item-model
 intent: 010-grocery-store-location-model
-status: draft
+status: complete
 priority: must
 created: '2026-09-04T14:30:00Z'
 assigned_bolt: 050-location-item-model
-implemented: false
+implemented: true
 ---
 
 # Story: 002-items-registry-and-sync-trigger
@@ -21,12 +21,12 @@ stable identity with no application code needing to remember to create one
 ## Acceptance Criteria
 
 - [ ] **Given** a new migration, **When** applied, **Then** `items(id, household_id, name,
-    name_key generated always as (lower(trim(name))) stored, created_at)` exists with
+  name_key generated always as (lower(trim(name))) stored, created_at)` exists with
       `unique (household_id, name_key)`.
 - [ ] **Given** a trigger on `dinner_ingredients` (`after insert or update of name`), **When**
       a row is written, **Then** it resolves `household_id` via `dinner_id → dinners
-    .household_id` and runs `insert into items (household_id, name) values (...) on
-    conflict (household_id, name_key) do nothing`.
+  .household_id` and runs `insert into items (household_id, name) values (...) on
+  conflict (household_id, name_key) do nothing`.
 - [ ] **Given** two `dinner_ingredients` rows with names that differ only in case/whitespace
       (e.g. "Black Beans" and " black beans "), **When** both trigger, **Then** exactly one
       `items` row exists for that household.

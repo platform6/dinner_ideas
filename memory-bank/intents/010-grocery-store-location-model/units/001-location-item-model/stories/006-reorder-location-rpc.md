@@ -2,11 +2,11 @@
 id: 006-reorder-location-rpc
 unit: 001-location-item-model
 intent: 010-grocery-store-location-model
-status: draft
+status: complete
 priority: must
 created: '2026-09-04T14:30:00Z'
 assigned_bolt: 050-location-item-model
-implemented: false
+implemented: true
 ---
 
 # Story: 006-reorder-location-rpc

@@ -2,11 +2,11 @@
 id: 003-item-and-category-placements
 unit: 001-location-item-model
 intent: 010-grocery-store-location-model
-status: draft
+status: complete
 priority: must
 created: '2026-09-04T14:30:00Z'
 assigned_bolt: 050-location-item-model
-implemented: false
+implemented: true
 ---
 
 # Story: 003-item-and-category-placements
@@ -22,11 +22,11 @@ schema-level impossibility, not an application-level bug class
 ## Acceptance Criteria
 
 - [ ] **Given** a new migration, **When** applied, **Then** `item_placements(id,
-    household_id, store_id, item_id, location_id)` exists with `unique (item_id,
-    store_id)` and a composite FK `(location_id, store_id) → locations(id, store_id)`.
+  household_id, store_id, item_id, location_id)` exists with `unique (item_id,
+  store_id)` and a composite FK `(location_id, store_id) → locations(id, store_id)`.
 - [ ] **Given** the same migration, **When** applied, **Then** `category_placements(id,
-    household_id, store_id, category, location_id)` exists with `unique (store_id,
-    category)` and the same composite-FK shape.
+  household_id, store_id, category, location_id)` exists with `unique (store_id,
+  category)` and the same composite-FK shape.
 - [ ] **Given** either table, **When** the referenced Location is deleted, **Then** the
       dependent placement row is deleted (`location_id → locations(id) on delete cascade`) —
       **not** nulled. Neither table's `location_id` column is ever null while the row exists.

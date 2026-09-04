@@ -119,6 +119,48 @@ export type Database = {
           },
         ];
       };
+      category_placements: {
+        Row: {
+          category: string;
+          created_at: string;
+          household_id: string;
+          id: string;
+          location_id: string;
+          store_id: string;
+        };
+        Insert: {
+          category: string;
+          created_at?: string;
+          household_id: string;
+          id?: string;
+          location_id: string;
+          store_id: string;
+        };
+        Update: {
+          category?: string;
+          created_at?: string;
+          household_id?: string;
+          id?: string;
+          location_id?: string;
+          store_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'category_placements_location_id_store_id_fkey';
+            columns: ['location_id', 'store_id'];
+            isOneToOne: false;
+            referencedRelation: 'locations';
+            referencedColumns: ['id', 'store_id'];
+          },
+          {
+            foreignKeyName: 'category_placements_store_id_household_id_fkey';
+            columns: ['store_id', 'household_id'];
+            isOneToOne: false;
+            referencedRelation: 'stores';
+            referencedColumns: ['id', 'household_id'];
+          },
+        ];
+      };
       category_row_assignments: {
         Row: {
           category: string;
@@ -478,6 +520,132 @@ export type Database = {
         };
         Relationships: [];
       };
+      item_placements: {
+        Row: {
+          created_at: string;
+          household_id: string;
+          id: string;
+          item_id: string;
+          location_id: string;
+          store_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          household_id: string;
+          id?: string;
+          item_id: string;
+          location_id: string;
+          store_id: string;
+        };
+        Update: {
+          created_at?: string;
+          household_id?: string;
+          id?: string;
+          item_id?: string;
+          location_id?: string;
+          store_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'item_placements_item_id_household_id_fkey';
+            columns: ['item_id', 'household_id'];
+            isOneToOne: false;
+            referencedRelation: 'item_location_resolution';
+            referencedColumns: ['item_id', 'household_id'];
+          },
+          {
+            foreignKeyName: 'item_placements_item_id_household_id_fkey';
+            columns: ['item_id', 'household_id'];
+            isOneToOne: false;
+            referencedRelation: 'items';
+            referencedColumns: ['id', 'household_id'];
+          },
+          {
+            foreignKeyName: 'item_placements_location_id_store_id_fkey';
+            columns: ['location_id', 'store_id'];
+            isOneToOne: false;
+            referencedRelation: 'locations';
+            referencedColumns: ['id', 'store_id'];
+          },
+          {
+            foreignKeyName: 'item_placements_store_id_household_id_fkey';
+            columns: ['store_id', 'household_id'];
+            isOneToOne: false;
+            referencedRelation: 'stores';
+            referencedColumns: ['id', 'household_id'];
+          },
+        ];
+      };
+      items: {
+        Row: {
+          created_at: string;
+          household_id: string;
+          id: string;
+          name: string;
+          name_key: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          household_id: string;
+          id?: string;
+          name: string;
+          name_key?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          household_id?: string;
+          id?: string;
+          name?: string;
+          name_key?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'items_household_id_fkey';
+            columns: ['household_id'];
+            isOneToOne: false;
+            referencedRelation: 'households';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      locations: {
+        Row: {
+          created_at: string;
+          household_id: string;
+          id: string;
+          name: string;
+          position: number;
+          store_id: string;
+          type: string;
+        };
+        Insert: {
+          created_at?: string;
+          household_id: string;
+          id?: string;
+          name: string;
+          position: number;
+          store_id: string;
+          type: string;
+        };
+        Update: {
+          created_at?: string;
+          household_id?: string;
+          id?: string;
+          name?: string;
+          position?: number;
+          store_id?: string;
+          type?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'locations_store_id_household_id_fkey';
+            columns: ['store_id', 'household_id'];
+            isOneToOne: false;
+            referencedRelation: 'stores';
+            referencedColumns: ['id', 'household_id'];
+          },
+        ];
+      };
       meal_history: {
         Row: {
           dinner_id: string;
@@ -548,6 +716,101 @@ export type Database = {
           id?: string;
         };
         Relationships: [];
+      };
+      stores: {
+        Row: {
+          created_at: string;
+          household_id: string;
+          id: string;
+          is_active: boolean;
+          name: string;
+        };
+        Insert: {
+          created_at?: string;
+          household_id: string;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+        };
+        Update: {
+          created_at?: string;
+          household_id?: string;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'stores_household_id_fkey';
+            columns: ['household_id'];
+            isOneToOne: false;
+            referencedRelation: 'households';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      suggestion_dismissals: {
+        Row: {
+          created_at: string;
+          household_id: string;
+          id: string;
+          item_id: string;
+          store_id: string;
+          suggested_item_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          household_id: string;
+          id?: string;
+          item_id: string;
+          store_id: string;
+          suggested_item_id: string;
+        };
+        Update: {
+          created_at?: string;
+          household_id?: string;
+          id?: string;
+          item_id?: string;
+          store_id?: string;
+          suggested_item_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'suggestion_dismissals_item_id_household_id_fkey';
+            columns: ['item_id', 'household_id'];
+            isOneToOne: false;
+            referencedRelation: 'item_location_resolution';
+            referencedColumns: ['item_id', 'household_id'];
+          },
+          {
+            foreignKeyName: 'suggestion_dismissals_item_id_household_id_fkey';
+            columns: ['item_id', 'household_id'];
+            isOneToOne: false;
+            referencedRelation: 'items';
+            referencedColumns: ['id', 'household_id'];
+          },
+          {
+            foreignKeyName: 'suggestion_dismissals_store_id_household_id_fkey';
+            columns: ['store_id', 'household_id'];
+            isOneToOne: false;
+            referencedRelation: 'stores';
+            referencedColumns: ['id', 'household_id'];
+          },
+          {
+            foreignKeyName: 'suggestion_dismissals_suggested_item_id_household_id_fkey';
+            columns: ['suggested_item_id', 'household_id'];
+            isOneToOne: false;
+            referencedRelation: 'item_location_resolution';
+            referencedColumns: ['item_id', 'household_id'];
+          },
+          {
+            foreignKeyName: 'suggestion_dismissals_suggested_item_id_household_id_fkey';
+            columns: ['suggested_item_id', 'household_id'];
+            isOneToOne: false;
+            referencedRelation: 'items';
+            referencedColumns: ['id', 'household_id'];
+          },
+        ];
       };
       tags: {
         Row: {
@@ -656,6 +919,31 @@ export type Database = {
         };
         Relationships: [];
       };
+      item_location_resolution: {
+        Row: {
+          household_id: string | null;
+          item_category: string | null;
+          item_id: string | null;
+          item_name: string | null;
+          location_id: string | null;
+          location_name: string | null;
+          location_position: number | null;
+          location_type: string | null;
+          name_key: string | null;
+          state: string | null;
+          store_id: string | null;
+          via_category: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'items_household_id_fkey';
+            columns: ['household_id'];
+            isOneToOne: false;
+            referencedRelation: 'households';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Functions: {
       clear_household_ai_key: { Args: never; Returns: undefined };
@@ -687,6 +975,24 @@ export type Database = {
         SetofOptions: {
           from: '*';
           to: 'grocery_store_rows';
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
+      };
+      reorder_location: {
+        Args: { p_location_id: string; p_new_position: number };
+        Returns: {
+          created_at: string;
+          household_id: string;
+          id: string;
+          name: string;
+          position: number;
+          store_id: string;
+          type: string;
+        }[];
+        SetofOptions: {
+          from: '*';
+          to: 'locations';
           isOneToOne: false;
           isSetofReturn: true;
         };

@@ -2,11 +2,11 @@
 id: 005-suggestion-dismissals
 unit: 001-location-item-model
 intent: 010-grocery-store-location-model
-status: draft
+status: complete
 priority: must
 created: '2026-09-04T14:30:00Z'
 assigned_bolt: 050-location-item-model
-implemented: false
+implemented: true
 ---
 
 # Story: 005-suggestion-dismissals
@@ -20,7 +20,7 @@ implemented: false
 ## Acceptance Criteria
 
 - [ ] **Given** a new migration, **When** applied, **Then** `suggestion_dismissals(id,
-    household_id, store_id, item_id, suggested_item_id)` exists with
+  household_id, store_id, item_id, suggested_item_id)` exists with
       `unique (store_id, item_id, suggested_item_id)`.
 - [ ] **Given** RLS, **When** applied, **Then** it mirrors `20260828232000`.
 - [ ] **Given** a dismissal is recorded, **When** the same `(item_id, suggested_item_id)`

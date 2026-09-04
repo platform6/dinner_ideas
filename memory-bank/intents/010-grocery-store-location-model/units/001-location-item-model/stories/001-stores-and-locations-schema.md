@@ -2,11 +2,11 @@
 id: 001-stores-and-locations-schema
 unit: 001-location-item-model
 intent: 010-grocery-store-location-model
-status: draft
+status: complete
 priority: must
 created: '2026-09-04T14:30:00Z'
 assigned_bolt: 050-location-item-model
-implemented: false
+implemented: true
 ---
 
 # Story: 001-stores-and-locations-schema
@@ -21,10 +21,10 @@ household
 ## Acceptance Criteria
 
 - [ ] **Given** a new migration, **When** applied, **Then** `stores(id, household_id, name,
-    is_active, created_at)` exists with a partial unique index
+  is_active, created_at)` exists with a partial unique index
       `unique (household_id) where is_active` (at most one active Store per household).
 - [ ] **Given** the same migration, **When** applied, **Then** `locations(id, household_id,
-    store_id, name, type, position)` exists with `type in ('section','aisle')`,
+  store_id, name, type, position)` exists with `type in ('section','aisle')`,
       `unique (store_id, position)`, and `unique (id, store_id)` (enabling composite FKs from
       later stories). `store_id` FKs to `stores(id) on delete cascade`.
 - [ ] **Given** both tables, **When** RLS is applied, **Then** it mirrors
