@@ -7,7 +7,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PlanPage } from '@/features/weekly-plan/components/PlanPage';
 import { theme } from '@/shared/theme';
-import { fetchCurrentPlan, fetchPlanByStartDate, removeSelection } from '@/features/weekly-plan/api';
+import {
+  fetchCurrentPlan,
+  fetchPlanByStartDate,
+  lockPlan,
+  removeSelection,
+} from '@/features/weekly-plan/api';
 import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/types';
 
 vi.mock('@/features/weekly-plan/api');
@@ -47,6 +52,13 @@ describe('PlanPage', () => {
   const mockedFetchCurrentPlan = vi.mocked(fetchCurrentPlan);
   const mockedFetchPlanByStartDate = vi.mocked(fetchPlanByStartDate);
   const mockedRemoveSelection = vi.mocked(removeSelection);
+  const mockedLockPlan = vi.mocked(lockPlan);
+
+  const threeSelections = [
+    selection({ id: 'sel-1', dinner_id: 'tacos', dinners: { ...selection({}).dinners, name: 'Tacos' } }),
+    selection({ id: 'sel-2', dinner_id: 'pasta', dinners: { ...selection({}).dinners, name: 'Pasta' } }),
+    selection({ id: 'sel-3', dinner_id: 'curry', dinners: { ...selection({}).dinners, name: 'Curry' } }),
+  ];
 
   function renderPage() {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -64,6 +76,7 @@ describe('PlanPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockedRemoveSelection.mockResolvedValue(undefined);
+    mockedLockPlan.mockResolvedValue(plan({ locked_at: '2026-08-25T12:00:00Z' }));
   });
 
   it('shows an empty-plan message with a link to the catalog when no plan exists yet', async () => {
@@ -118,9 +131,50 @@ describe('PlanPage', () => {
     renderPage();
 
     expect(await screen.findByText('Tacos')).toBeInTheDocument();
-    expect(screen.getByText(/this plan is locked/i)).toBeInTheDocument();
+    expect(screen.getByText(/locked in — saved to your history/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /remove/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /lock in this week/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/selected$/)).not.toBeInTheDocument();
+  });
+
+  it('shows a "pick 3" prompt while 1–2 dinners are picked on the current week', async () => {
+    mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: threeSelections.slice(0, 2) }));
+    renderPage();
+
+    expect(await screen.findByText(/pick 3 dinners to lock in your week/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /lock in this week/i })).not.toBeInTheDocument();
+  });
+
+  it('offers "Lock in this week" once 3 are picked on the current unlocked week', async () => {
+    mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: threeSelections }));
+    renderPage();
+
+    expect(await screen.findByRole('button', { name: /lock in this week/i })).toBeInTheDocument();
+    expect(screen.getByText(/locks these 3 dinners and adds them to your history/i)).toBeInTheDocument();
+  });
+
+  it('locks the current week through the inline confirm', async () => {
+    const user = userEvent.setup();
+    mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: threeSelections }));
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: /lock in this week/i }));
+    await user.click(screen.getByRole('button', { name: /lock it in/i }));
+
+    await waitFor(() => expect(mockedLockPlan).toHaveBeenCalledWith('plan-id'));
+    expect(mockedLockPlan).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows an inline error when locking fails', async () => {
+    const user = userEvent.setup();
+    mockedLockPlan.mockRejectedValueOnce(new Error('nope'));
+    mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: threeSelections }));
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: /lock in this week/i }));
+    await user.click(screen.getByRole('button', { name: /lock it in/i }));
+
+    expect(await screen.findByText(/couldn’t lock this week, try again/i)).toBeInTheDocument();
   });
 
   it('shows the current week as a date range, with ▶ disabled', async () => {

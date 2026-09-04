@@ -67,7 +67,9 @@ memo + `selectionDisabled`; `weekly-plan/api.ts` (`addSelection`, no `clearSelec
 
 ## Scope Changes
 
-None yet.
+| Date       | Change                                                                                                                                                                                                                                                                                | Reason                                                                                                                                                                                                                                                                                              | Impact                                                                        |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| 2026-09-03 | **Re-sequenced to ship after `011-planning-week-rollover`** (which ships after `012-explicit-plan-locking`). Framing shifts from "the only way to reset the week" to "the **mid-week** reset within the current planning week" — auto-rollover (`011`) now handles the new-week case. | Product-owner UX session: the catalog showing stale picks indefinitely is a week-awareness gap, fixed properly by `011`. `009`'s design handoff (option 1a, inline confirm, one keyed delete, undo bar) stays valid — only the requirements.md intro framing needs a light edit when `009` resumes. | No FR change expected; no design-handoff change. Sequence: `012 → 011 → 009`. |
 
 ## Ready for Construction
 

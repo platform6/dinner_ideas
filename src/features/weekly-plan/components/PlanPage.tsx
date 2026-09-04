@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Alert,
@@ -18,22 +18,40 @@ import {
   useBreakpointValue,
 } from '@chakra-ui/react';
 
-import { useCurrentPlan, useToggleSelection, useWeekByOffset } from '@/features/weekly-plan/hooks';
+import {
+  useCurrentPlan,
+  useLockPlan,
+  useToggleSelection,
+  useWeekByOffset,
+} from '@/features/weekly-plan/hooks';
 import { formatWeekRange } from '@/features/weekly-plan/date';
+import { LockWeekControl } from '@/features/weekly-plan/components/LockWeekControl';
 import { uiIcons } from '@/shared/components/icons';
 
 export function PlanPage() {
   const [offset, setOffset] = useState(0);
   const week = useWeekByOffset(offset);
   const toggleSelection = useToggleSelection();
+  const lockPlan = useLockPlan();
   // Only needed for the current week's pick/remove actions, which read the live plan snapshot
   // fresh each toggle (see `toggle-selection.ts`) rather than the possibly-stale `week.data`.
   const currentPlan = useCurrentPlan();
+  const headingRef = useRef<HTMLHeadingElement>(null);
 
   const isCurrentWeek = offset === 0;
   const plan = week.data;
   const isLocked = plan?.locked_at != null;
   const selections = plan?.weekly_plan_selections ?? [];
+
+  async function handleLock() {
+    if (!plan) return;
+    try {
+      await lockPlan.mutateAsync(plan.id);
+      headingRef.current?.focus();
+    } catch {
+      // Surfaced by the `lockPlan.isError` alert below; the control returns to idle.
+    }
+  }
   // md+ lays the three picks side by side as vertical cards; phone keeps horizontal rows.
   const threeAcross = useBreakpointValue({ base: false, md: true }, { ssr: false }) ?? false;
   const isFull = isCurrentWeek && !isLocked && selections.length === 3;
@@ -60,7 +78,7 @@ export function PlanPage() {
       <HStack justify="space-between" flexWrap="wrap" gap={3}>
         <Box>
           <Text textStyle="eyebrow">{formatWeekRange(week.weekStartDate)}</Text>
-          <Heading textStyle="pageTitle" as="h1">
+          <Heading textStyle="pageTitle" as="h1" ref={headingRef} tabIndex={-1}>
             This week’s plan
           </Heading>
         </Box>
@@ -90,6 +108,31 @@ export function PlanPage() {
           )}
         </HStack>
       </HStack>
+
+      {isCurrentWeek && !isLocked && selections.length >= 1 && selections.length < 3 && (
+        <Text textStyle="faint">Pick 3 dinners to lock in your week.</Text>
+      )}
+
+      {isCurrentWeek && !isLocked && selections.length === 3 && (
+        <Stack gap={1}>
+          <LockWeekControl
+            key={selections.map((s) => s.dinner_id).join(',')}
+            selectionCount={selections.length}
+            isLocking={lockPlan.isPending}
+            onLock={() => void handleLock()}
+          />
+          <Text textStyle="faint">
+            Locks these 3 dinners and adds them to your history. You can still shop your list either way.
+          </Text>
+        </Stack>
+      )}
+
+      {isCurrentWeek && lockPlan.isError && (
+        <Alert status="error" borderRadius="field">
+          <AlertIcon />
+          Couldn’t lock this week, try again.
+        </Alert>
+      )}
 
       {isCurrentWeek && toggleSelection.isError && (
         <Alert status="error" borderRadius="field">
@@ -130,10 +173,13 @@ export function PlanPage() {
       )}
 
       {isCurrentWeek && isLocked && selections.length > 0 && (
-        <Text textStyle="faint">
-          This plan is locked — its shopping list has already been sent. Pick a dinner from the catalog to
-          start next week’s plan.
-        </Text>
+        <Box>
+          <Text textStyle="eyebrow">{formatWeekRange(week.weekStartDate)}</Text>
+          <Text textStyle="faint">
+            This week’s plan is locked in — saved to your history. Pick a dinner from the catalog to start
+            next week’s plan.
+          </Text>
+        </Box>
       )}
 
       {selections.length > 0 && (

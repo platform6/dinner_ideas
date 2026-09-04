@@ -2,11 +2,11 @@
 
 ## Overview
 
-- **Total stories**: 80
-- **Completed**: 80
-- **Generated**: 0
+- **Total stories**: 100
+- **Completed**: 92
+- **Generated**: 8
 - **Planned**: 0
-- **Last updated**: 2026-08-31
+- **Last updated**: 2026-09-04
 
 ---
 
@@ -156,11 +156,38 @@
 - [x] **001-settings-ui-reflects-config-no-hang** (settings-ai-remediation): daily-limit field shows the saved value; `callClaude` `AbortController` timeout; drop the dead `useEffect` - Should - ✅ COMPLETE
 - [x] **002-ai-config-write-provenance** (settings-ai-remediation): `BEFORE INSERT OR UPDATE` trigger stamps `updated_by` / `updated_at`; client drops client-clock `updated_at` - Should - ✅ COMPLETE
 
+### 011-planning-week-rollover
+
+**Unit: 001-week-start-setting** — bolt `045`
+
+- [x] **001-week-start-day-column** (week-start-setting): Additive `households.week_start_day` column + migration + types regen - Must - ✅ GENERATED
+- [x] **002-settings-planning-week-card** (week-start-setting): Owner-editable "Planning week" card on `/settings` (+ non-owner / Sunday-default behaviour) - Must - ✅ GENERATED
+
+**Unit: 002-planning-week-rollover-ui** — bolts `046`, `047`
+
+- [x] **001-planning-week-date-helpers** (planning-week-rollover-ui): `planningWeekStart` / `currentPlanningWeekStart` pure helpers + tests - Must - ✅ GENERATED
+- [x] **002-week-aware-current-plan** (planning-week-rollover-ui): `useCurrentPlan` resolves by planning-week start; 4-consumer audit - Must - ✅ GENERATED
+- [x] **003-week-aligned-plan-creation** (planning-week-rollover-ui): `createPlan` / `useToggleSelection` stamp week-aligned `start_date` - Must - ✅ GENERATED
+- [x] **004-catalog-planning-window-label** (planning-week-rollover-ui): `formatWeekRange` window label in the catalog header - Must - ✅ GENERATED
+- [x] **005-rollover-on-app-open** (planning-week-rollover-ui): Recompute current planning week on mount; `useWeekByOffset` anchor change - Must - ✅ GENERATED
+- [x] **006-rollover-regression-tests** (planning-week-rollover-ui): Cross-surface regression + boundary tests - Must - ✅ GENERATED
+
+### 012-explicit-plan-locking — ✅ COMPLETE (bolts 043, 044)
+
+**Unit: 001-explicit-plan-locking-ui** — bolts `043`, `044`
+
+- [x] **001-lock-in-this-week-action** (explicit-plan-locking-ui): "Lock in this week" button + `/plan` helper states - Must - ✅ COMPLETE
+- [x] **002-inline-lock-confirm** (explicit-plan-locking-ui): Inline confirm pill (Keep editing / Lock it in) - Must - ✅ COMPLETE
+- [x] **003-locked-view-reword** (explicit-plan-locking-ui): Reworded locked banner + week-range label - Must - ✅ COMPLETE
+- [x] **004-shopping-list-lock-decoupled** (explicit-plan-locking-ui): Remove all lock wiring from ShoppingListPage; plain copy - Must - ✅ COMPLETE
+- [x] **005-not-locked-yet-nudge** (explicit-plan-locking-ui): Non-blocking pointer to `/plan` when copying an unlocked week - Should - ✅ COMPLETE
+- [x] **006-lock-flow-tests** (explicit-plan-locking-ui): New/updated test coverage across both pages - Must - ✅ COMPLETE
+
 ---
 
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 0
+- **Generated**: 8
 - **In Progress**: 0
-- **Completed**: 86
+- **Completed**: 92
