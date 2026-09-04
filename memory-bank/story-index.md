@@ -2,9 +2,9 @@
 
 ## Overview
 
-- **Total stories**: 106
+- **Total stories**: 123
 - **Completed**: 106
-- **Generated**: 0
+- **Generated**: 17
 - **Planned**: 0
 - **Last updated**: 2026-09-04
 
@@ -167,6 +167,34 @@
 - [x] **005-keyboard-and-a11y** (clear-picks-ui): focus to Keep/Undo, `Escape`, `role="group"`, `aria-live` - Must - ✅ COMPLETE
 - [x] **006-clear-picks-tests** (clear-picks-ui): `ClearPicksControl.test.tsx` + `clear-selections.test.ts` + `CatalogPage.test.tsx` extension - Must - ✅ COMPLETE
 
+### 010-grocery-store-location-model — bolts 050–054 (v2 draft, fresh 2026-09-04)
+
+**Unit: 001-location-item-model** — bolts `050`, `051`
+
+- [x] **001-stores-and-locations-schema** (location-item-model): `stores` + `locations` tables, RLS - Must - ✅ GENERATED
+- [x] **002-items-registry-and-sync-trigger** (location-item-model): `items` registry + get-or-create trigger, source-agnostic - Must - ✅ GENERATED
+- [x] **003-item-and-category-placements** (location-item-model): `item_placements` + `category_placements`, composite FKs - Must - ✅ GENERATED
+- [x] **004-location-resolution-query** (location-item-model): explicit → inherited → unassigned resolution - Must - ✅ GENERATED
+- [x] **005-suggestion-dismissals** (location-item-model): rejected-pairing suppression - Must - ✅ GENERATED
+- [x] **006-reorder-location-rpc** (location-item-model): race-safe reorder scoped by store - Must - ✅ GENERATED
+- [x] **007-cutover-migration** (location-item-model): seed + carry-across + backfill + retire old tables - Must - ✅ GENERATED
+- [x] **008-standards-and-decision-docs** (location-item-model): architecture/decision-index updates - Should - ✅ GENERATED
+
+**Unit: 002-store-config-page** — bolts `052`, `053`
+
+- [x] **001-similarity-algorithm** (store-config-page): client-side similarity scoring - Must - ✅ GENERATED
+- [x] **002-walking-path-list** (store-config-page): location rows, lifecycle, reorder - Must - ✅ GENERATED
+- [x] **003-assign-flow** (store-config-page): bottom sheet — resolution line, suggestions, picker, unlink - Must - ✅ GENERATED
+- [x] **004-unassigned-section** (store-config-page): "Not on the path yet" - Must - ✅ GENERATED
+- [x] **005-first-run-and-desktop** (store-config-page): empty state + desktop layout - Should - ✅ GENERATED
+- [x] **006-delete-location-confirm** (store-config-page): the one destructive confirm on the page - Must - ✅ GENERATED
+- [x] **007-store-config-tests** (store-config-page): consolidated test coverage - Must - ✅ GENERATED
+
+**Unit: 003-shopping-list-ordering** — bolt `054`
+
+- [x] **001-shopping-list-sort-by-location** (shopping-list-ordering): sort key → resolved Item→Location position - Must - ✅ GENERATED
+- [x] **002-shopping-list-ordering-tests** (shopping-list-ordering): updated tests + cutover equivalence check - Must - ✅ GENERATED
+
 ### 011-planning-week-rollover — ✅ COMPLETE (bolts 045, 046, 047)
 
 **Unit: 001-week-start-setting** — bolt `045`
@@ -199,6 +227,6 @@
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 0
+- **Generated**: 17
 - **In Progress**: 0
 - **Completed**: 106
