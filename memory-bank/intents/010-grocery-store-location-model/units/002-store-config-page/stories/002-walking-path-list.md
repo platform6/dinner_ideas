@@ -2,11 +2,11 @@
 id: 002-walking-path-list
 unit: 002-store-config-page
 intent: 010-grocery-store-location-model
-status: draft
+status: complete
 priority: must
 created: '2026-09-04T14:30:00Z'
 assigned_bolt: 052-store-config-page
-implemented: false
+implemented: true
 ---
 
 # Story: 002-walking-path-list

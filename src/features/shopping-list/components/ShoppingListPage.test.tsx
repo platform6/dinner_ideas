@@ -9,14 +9,14 @@ import { ShoppingListPage } from '@/features/shopping-list/components/ShoppingLi
 import { fetchDinnersByIds } from '@/features/dinners/api';
 import { fetchCurrentPlan } from '@/features/weekly-plan/api';
 import { fetchWeekStartDay } from '@/features/settings/api';
-import { fetchAssignments, fetchRows } from '@/features/store-config/api';
+import { fetchAssignments, fetchRows } from '@/features/shopping-list/legacy-store-rows';
 import { theme } from '@/shared/theme';
 import type { DinnerWithIngredients } from '@/features/dinners/types';
 import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/types';
 
 vi.mock('@/features/dinners/api');
 vi.mock('@/features/weekly-plan/api');
-vi.mock('@/features/store-config/api');
+vi.mock('@/features/shopping-list/legacy-store-rows');
 vi.mock('@/features/settings/api');
 
 function selection(overrides: Partial<SelectionWithDinner>): SelectionWithDinner {

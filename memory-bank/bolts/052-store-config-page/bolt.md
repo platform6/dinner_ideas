@@ -3,24 +3,31 @@ id: 052-store-config-page
 unit: 002-store-config-page
 intent: 010-grocery-store-location-model
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-similarity-algorithm
   - 002-walking-path-list
   - 006-delete-location-confirm
 created: '2026-09-04T14:30:00Z'
-started: null
-completed: null
+started: '2026-09-04T21:30:00Z'
+completed: '2026-09-04T22:34:38Z'
 current_stage: null
-stages_completed: []
-
+stages_completed:
+  - name: plan
+    completed: '2026-09-04T22:20:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-04T22:30:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-04T22:35:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 051-location-item-model
 enables_bolts:
   - 053-store-config-page
 requires_units: []
 blocks: false
-
 complexity:
   avg_complexity: 2
   avg_uncertainty: 2
@@ -53,9 +60,11 @@ engine to feed the assign flow (bolt 053).
 
 ## Stages
 
-- [ ] **1. plan**: Pending → implementation-plan.md
-- [ ] **2. implement**: Pending → src/features/store-config/
-- [ ] **3. test**: Pending → test-walkthrough.md
+Per `simple-construction-bolt` v1.0.0 (3 stages):
+
+- ✅ **1. Plan**: Complete → implementation-plan.md
+- ✅ **2. Implement**: Complete → src/features/store-config/ + implementation-walkthrough.md
+- ✅ **3. Test**: Complete → 40 new tests (253/253 green) + test-walkthrough.md
 
 ## Dependencies
 

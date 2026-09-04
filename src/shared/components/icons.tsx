@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   ArrowDown,
   ArrowRight,
   ArrowUp,
@@ -171,6 +172,9 @@ export const uiIcons = {
   overflowMenu: MoreVertical,
   // Added in 007-claude-integration bolt 039 (the /settings route).
   settings: Settings,
+  // Added in 010-grocery-store-location-model bolt 052 (the walking-path page's one
+  // destructive confirm — the only warning glyph in the app).
+  warning: AlertTriangle,
 } as const;
 
 export type { LucideIcon };

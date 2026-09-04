@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { reorderGroupsByRows } from '@/features/shopping-list/reorder';
 import type { ShoppingListGroup } from '@/features/shopping-list/types';
-import type { CategoryRowAssignment, GroceryStoreRow } from '@/features/store-config/types';
+import type { CategoryRowAssignment, GroceryStoreRow } from '@/features/shopping-list/legacy-store-rows';
 
 function row(overrides: Partial<GroceryStoreRow>): GroceryStoreRow {
   return { id: 'row-id', household_id: 'hh-test', name: 'Row', position: 1, ...overrides };

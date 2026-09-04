@@ -1,4 +1,4 @@
-import type { CategoryRowAssignment, GroceryStoreRow } from '@/features/store-config/types';
+import type { CategoryRowAssignment, GroceryStoreRow } from '@/features/shopping-list/legacy-store-rows';
 import type { ShoppingListGroup } from '@/features/shopping-list/types';
 
 /**

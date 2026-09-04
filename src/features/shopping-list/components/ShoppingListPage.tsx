@@ -18,11 +18,10 @@ import {
 } from '@chakra-ui/react';
 
 import { useCurrentPlan } from '@/features/weekly-plan/hooks';
-import { useShoppingListDinners } from '@/features/shopping-list/hooks';
 import { buildShoppingList } from '@/features/shopping-list/aggregate';
 import { reorderGroupsByRows } from '@/features/shopping-list/reorder';
 import { formatShoppingListText } from '@/features/shopping-list/format';
-import { useAssignments, useRows } from '@/features/store-config/hooks';
+import { useAssignments, useRows, useShoppingListDinners } from '@/features/shopping-list/hooks';
 import { categoryIcon, uiIcons } from '@/shared/components/icons';
 
 function itemKey(category: string, name: string, unit: string) {

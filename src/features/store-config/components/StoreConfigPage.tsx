@@ -1,49 +1,61 @@
-import { useState } from 'react';
-import {
-  Alert,
-  AlertIcon,
-  Box,
-  Button,
-  Center,
-  Heading,
-  HStack,
-  IconButton,
-  Input,
-  Select,
-  SimpleGrid,
-  Spinner,
-  Stack,
-  Text,
-} from '@chakra-ui/react';
+import { useMemo, useState } from 'react';
+import { Alert, AlertIcon, Center, Heading, Spinner, Stack, Text } from '@chakra-ui/react';
 
+import { AddStopRow } from '@/features/store-config/components/AddStopRow';
+import { LocationRow } from '@/features/store-config/components/LocationRow';
 import {
-  useAddRow,
-  useAssignCategory,
-  useAssignments,
-  useDeleteRow,
-  useDistinctCategories,
-  useReorderRow,
-  useRows,
+  useActiveStore,
+  useAddLocation,
+  useCountPlacementsAtLocation,
+  useDeleteLocation,
+  useLocations,
+  useRenameLocation,
+  useReorderLocation,
+  useResolvedItems,
 } from '@/features/store-config/hooks';
-import { uiIcons } from '@/shared/components/icons';
+import type { ResolvedItem } from '@/features/store-config/types';
 
 /**
- * Lets the wife define her store's row order and assign ingredient categories to rows (FR-12),
- * so the shopping list reads in the order she actually walks the store. Up/Down buttons, not
- * drag-and-drop — matches this app's existing low-fuss interaction style (per `ux-guide.md`).
+ * The "Walking path" page (FR-11): ONE ordered list of stops, sections and aisles as visual
+ * peers — replacing the two-panel "Rows + Category assignments" layout of intent 001 unit 004.
+ *
+ * Copy here deliberately avoids the vocabulary of the data model. The page is a "walking path",
+ * a location is a "stop"; "placement", "assignment", "inherited" and "unassigned" are
+ * implementation words and must not reach the interface.
+ *
+ * Placing an individual ingredient is bolt 053 — this bolt builds the path the placements will
+ * point at.
  */
 export function StoreConfigPage() {
-  const rows = useRows();
-  const assignments = useAssignments();
-  const categories = useDistinctCategories();
-  const addRow = useAddRow();
-  const reorderRow = useReorderRow();
-  const deleteRow = useDeleteRow();
-  const assignCategory = useAssignCategory();
+  const store = useActiveStore();
+  const storeId = store.data?.id;
+  const locations = useLocations(storeId);
+  const resolved = useResolvedItems(storeId);
 
-  const [newRowName, setNewRowName] = useState('');
+  const addLocation = useAddLocation(store.data);
+  const renameLocation = useRenameLocation(storeId);
+  const reorderLocation = useReorderLocation(storeId);
+  const deleteLocation = useDeleteLocation(storeId);
+  const countPlacements = useCountPlacementsAtLocation();
 
-  if (rows.isLoading || assignments.isLoading || categories.isLoading) {
+  const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
+  const [removalCount, setRemovalCount] = useState<number | null>(null);
+  const [announcement, setAnnouncement] = useState('');
+
+  /** Items grouped by the stop they resolve to — the source of each row's preview and count. */
+  const itemsByLocation = useMemo(() => {
+    const grouped = new Map<string, ResolvedItem[]>();
+    for (const item of resolved.data ?? []) {
+      if (!item.locationId) continue;
+      const existing = grouped.get(item.locationId);
+      if (existing) existing.push(item);
+      else grouped.set(item.locationId, [item]);
+    }
+    for (const items of grouped.values()) items.sort((a, b) => a.itemName.localeCompare(b.itemName));
+    return grouped;
+  }, [resolved.data]);
+
+  if (store.isLoading || locations.isLoading || resolved.isLoading) {
     return (
       <Center py={12}>
         <Spinner size="lg" />
@@ -51,158 +63,95 @@ export function StoreConfigPage() {
     );
   }
 
-  if (rows.isError || assignments.isError || categories.isError) {
+  if (store.isError || locations.isError || resolved.isError) {
     return (
       <Alert status="error" borderRadius="field">
         <AlertIcon />
-        Couldn’t load your store configuration. Try refreshing the page.
+        Couldn&rsquo;t load your walking path. Try refreshing the page.
       </Alert>
     );
   }
 
-  const rowList = rows.data ?? [];
-  const assignmentByCategory = new Map((assignments.data ?? []).map((a) => [a.category, a.row_id]));
+  const stops = locations.data ?? [];
+  const isBusy = reorderLocation.isPending || deleteLocation.isPending || renameLocation.isPending;
 
-  function handleAddRow() {
-    const name = newRowName.trim();
-    if (!name) return;
-    addRow.mutate({ name, currentRowCount: rowList.length });
-    setNewRowName('');
+  /**
+   * "Remove" reads the placement count first: an empty stop goes immediately with no dialog
+   * (story 002), a stop with placements gets the count-stated confirm (story 006).
+   */
+  function requestRemoval(locationId: string) {
+    setPendingRemovalId(locationId);
+    setRemovalCount(null);
+    countPlacements.mutate(locationId, {
+      onSuccess: (count) => {
+        if (count === 0) {
+          deleteLocation.mutate(locationId, { onSuccess: () => setPendingRemovalId(null) });
+          return;
+        }
+        setRemovalCount(count);
+      },
+    });
+  }
+
+  function cancelRemoval() {
+    setPendingRemovalId(null);
+    setRemovalCount(null);
+  }
+
+  function move(index: number, direction: -1 | 1) {
+    const stop = stops[index];
+    const neighbour = stops[index + direction];
+    if (!stop || !neighbour) return;
+
+    reorderLocation.mutate(
+      { locationId: stop.id, newPosition: neighbour.position },
+      {
+        onSuccess: () => setAnnouncement(`${stop.name} moved to position ${neighbour.position}`),
+      },
+    );
   }
 
   return (
     <Stack gap={6}>
-      <Heading textStyle="pageTitle" as="h1">
-        Grocery store setup
-      </Heading>
+      <Stack gap={1}>
+        <Heading textStyle="pageTitle" as="h1">
+          Walking path
+        </Heading>
+        <Text textStyle="faint">
+          The order you walk your store, top to bottom. Your shopping list follows it.
+        </Text>
+      </Stack>
 
-      <SimpleGrid columns={{ base: 1, md: 2 }} gap={8}>
-        <Box>
-          <Text textStyle="sectionLabel" mb={1.5}>
-            Rows
-          </Text>
-          <Text textStyle="faint" mb={3}>
-            List your store's sections in the order you walk them — first row is where you start shopping.
-          </Text>
+      <Stack gap={2}>
+        {stops.map((stop, index) => (
+          <LocationRow
+            key={stop.id}
+            location={stop}
+            items={itemsByLocation.get(stop.id) ?? []}
+            isFirst={index === 0}
+            isLast={index === stops.length - 1}
+            isBusy={isBusy}
+            onMoveEarlier={() => move(index, -1)}
+            onMoveLater={() => move(index, 1)}
+            onRename={(name) => renameLocation.mutate({ locationId: stop.id, name })}
+            onRemove={() => deleteLocation.mutate(stop.id, { onSuccess: () => cancelRemoval() })}
+            removalCount={pendingRemovalId === stop.id ? removalCount : null}
+            isConfirmingRemoval={pendingRemovalId === stop.id}
+            onRequestRemoval={() => requestRemoval(stop.id)}
+            onCancelRemoval={cancelRemoval}
+          />
+        ))}
 
-          {rowList.length === 0 ? (
-            <Box layerStyle="cardDashed" mb={3}>
-              <Text textStyle="faint">
-                No rows configured yet — the shopping list will use alphabetical order until you add some.
-              </Text>
-            </Box>
-          ) : (
-            <Stack gap={2} mb={3}>
-              {rowList.map((row, index) => (
-                <HStack key={row.id} justify="space-between" layerStyle="card">
-                  <HStack gap={3}>
-                    <Center
-                      w="30px"
-                      h="30px"
-                      borderRadius="full"
-                      bg="paper.sunken"
-                      color="ink.500"
-                      fontWeight={600}
-                      fontSize="0.8125rem"
-                      flexShrink={0}
-                    >
-                      {index + 1}
-                    </Center>
-                    <Text fontWeight={500} color="ink.900">
-                      {row.name}
-                    </Text>
-                  </HStack>
-                  <HStack gap={1.5}>
-                    <IconButton
-                      size="sm"
-                      variant="outline"
-                      aria-label={`Move ${row.name} up`}
-                      icon={<uiIcons.rowUp size={15} strokeWidth={2} />}
-                      isDisabled={index === 0 || reorderRow.isPending}
-                      onClick={() =>
-                        reorderRow.mutate({ rowId: row.id, newPosition: rowList[index - 1].position })
-                      }
-                    />
-                    <IconButton
-                      size="sm"
-                      variant="outline"
-                      aria-label={`Move ${row.name} down`}
-                      icon={<uiIcons.rowDown size={15} strokeWidth={2} />}
-                      isDisabled={index === rowList.length - 1 || reorderRow.isPending}
-                      onClick={() =>
-                        reorderRow.mutate({ rowId: row.id, newPosition: rowList[index + 1].position })
-                      }
-                    />
-                    <IconButton
-                      size="sm"
-                      variant="quiet"
-                      aria-label="Delete"
-                      icon={<uiIcons.deleteRow size={15} strokeWidth={2} />}
-                      isLoading={deleteRow.isPending && deleteRow.variables === row.id}
-                      onClick={() => deleteRow.mutate(row.id)}
-                    />
-                  </HStack>
-                </HStack>
-              ))}
-            </Stack>
-          )}
+        <AddStopRow
+          isAdding={addLocation.isPending}
+          onAdd={(name) => addLocation.mutate({ name, position: stops.length + 1 })}
+        />
+      </Stack>
 
-          <HStack>
-            <Input
-              maxW="14rem"
-              placeholder="New row name"
-              aria-label="New row name"
-              value={newRowName}
-              onChange={(event) => setNewRowName(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') handleAddRow();
-              }}
-            />
-            <Button onClick={handleAddRow} isLoading={addRow.isPending} isDisabled={!newRowName.trim()}>
-              Add row
-            </Button>
-          </HStack>
-        </Box>
-
-        <Box>
-          <Text textStyle="sectionLabel" mb={1.5}>
-            Category assignments
-          </Text>
-          <Text textStyle="faint" mb={3}>
-            Assign each ingredient category to a row. Unassigned categories appear after your rows,
-            alphabetically.
-          </Text>
-
-          {(categories.data ?? []).length === 0 ? (
-            <Text textStyle="faint">No ingredient categories found yet.</Text>
-          ) : (
-            <Stack gap={2}>
-              {(categories.data ?? []).map((category) => (
-                <HStack key={category} justify="space-between" layerStyle="card">
-                  <Text color="ink.700">{category}</Text>
-                  <Select
-                    maxW="12rem"
-                    aria-label={`Row for ${category}`}
-                    placeholder="Unassigned"
-                    value={assignmentByCategory.get(category) ?? ''}
-                    isDisabled={rowList.length === 0}
-                    onChange={(event) => {
-                      const rowId = event.target.value;
-                      if (rowId) assignCategory.mutate({ category, rowId });
-                    }}
-                  >
-                    {rowList.map((row) => (
-                      <option key={row.id} value={row.id}>
-                        {row.name}
-                      </option>
-                    ))}
-                  </Select>
-                </HStack>
-              ))}
-            </Stack>
-          )}
-        </Box>
-      </SimpleGrid>
+      {/* Arrow presses are announced politely — the visual reorder is not enough on its own. */}
+      <Text aria-live="polite" position="absolute" left="-10000px">
+        {announcement}
+      </Text>
     </Stack>
   );
 }
