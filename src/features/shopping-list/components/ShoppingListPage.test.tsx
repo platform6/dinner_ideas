@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ShoppingListPage } from '@/features/shopping-list/components/ShoppingListPage';
 import { fetchDinnersByIds } from '@/features/dinners/api';
 import { fetchCurrentPlan } from '@/features/weekly-plan/api';
+import { fetchWeekStartDay } from '@/features/settings/api';
 import { fetchAssignments, fetchRows } from '@/features/store-config/api';
 import { theme } from '@/shared/theme';
 import type { DinnerWithIngredients } from '@/features/dinners/types';
@@ -16,6 +17,7 @@ import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/ty
 vi.mock('@/features/dinners/api');
 vi.mock('@/features/weekly-plan/api');
 vi.mock('@/features/store-config/api');
+vi.mock('@/features/settings/api');
 
 function selection(overrides: Partial<SelectionWithDinner>): SelectionWithDinner {
   return {
@@ -110,6 +112,7 @@ describe('ShoppingListPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(fetchWeekStartDay).mockResolvedValue(0);
     mockedFetchDinnersByIds.mockResolvedValue(threeDinners);
     mockedFetchRows.mockResolvedValue([]);
     mockedFetchAssignments.mockResolvedValue([]);

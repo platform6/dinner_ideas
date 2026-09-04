@@ -13,9 +13,12 @@ import {
   lockPlan,
   removeSelection,
 } from '@/features/weekly-plan/api';
+import { fetchWeekStartDay } from '@/features/settings/api';
+import { currentPlanningWeekStart, formatWeekRange } from '@/features/weekly-plan/date';
 import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/types';
 
 vi.mock('@/features/weekly-plan/api');
+vi.mock('@/features/settings/api');
 
 function selection(overrides: Partial<SelectionWithDinner>): SelectionWithDinner {
   return {
@@ -75,6 +78,7 @@ describe('PlanPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(fetchWeekStartDay).mockResolvedValue(0);
     mockedRemoveSelection.mockResolvedValue(undefined);
     mockedLockPlan.mockResolvedValue(plan({ locked_at: '2026-08-25T12:00:00Z' }));
   });
@@ -243,6 +247,17 @@ describe('PlanPage', () => {
       'href',
       '/shopping-list',
     );
+  });
+
+  it('anchors offset 0 on the current planning week, not on today, when no plan exists', async () => {
+    mockedFetchCurrentPlan.mockResolvedValue(null);
+    mockedFetchPlanByStartDate.mockResolvedValue(null);
+    renderPage();
+
+    // The header range is the planning-week window (from week_start_day + today), not a
+    // range that starts on today's date — proves useWeekByOffset's anchor moved off todayIsoDate().
+    expect(await screen.findByText(formatWeekRange(currentPlanningWeekStart(0)))).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /next week/i })).toBeDisabled();
   });
 
   it('shows a clear empty state for a skipped week with no plan', async () => {

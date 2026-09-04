@@ -20,6 +20,8 @@ import { CatalogFilters, type CatalogFilterState } from '@/features/dinners/comp
 import { applyFilters } from '@/features/dinners/filters';
 import { formatLastChosen } from '@/features/dinners/last-chosen';
 import { useCurrentPlan, useToggleSelection } from '@/features/weekly-plan/hooks';
+import { currentPlanningWeekStart, formatWeekRange } from '@/features/weekly-plan/date';
+import { useWeekStartDay } from '@/features/settings/hooks';
 import { uiIcons } from '@/shared/components/icons';
 
 const defaultFilters: CatalogFilterState = {
@@ -37,6 +39,12 @@ export function CatalogPage() {
   const toggleSelection = useToggleSelection();
   const lastChosenDates = useLastChosenDates();
   const allTags = useAllTags();
+  const weekStart = useWeekStartDay();
+
+  // Which week these picks are for. Matches the /plan offset-0 label (both resolve to the
+  // planning-week start now that plans are week-aligned). Neutral placeholder while loading.
+  const weekLabel =
+    weekStart.data != null ? formatWeekRange(currentPlanningWeekStart(weekStart.data)) : 'This week';
 
   const selectedDinnerIds = useMemo(() => {
     const plan = currentPlan.data;
@@ -57,7 +65,7 @@ export function CatalogPage() {
     <>
       <HStack justify="space-between" mb={4} flexWrap="wrap" gap={3}>
         <Box>
-          <Text textStyle="eyebrow">This week</Text>
+          <Text textStyle="eyebrow">{weekLabel}</Text>
           <Heading textStyle="pageTitle" as="h1">
             Dinner catalog
           </Heading>

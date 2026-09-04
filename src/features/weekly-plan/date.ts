@@ -32,6 +32,24 @@ export function todayIsoDate(): string {
   return toIsoDate(new Date());
 }
 
+/**
+ * The start date (`YYYY-MM-DD`) of the planning week that contains `isoDate`, given the
+ * household's week-start weekday (`0` = Sunday .. `6` = Saturday). Returns `isoDate` unchanged
+ * when it already falls on that weekday. Whole-date local math — no hour arithmetic, so a week
+ * spanning a DST transition still yields a 7-calendar-day window (intent 011).
+ */
+export function planningWeekStart(isoDate: string, weekStartDay: number): string {
+  const date = parseLocalDate(isoDate);
+  const delta = (date.getDay() - weekStartDay + 7) % 7;
+  date.setDate(date.getDate() - delta);
+  return toIsoDate(date);
+}
+
+/** `planningWeekStart` for today's local date — the current planning week's start. */
+export function currentPlanningWeekStart(weekStartDay: number): string {
+  return planningWeekStart(todayIsoDate(), weekStartDay);
+}
+
 /** Formats a week's start date as a "M/D – M/D" range for the week-navigation header (FR-11). */
 export function formatWeekRange(startDate: string): string {
   const start = parseLocalDate(startDate);

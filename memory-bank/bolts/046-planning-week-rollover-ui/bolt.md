@@ -3,24 +3,28 @@ id: 046-planning-week-rollover-ui
 unit: 002-planning-week-rollover-ui
 intent: 011-planning-week-rollover
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-planning-week-date-helpers
   - 002-week-aware-current-plan
   - 003-week-aligned-plan-creation
 created: '2026-09-03T22:55:00Z'
-started: null
-completed: null
+started: '2026-09-04T02:15:00Z'
+completed: '2026-09-04T02:12:57Z'
 current_stage: null
-stages_completed: []
-
+stages_completed:
+  - name: plan
+    completed: '2026-09-04T02:15:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-04T02:22:00Z'
+    artifact: implementation-walkthrough.md
 requires_bolts:
   - 045-week-start-setting
 enables_bolts:
   - 047-planning-week-rollover-ui
 requires_units: []
 blocks: false
-
 complexity:
   avg_complexity: 2
   avg_uncertainty: 2

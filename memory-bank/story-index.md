@@ -3,8 +3,8 @@
 ## Overview
 
 - **Total stories**: 100
-- **Completed**: 92
-- **Generated**: 8
+- **Completed**: 100
+- **Generated**: 0
 - **Planned**: 0
 - **Last updated**: 2026-09-04
 
@@ -156,21 +156,21 @@
 - [x] **001-settings-ui-reflects-config-no-hang** (settings-ai-remediation): daily-limit field shows the saved value; `callClaude` `AbortController` timeout; drop the dead `useEffect` - Should - ✅ COMPLETE
 - [x] **002-ai-config-write-provenance** (settings-ai-remediation): `BEFORE INSERT OR UPDATE` trigger stamps `updated_by` / `updated_at`; client drops client-clock `updated_at` - Should - ✅ COMPLETE
 
-### 011-planning-week-rollover
+### 011-planning-week-rollover — ✅ COMPLETE (bolts 045, 046, 047)
 
 **Unit: 001-week-start-setting** — bolt `045`
 
-- [x] **001-week-start-day-column** (week-start-setting): Additive `households.week_start_day` column + migration + types regen - Must - ✅ GENERATED
-- [x] **002-settings-planning-week-card** (week-start-setting): Owner-editable "Planning week" card on `/settings` (+ non-owner / Sunday-default behaviour) - Must - ✅ GENERATED
+- [x] **001-week-start-day-column** (week-start-setting): Additive `households.week_start_day` column + migration + types - Must - ✅ COMPLETE
+- [x] **002-settings-planning-week-card** (week-start-setting): Owner-editable "Planning week" card on `/settings` (+ non-owner / Sunday-default) - Must - ✅ COMPLETE
 
 **Unit: 002-planning-week-rollover-ui** — bolts `046`, `047`
 
-- [x] **001-planning-week-date-helpers** (planning-week-rollover-ui): `planningWeekStart` / `currentPlanningWeekStart` pure helpers + tests - Must - ✅ GENERATED
-- [x] **002-week-aware-current-plan** (planning-week-rollover-ui): `useCurrentPlan` resolves by planning-week start; 4-consumer audit - Must - ✅ GENERATED
-- [x] **003-week-aligned-plan-creation** (planning-week-rollover-ui): `createPlan` / `useToggleSelection` stamp week-aligned `start_date` - Must - ✅ GENERATED
-- [x] **004-catalog-planning-window-label** (planning-week-rollover-ui): `formatWeekRange` window label in the catalog header - Must - ✅ GENERATED
-- [x] **005-rollover-on-app-open** (planning-week-rollover-ui): Recompute current planning week on mount; `useWeekByOffset` anchor change - Must - ✅ GENERATED
-- [x] **006-rollover-regression-tests** (planning-week-rollover-ui): Cross-surface regression + boundary tests - Must - ✅ GENERATED
+- [x] **001-planning-week-date-helpers** (planning-week-rollover-ui): `planningWeekStart` / `currentPlanningWeekStart` pure helpers + tests - Must - ✅ COMPLETE
+- [x] **002-week-aware-current-plan** (planning-week-rollover-ui): `useCurrentPlan` resolves by planning-week start; 4-consumer audit - Must - ✅ COMPLETE
+- [x] **003-week-aligned-plan-creation** (planning-week-rollover-ui): `createPlan` / `useToggleSelection` stamp week-aligned `start_date` - Must - ✅ COMPLETE
+- [x] **004-catalog-planning-window-label** (planning-week-rollover-ui): `formatWeekRange` window label in the catalog header - Must - ✅ COMPLETE
+- [x] **005-rollover-on-app-open** (planning-week-rollover-ui): planning-week recomputed each render; `useWeekByOffset` anchor moved off `todayIsoDate()` - Must - ✅ COMPLETE
+- [x] **006-rollover-regression-tests** (planning-week-rollover-ui): Cross-surface regression + boundary (helper-level) tests - Must - ✅ COMPLETE
 
 ### 012-explicit-plan-locking — ✅ COMPLETE (bolts 043, 044)
 
@@ -188,6 +188,6 @@
 ## Stories by Status
 
 - **Planned**: 0
-- **Generated**: 8
+- **Generated**: 0
 - **In Progress**: 0
-- **Completed**: 92
+- **Completed**: 100

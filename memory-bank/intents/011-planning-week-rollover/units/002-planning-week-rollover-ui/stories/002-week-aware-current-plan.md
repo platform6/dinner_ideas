@@ -2,11 +2,11 @@
 id: 002-week-aware-current-plan
 unit: 002-planning-week-rollover-ui
 intent: 011-planning-week-rollover
-status: draft
+status: complete
 priority: must
 created: '2026-09-03T22:55:00Z'
 assigned_bolt: 046-planning-week-rollover-ui
-implemented: false
+implemented: true
 ---
 
 # Story: 002-week-aware-current-plan

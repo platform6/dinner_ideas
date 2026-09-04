@@ -3,23 +3,27 @@ id: 045-week-start-setting
 unit: 001-week-start-setting
 intent: 011-planning-week-rollover
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-week-start-day-column
   - 002-settings-planning-week-card
 created: '2026-09-03T22:55:00Z'
-started: null
-completed: null
+started: '2026-09-04T02:03:05Z'
+completed: '2026-09-04T02:06:29Z'
 current_stage: null
-stages_completed: []
-
+stages_completed:
+  - name: plan
+    completed: '2026-09-04T02:03:05Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-04T02:08:00Z'
+    artifact: implementation-walkthrough.md
 requires_bolts:
   - 044-explicit-plan-locking-ui
 enables_bolts:
   - 046-planning-week-rollover-ui
 requires_units: []
 blocks: false
-
 complexity:
   avg_complexity: 1
   avg_uncertainty: 1

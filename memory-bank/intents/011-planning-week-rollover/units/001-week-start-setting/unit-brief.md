@@ -2,7 +2,7 @@
 unit: 001-week-start-setting
 intent: 011-planning-week-rollover
 phase: inception
-status: draft
+status: complete
 created: '2026-09-03T22:55:00Z'
 updated: '2026-09-03T22:55:00Z'
 unit_type: frontend

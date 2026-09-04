@@ -9,13 +9,27 @@ import {
   removeSelection,
 } from '@/features/weekly-plan/api';
 import { decideToggleAction } from '@/features/weekly-plan/toggle-selection';
-import { shiftWeek, todayIsoDate } from '@/features/weekly-plan/date';
+import { currentPlanningWeekStart, shiftWeek } from '@/features/weekly-plan/date';
+import { useWeekStartDay } from '@/features/settings/hooks';
 import type { CurrentPlan } from '@/features/weekly-plan/types';
 
 const currentPlanKey = ['weekly-plan', 'current'] as const;
 
+/**
+ * The plan for the *current planning week* (intent 011) — resolved from today's local date +
+ * the household's `week_start_day`, not "the newest plan". Returns `data: null` (not an older
+ * plan) when this week has no plan yet, so the catalog shows a clean 0-of-3. Disabled until
+ * `week_start_day` has loaded; keyed on the planning-week start so a rollover or a settings
+ * change refetches.
+ */
 export function useCurrentPlan() {
-  return useQuery({ queryKey: currentPlanKey, queryFn: fetchCurrentPlan });
+  const weekStart = useWeekStartDay();
+  const startDate = weekStart.data != null ? currentPlanningWeekStart(weekStart.data) : null;
+  return useQuery({
+    queryKey: [...currentPlanKey, startDate],
+    queryFn: () => fetchCurrentPlan(startDate as string),
+    enabled: startDate != null,
+  });
 }
 
 /**
@@ -27,7 +41,10 @@ export function useCurrentPlan() {
  */
 export function useWeekByOffset(offset: number) {
   const currentPlan = useCurrentPlan();
-  const anchorDate = currentPlan.data?.start_date ?? todayIsoDate();
+  const weekStart = useWeekStartDay();
+  // Fall back to the current planning-week start (not raw "today"), so offset 0 is that week
+  // even before any plan exists and negative offsets step in true week increments (intent 011).
+  const anchorDate = currentPlan.data?.start_date ?? currentPlanningWeekStart(weekStart.data ?? 0);
   const targetDate = offset === 0 ? anchorDate : shiftWeek(anchorDate, offset);
 
   const pastQuery = useQuery({
@@ -59,6 +76,7 @@ interface ToggleSelectionArgs {
  */
 export function useToggleSelection() {
   const queryClient = useQueryClient();
+  const weekStart = useWeekStartDay();
 
   return useMutation({
     mutationFn: async ({ dinnerId, currentPlan }: ToggleSelectionArgs) => {
@@ -69,7 +87,12 @@ export function useToggleSelection() {
         return;
       }
 
-      const planId = action.type === 'create-and-add' ? (await createPlan(todayIsoDate())).id : action.planId;
+      // A brand-new plan is filed under the *current planning week* (intent 011), so the pick
+      // reappears on the next load and the week rolls over cleanly — not under today's date.
+      const planId =
+        action.type === 'create-and-add'
+          ? (await createPlan(currentPlanningWeekStart(weekStart.data ?? 0))).id
+          : action.planId;
       await addSelection(planId, dinnerId);
     },
     onSuccess: () => {

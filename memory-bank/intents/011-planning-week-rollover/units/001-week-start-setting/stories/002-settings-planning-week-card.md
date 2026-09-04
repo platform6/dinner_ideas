@@ -2,11 +2,11 @@
 id: 002-settings-planning-week-card
 unit: 001-week-start-setting
 intent: 011-planning-week-rollover
-status: draft
+status: complete
 priority: must
 created: '2026-09-03T22:55:00Z'
 assigned_bolt: 045-week-start-setting
-implemented: false
+implemented: true
 ---
 
 # Story: 002-settings-planning-week-card

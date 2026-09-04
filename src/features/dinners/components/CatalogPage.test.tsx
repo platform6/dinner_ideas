@@ -13,11 +13,14 @@ import {
   setDinnerActive,
 } from '@/features/dinners/api';
 import { addSelection, createPlan, fetchCurrentPlan } from '@/features/weekly-plan/api';
+import { currentPlanningWeekStart, formatWeekRange } from '@/features/weekly-plan/date';
+import { fetchWeekStartDay } from '@/features/settings/api';
 import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/types';
 import type { CatalogDinner } from '@/features/dinners/types';
 
 vi.mock('@/features/dinners/api');
 vi.mock('@/features/weekly-plan/api');
+vi.mock('@/features/settings/api');
 
 function dinner(overrides: Partial<CatalogDinner>): CatalogDinner {
   return {
@@ -55,6 +58,7 @@ describe('CatalogPage (suppress flow)', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(fetchWeekStartDay).mockResolvedValue(0);
     mockedFetchActive.mockResolvedValue([dinner({ id: '1', name: 'Tacos' })]);
     mockedSetActive.mockResolvedValue(undefined);
     mockedFetchCurrentPlan.mockResolvedValue(null);
@@ -148,6 +152,7 @@ describe('CatalogPage (pick-3 flow)', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(fetchWeekStartDay).mockResolvedValue(0);
     mockedCreatePlan.mockResolvedValue(plan({ id: 'new-plan' }));
     mockedAddSelection.mockResolvedValue(undefined);
     mockedFetchLastChosenDates.mockResolvedValue(new Map());
@@ -165,6 +170,29 @@ describe('CatalogPage (pick-3 flow)', () => {
 
     await waitFor(() => expect(mockedCreatePlan).toHaveBeenCalled());
     await waitFor(() => expect(mockedAddSelection).toHaveBeenCalledWith('new-plan', '1'));
+  });
+
+  it('files the new plan under the current planning week, not today', async () => {
+    mockedFetchActive.mockResolvedValue([dinner({ id: '1', name: 'Tacos' })]);
+    mockedFetchCurrentPlan.mockResolvedValue(null);
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText('Tacos');
+    await user.click(screen.getByRole('checkbox', { name: 'Pick Tacos for this week' }));
+
+    await waitFor(() => expect(mockedCreatePlan).toHaveBeenCalledWith(currentPlanningWeekStart(0)));
+  });
+
+  it('shows the planning-week range in the header and an empty 0-of-3 when this week has no plan', async () => {
+    mockedFetchActive.mockResolvedValue([dinner({ id: '1', name: 'Tacos' })]);
+    mockedFetchCurrentPlan.mockResolvedValue(null); // no plan for the current planning week
+    renderPage();
+
+    await screen.findByText('Tacos');
+    expect(screen.getByText(formatWeekRange(currentPlanningWeekStart(0)))).toBeInTheDocument();
+    expect(screen.getByText('0 of 3')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Pick Tacos for this week' })).not.toBeChecked();
   });
 
   it('disables picking a 4th dinner once 3 are already selected', async () => {

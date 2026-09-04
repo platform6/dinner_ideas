@@ -9,6 +9,32 @@ import type { ClaudeModel } from '@/features/ai/api';
 
 const DEFAULT_DAILY_LIMIT = 25;
 
+/** Sunday. The `households.week_start_day` default, and the fallback when no row is readable. */
+const DEFAULT_WEEK_START_DAY = 0;
+
+/**
+ * The weekday (0 = Sunday .. 6 = Saturday) the household's dinner-planning week starts on
+ * (intent 011). RLS ("Household readable by its members") scopes this to the caller's own
+ * household row.
+ */
+export async function fetchWeekStartDay(): Promise<number> {
+  const { data, error } = await supabase.from('households').select('week_start_day').maybeSingle();
+  if (error) throw error;
+  return data?.week_start_day ?? DEFAULT_WEEK_START_DAY;
+}
+
+/**
+ * Owner-only (enforced by the "Household updatable by an owner" RLS policy — this is a plain
+ * PostgREST update, not an RPC, because `week_start_day` is not a protected column).
+ */
+export async function updateWeekStartDay(householdId: string, weekStartDay: number): Promise<void> {
+  const { error } = await supabase
+    .from('households')
+    .update({ week_start_day: weekStartDay })
+    .eq('id', householdId);
+  if (error) throw error;
+}
+
 export interface AiConfig {
   /** null = use the server default model. */
   modelOverride: ClaudeModel | null;

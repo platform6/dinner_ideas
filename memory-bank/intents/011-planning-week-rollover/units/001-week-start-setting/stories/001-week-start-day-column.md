@@ -2,11 +2,11 @@
 id: 001-week-start-day-column
 unit: 001-week-start-setting
 intent: 011-planning-week-rollover
-status: draft
+status: complete
 priority: must
 created: '2026-09-03T22:55:00Z'
 assigned_bolt: 045-week-start-setting
-implemented: false
+implemented: true
 ---
 
 # Story: 001-week-start-day-column
@@ -31,7 +31,7 @@ implemented: false
 - [ ] **Given** the migration is applied, **When** `database.types.ts` is regenerated, **Then**
       `households` Row/Insert/Update types include `week_start_day: number`.
 - [ ] **Given** a non-owner session, **When** it attempts `update households set week_start_day
-    = 3`, **Then** RLS rejects it (0 rows affected / error) — verified by a DB test or a
+  = 3`, **Then** RLS rejects it (0 rows affected / error) — verified by a DB test or a
       documented manual check.
 
 ## Technical Notes
