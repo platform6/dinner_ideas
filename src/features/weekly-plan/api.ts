@@ -57,6 +57,16 @@ export async function removeSelection(selectionId: string): Promise<void> {
   if (error) throw error;
 }
 
+/**
+ * Clears every selection on a plan in one statement (intent 009). Leaves the `weekly_plans`
+ * row — an empty draft plan is a valid state. Idempotent; household RLS on
+ * `weekly_plan_selections` means a plan id from another household deletes zero rows.
+ */
+export async function clearSelections(planId: string): Promise<void> {
+  const { error } = await supabase.from('weekly_plan_selections').delete().eq('weekly_plan_id', planId);
+  if (error) throw error;
+}
+
 /** Locks a plan via the DB's `lock_weekly_plan` RPC. Idempotent — locking an already-locked plan is a no-op success. */
 export async function lockPlan(planId: string): Promise<WeeklyPlan> {
   const { data, error } = await supabase.rpc('lock_weekly_plan', { p_plan_id: planId });

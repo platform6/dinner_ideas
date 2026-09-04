@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   addSelection,
+  clearSelections,
   createPlan,
   fetchCurrentPlan,
   fetchPlanByStartDate,
@@ -94,6 +95,49 @@ export function useToggleSelection() {
           ? (await createPlan(currentPlanningWeekStart(weekStart.data ?? 0))).id
           : action.planId;
       await addSelection(planId, dinnerId);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: currentPlanKey });
+    },
+  });
+}
+
+/**
+ * Clears the whole week's selection in one keyed `delete` (intent 009). Reads the removed
+ * `dinner_id`s from the passed plan snapshot *before* deleting and returns them (in selection
+ * order) so the caller can offer Undo without re-reading the now-empty plan. Deliberately not
+ * N × `useToggleSelection` — that derives add/remove from a caller snapshot, the exact
+ * stale-snapshot hazard `selectionDisabled` guards against.
+ */
+export function useClearSelections() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (plan: CurrentPlan | null): Promise<string[]> => {
+      if (!plan) return [];
+      const dinnerIds = plan.weekly_plan_selections.map((s) => s.dinner_id);
+      await clearSelections(plan.id);
+      return dinnerIds;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: currentPlanKey });
+    },
+  });
+}
+
+/**
+ * Undo for `useClearSelections`: re-adds the given `dinnerIds` **sequentially, in order**
+ * (awaited `for` loop, not `Promise.all`) so the 1 / 2 / 3 badges on `/plan` come back in
+ * their original order.
+ */
+export function useRestoreSelections() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ planId, dinnerIds }: { planId: string; dinnerIds: string[] }) => {
+      for (const dinnerId of dinnerIds) {
+        await addSelection(planId, dinnerId);
+      }
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: currentPlanKey });

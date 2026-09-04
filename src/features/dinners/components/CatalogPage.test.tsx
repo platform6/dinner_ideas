@@ -12,7 +12,7 @@ import {
   fetchLastChosenDates,
   setDinnerActive,
 } from '@/features/dinners/api';
-import { addSelection, createPlan, fetchCurrentPlan } from '@/features/weekly-plan/api';
+import { addSelection, clearSelections, createPlan, fetchCurrentPlan } from '@/features/weekly-plan/api';
 import { currentPlanningWeekStart, formatWeekRange } from '@/features/weekly-plan/date';
 import { fetchWeekStartDay } from '@/features/settings/api';
 import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/types';
@@ -136,8 +136,20 @@ describe('CatalogPage (pick-3 flow)', () => {
   const mockedFetchCurrentPlan = vi.mocked(fetchCurrentPlan);
   const mockedCreatePlan = vi.mocked(createPlan);
   const mockedAddSelection = vi.mocked(addSelection);
+  const mockedClearSelections = vi.mocked(clearSelections);
   const mockedFetchLastChosenDates = vi.mocked(fetchLastChosenDates);
   const mockedFetchAllTags = vi.mocked(fetchAllTags);
+
+  const threeSelected = [
+    selectionWithDinner({ id: 'sel-1', dinner_id: '1' }),
+    selectionWithDinner({ id: 'sel-2', dinner_id: '2' }),
+    selectionWithDinner({ id: 'sel-3', dinner_id: '3' }),
+  ];
+  const threeDinners = [
+    dinner({ id: '1', name: 'Tacos' }),
+    dinner({ id: '2', name: 'Pasta' }),
+    dinner({ id: '3', name: 'Curry' }),
+  ];
 
   function renderPage() {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -155,6 +167,7 @@ describe('CatalogPage (pick-3 flow)', () => {
     vi.mocked(fetchWeekStartDay).mockResolvedValue(0);
     mockedCreatePlan.mockResolvedValue(plan({ id: 'new-plan' }));
     mockedAddSelection.mockResolvedValue(undefined);
+    mockedClearSelections.mockResolvedValue(undefined);
     mockedFetchLastChosenDates.mockResolvedValue(new Map());
     mockedFetchAllTags.mockResolvedValue([]);
   });
@@ -311,5 +324,87 @@ describe('CatalogPage (pick-3 flow)', () => {
     await waitFor(() =>
       expect(screen.getByRole('checkbox', { name: 'Pick Pasta for this week' })).toBeEnabled(),
     );
+  });
+
+  describe('clear picks', () => {
+    async function clearFromThree(user: ReturnType<typeof userEvent.setup>) {
+      mockedFetchActive.mockResolvedValue(threeDinners);
+      mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: threeSelected }));
+      renderPage();
+      await screen.findByText('3 of 3');
+      await user.click(screen.getByRole('button', { name: /clear picks/i }));
+      await user.click(screen.getByRole('button', { name: /clear all/i }));
+    }
+
+    it('clears the week in one keyed delete and shows the undo bar (plural count)', async () => {
+      const user = userEvent.setup();
+      await clearFromThree(user);
+
+      await waitFor(() => expect(mockedClearSelections).toHaveBeenCalledWith('plan-id'));
+      expect(mockedClearSelections).toHaveBeenCalledTimes(1);
+      expect(await screen.findByText('3 dinners cleared.')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /undo/i })).toBeInTheDocument();
+    });
+
+    it('singularises the undo-bar count at 1', async () => {
+      const user = userEvent.setup();
+      mockedFetchActive.mockResolvedValue(threeDinners);
+      mockedFetchCurrentPlan.mockResolvedValue(
+        plan({ weekly_plan_selections: [selectionWithDinner({ id: 'sel-1', dinner_id: '1' })] }),
+      );
+      renderPage();
+      await screen.findByText('1 of 3');
+      await user.click(screen.getByRole('button', { name: /clear picks/i }));
+      await user.click(screen.getByRole('button', { name: /clear all/i }));
+
+      expect(await screen.findByText('1 dinner cleared.')).toBeInTheDocument();
+    });
+
+    it('Undo re-adds the cleared dinners in their original order, then hides the bar', async () => {
+      const user = userEvent.setup();
+      await clearFromThree(user);
+      await screen.findByText('3 dinners cleared.');
+
+      await user.click(screen.getByRole('button', { name: /undo/i }));
+
+      await waitFor(() => expect(mockedAddSelection).toHaveBeenCalledTimes(3));
+      expect(mockedAddSelection.mock.calls).toEqual([
+        ['plan-id', '1'],
+        ['plan-id', '2'],
+        ['plan-id', '3'],
+      ]);
+      await waitFor(() => expect(screen.queryByText('3 dinners cleared.')).not.toBeInTheDocument());
+    });
+
+    it('hides the undo bar when another dinner is picked', async () => {
+      const user = userEvent.setup();
+      await clearFromThree(user);
+      await screen.findByText('3 dinners cleared.');
+
+      await user.click(screen.getByRole('checkbox', { name: 'Pick Tacos for this week' }));
+
+      await waitFor(() => expect(screen.queryByText('3 dinners cleared.')).not.toBeInTheDocument());
+    });
+
+    it('shows no Clear picks control and no undo bar when the plan is locked', async () => {
+      mockedFetchActive.mockResolvedValue(threeDinners);
+      mockedFetchCurrentPlan.mockResolvedValue(
+        plan({ locked_at: '2026-08-25T00:00:00Z', weekly_plan_selections: threeSelected }),
+      );
+      renderPage();
+
+      await screen.findByText('Tacos');
+      expect(screen.queryByRole('button', { name: /clear picks/i })).not.toBeInTheDocument();
+      expect(screen.queryByText(/dinners? cleared\./)).not.toBeInTheDocument();
+    });
+
+    it('surfaces an error and shows no undo bar when the clear fails', async () => {
+      const user = userEvent.setup();
+      mockedClearSelections.mockRejectedValueOnce(new Error('boom'));
+      await clearFromThree(user);
+
+      expect(await screen.findByText(/couldn’t clear your picks, try again/i)).toBeInTheDocument();
+      expect(screen.queryByText(/dinners? cleared\./)).not.toBeInTheDocument();
+    });
   });
 });

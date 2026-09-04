@@ -1,8 +1,8 @@
 ---
 intent: 009-clear-picks-reset
 created: '2026-09-01T02:00:00Z'
-completed: null
-status: in-progress
+completed: '2026-09-04T02:36:10Z'
+status: complete
 ---
 
 # Inception Log: clear-picks-reset
@@ -28,13 +28,13 @@ memo + `selectionDisabled`; `weekly-plan/api.ts` (`addSelection`, no `clearSelec
 
 ## Artifacts Created
 
-| Artifact       | Status                                         | File                                    |
-| -------------- | ---------------------------------------------- | --------------------------------------- |
-| Requirements   | ⏳ draft — **Checkpoint 2 (approval) pending** | requirements.md                         |
-| System Context | ✅ draft                                       | system-context.md                       |
-| Units          | ✅ draft                                       | units.md (1 unit: `001-clear-picks-ui`) |
-| Stories        | ⬜ not generated (await Checkpoint 2)          | —                                       |
-| Bolt Plan      | ⬜ not generated (await Checkpoint 2)          | —                                       |
+| Artifact       | Status                                                         | File                              |
+| -------------- | -------------------------------------------------------------- | --------------------------------- |
+| Requirements   | ✅ Checkpoint 2 approved (2026-09-04; OQ-1/OQ-2 resolved "no") | requirements.md                   |
+| System Context | ✅ draft                                                       | system-context.md                 |
+| Units          | ✅ complete (1 unit: `001-clear-picks-ui`)                     | units.md                          |
+| Stories        | ✅ 6 generated                                                 | units/001-clear-picks-ui/stories/ |
+| Bolt Plan      | ✅ 2 bolts (`048`, `049`) — Checkpoint 3 done                  | memory-bank/bolts/048-_, 049-_    |
 
 ## Summary
 
@@ -43,8 +43,19 @@ memo + `selectionDisabled`; `weekly-plan/api.ts` (`addSelection`, no `clearSelec
 | Functional Requirements     | 10                                                  |
 | Non-Functional Requirements | 3 groups (Compatibility, Accessibility, Regression) |
 | Units                       | 1                                                   |
-| Stories                     | TBD (after requirements approval)                   |
-| Bolts Planned               | TBD (after requirements approval)                   |
+| Stories                     | 6                                                   |
+| Bolts Planned               | 2                                                   |
+
+## Checkpoint 2 Resolution (2026-09-04)
+
+- **OQ-1 (Undo survives navigation?) → NO.** `clearedIds` lives only in `CatalogPage` state;
+  no `sessionStorage`, no soft-delete column. Keeps the "no schema change" constraint; a
+  mistaken clear is recoverable by re-picking or the next planning-week rollover.
+- **OQ-2 (control on `/plan`?) → NO.** Catalog-only; the prop-driven control drops in later
+  if wanted.
+- **Re-scope**: ships after `011-planning-week-rollover`; framed as the deliberate **mid-week
+  reset**. `clearSelections` operates on the current planning week's plan (`useCurrentPlan`
+  is week-aware since 011). No FR/design change.
 
 ## Units Breakdown
 

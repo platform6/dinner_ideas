@@ -2,8 +2,8 @@
 
 ## Overview
 
-- **Total stories**: 100
-- **Completed**: 100
+- **Total stories**: 106
+- **Completed**: 106
 - **Generated**: 0
 - **Planned**: 0
 - **Last updated**: 2026-09-04
@@ -156,6 +156,17 @@
 - [x] **001-settings-ui-reflects-config-no-hang** (settings-ai-remediation): daily-limit field shows the saved value; `callClaude` `AbortController` timeout; drop the dead `useEffect` - Should - ✅ COMPLETE
 - [x] **002-ai-config-write-provenance** (settings-ai-remediation): `BEFORE INSERT OR UPDATE` trigger stamps `updated_by` / `updated_at`; client drops client-clock `updated_at` - Should - ✅ COMPLETE
 
+### 009-clear-picks-reset — ✅ COMPLETE (bolts 048, 049; shipped after 011)
+
+**Unit: 001-clear-picks-ui**
+
+- [x] **001-clear-picks-control** (clear-picks-ui): `ClearPicksControl` — quiet button → inline confirm pill, call-site terracotta fill - Must - ✅ COMPLETE
+- [x] **002-clear-selections-hooks** (clear-picks-ui): `clearSelections(planId)` + `useClearSelections` (returns removed ids in order) + `useRestoreSelections` (sequential re-add) - Must - ✅ COMPLETE
+- [x] **003-catalog-mount-and-undo-bar** (clear-picks-ui): header placement + `clearedIds` state + parent-owned undo bar + dismiss rules - Must - ✅ COMPLETE
+- [x] **004-in-flight-and-error-handling** (clear-picks-ui): `selectionDisabled` += clearing; clear/undo error alerts; locked-plan hidden - Must - ✅ COMPLETE
+- [x] **005-keyboard-and-a11y** (clear-picks-ui): focus to Keep/Undo, `Escape`, `role="group"`, `aria-live` - Must - ✅ COMPLETE
+- [x] **006-clear-picks-tests** (clear-picks-ui): `ClearPicksControl.test.tsx` + `clear-selections.test.ts` + `CatalogPage.test.tsx` extension - Must - ✅ COMPLETE
+
 ### 011-planning-week-rollover — ✅ COMPLETE (bolts 045, 046, 047)
 
 **Unit: 001-week-start-setting** — bolt `045`
@@ -190,4 +201,4 @@
 - **Planned**: 0
 - **Generated**: 0
 - **In Progress**: 0
-- **Completed**: 100
+- **Completed**: 106

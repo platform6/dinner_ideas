@@ -1,20 +1,26 @@
 ---
 intent: 009-clear-picks-reset
 phase: inception
-status: draft
+status: complete
 created: '2026-09-01T02:00:00Z'
-updated: '2026-09-01T02:00:00Z'
+updated: '2026-09-04T02:36:10Z'
 ---
 
 # Requirements: Clear Picks — reset the week's dinner selection
 
 ## Intent Overview
 
-Today the only way to undo the week's dinner picks is to un-pick each catalog card one at a
-time, or press the small `×` on each row in `/plan`. There is no "start over". This intent
-adds **one control** — **Clear picks** — in the catalog header, beside the "N of 3" count
-badge it undoes. It asks once (inline, not a modal), clears every selection in a single
-request, then offers **Undo**.
+The only way to undo the week's dinner picks is to un-pick each catalog card one at a time,
+or press the small `×` on each row in `/plan`. There is no "start over". This intent adds
+**one control** — **Clear picks** — in the catalog header, beside the "N of 3" count badge it
+undoes. It asks once (inline, not a modal), clears every selection in a single request, then
+offers **Undo**.
+
+**Re-scoped (2026-09-04): this ships after `011-planning-week-rollover`.** `011` made the
+catalog roll over to a fresh, empty set at the household's week boundary, so "Clear picks" is
+no longer "the only way to start over" — it is the **deliberate mid-week reset** ("I changed
+my mind about this week"). `useCurrentPlan` is now week-aware, so `clearSelections` operates
+on **the current planning week's plan**. No FR or design change — only this framing.
 
 **Source**: `D3.zip` → `design_handoff_clear_picks/` — a **high-fidelity** handoff:
 `README.md` (self-sufficient spec), `Reset Dinner Selection.dc.html` (interactive prototype),
@@ -270,10 +276,10 @@ size="sm"`, `leftIcon={uiIcons.restore}` (13px, `strokeWidth={2.2}`), label "Cle
 
 ## Open Questions
 
-| #    | Question                                                                                                                                          | Owner         | Resolution                                                                                                                                                                                                              |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| OQ-1 | Should **Undo survive a page navigation**? As specified it does **not** — leaving the catalog drops the undo bar and the clear becomes permanent. | Product owner | **Pending.** Default (this intent): does **not** survive navigation — the simple build. Persisting it (sessionStorage, or a soft-delete column on the selections) is a materially larger change and is not scoped here. |
-| OQ-2 | Should the same "reset" affordance also appear on `/plan` (beside the week nav)?                                                                  | Product owner | **Assumed no** for this intent — the handoff says "not part of this request"; the control is already prop-driven so it can be dropped in later with no rework.                                                          |
+| #    | Question                                                                         | Owner         | Resolution                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ---- | -------------------------------------------------------------------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OQ-1 | Should **Undo survive a page navigation**?                                       | Product owner | **Resolved 2026-09-04: NO.** Leaving the catalog drops the undo bar and the clear is permanent. `clearedIds` lives only in `CatalogPage` React state — no `sessionStorage`, no soft-delete column. Keeps the "no schema change" constraint; a mistaken clear is recoverable by re-picking (cheap) or waiting for the next planning-week rollover. Persistence, if ever wanted, is a separate follow-up intent. |
+| OQ-2 | Should the same "reset" affordance also appear on `/plan` (beside the week nav)? | Product owner | **Resolved 2026-09-04: NO.** Catalog-only for this intent. The control is prop-driven (`{ count, onClear, isClearing }`), so it can be dropped onto `/plan` later with no rework.                                                                                                                                                                                                                              |
 
 ---
 
