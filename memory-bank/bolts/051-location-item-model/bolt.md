@@ -3,16 +3,30 @@ id: 051-location-item-model
 unit: 001-location-item-model
 intent: 010-grocery-store-location-model
 type: ddd-construction-bolt
-status: planned
+status: complete
 stories:
   - 007-cutover-migration
   - 008-standards-and-decision-docs
 created: '2026-09-04T14:30:00Z'
-started: null
-completed: null
+started: '2026-09-04T19:56:26Z'
+completed: '2026-09-04T21:25:40Z'
 current_stage: null
-stages_completed: []
-
+stages_completed:
+  - name: model
+    completed: '2026-09-04T19:59:00Z'
+    artifact: ddd-01-domain-model.md
+  - name: design
+    completed: '2026-09-04T20:50:00Z'
+    artifact: ddd-02-technical-design.md
+  - name: adr-analysis
+    completed: '2026-09-04T20:55:53Z'
+    artifact: adr-009-deferred-destructive-retirement.md
+  - name: implement
+    completed: '2026-09-04T21:07:00Z'
+    artifact: supabase/migrations/20260904190000_location_item_model_cutover.sql
+  - name: test
+    completed: '2026-09-04T21:10:00Z'
+    artifact: ddd-03-test-report.md
 requires_bolts:
   - 050-location-item-model
 enables_bolts:
@@ -21,7 +35,6 @@ enables_bolts:
   - 054-shopping-list-ordering
 requires_units: []
 blocks: false
-
 complexity:
   avg_complexity: 3
   avg_uncertainty: 2
@@ -55,10 +68,13 @@ comes entirely from category inheritance.
 
 ## Stages
 
-- [ ] **1. model**: Pending → ddd-01-domain-model.md
-- [ ] **2. design**: Pending → ddd-02-technical-design.md
-- [ ] **3. implement**: Pending → supabase/migrations/
-- [ ] **4. test**: Pending → ddd-03-test-report.md
+Per `ddd-construction-bolt` v2.0.0 (5 stages; stage 3 optional):
+
+- ✅ **1. Domain Model**: Complete → ddd-01-domain-model.md
+- ✅ **2. Technical Design**: Complete → ddd-02-technical-design.md
+- ✅ **3. ADR Analysis**: Complete → adr-009
+- ✅ **4. Implement**: Complete → 20260904190000_location_item_model_cutover.sql + standards docs
+- ✅ **5. Test**: Complete → location_item_model_cutover_test.sql (30/30) + ddd-03-test-report.md
 
 ## Dependencies
 

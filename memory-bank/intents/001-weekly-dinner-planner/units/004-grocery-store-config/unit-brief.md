@@ -4,10 +4,23 @@ intent: 001-weekly-dinner-planner
 phase: inception
 status: complete
 created: '2026-08-27T01:00:00Z'
-updated: '2026-08-28T00:00:00Z'
+updated: '2026-09-04T21:05:00Z'
+superseded_by: '010-grocery-store-location-model'
 ---
 
 # Unit Brief: Grocery Store Config
+
+> **⚠️ SUPERSEDED BY INTENT `010-grocery-store-location-model` (2026-09-04).**
+>
+> This unit's model — `grocery_store_rows` + `category_row_assignments`, mapping a whole
+> ingredient _category_ to a row — is replaced by the Store → Location → Item model, which
+> places **individual ingredients** at Locations with category placement surviving as an
+> automatic fallback. The data was carried across by bolt `051` (migration
+> `20260904190000_location_item_model_cutover.sql`) with a verified-equivalent walking order.
+>
+> The old tables still exist but are retired-in-waiting: see
+> `bolts/051-location-item-model/deferred-retirement-migration.sql` and decision-index **ADR-9**.
+> Read this brief for history only — nothing here describes the current model.
 
 ## Purpose
 

@@ -2,11 +2,11 @@
 id: 008-standards-and-decision-docs
 unit: 001-location-item-model
 intent: 010-grocery-store-location-model
-status: draft
+status: complete
 priority: should
 created: '2026-09-04T14:30:00Z'
 assigned_bolt: 051-location-item-model
-implemented: false
+implemented: true
 ---
 
 # Story: 008-standards-and-decision-docs

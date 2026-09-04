@@ -2,11 +2,11 @@
 id: 007-cutover-migration
 unit: 001-location-item-model
 intent: 010-grocery-store-location-model
-status: draft
+status: complete
 priority: must
 created: '2026-09-04T14:30:00Z'
 assigned_bolt: 051-location-item-model
-implemented: false
+implemented: true
 ---
 
 # Story: 007-cutover-migration
