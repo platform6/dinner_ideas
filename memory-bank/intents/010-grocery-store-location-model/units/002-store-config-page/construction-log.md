@@ -2,7 +2,7 @@
 unit: 002-store-config-page
 intent: 010-grocery-store-location-model
 created: '2026-09-04T22:16:02Z'
-last_updated: '2026-09-04T22:35:00Z'
+last_updated: '2026-09-04T23:00:00Z'
 ---
 
 # Construction Log: 002-store-config-page
@@ -44,9 +44,9 @@ last_updated: '2026-09-04T22:35:00Z'
 | ---------------------- | ----- |
 | Original bolts planned | 2     |
 | Current bolt count     | 2     |
-| Bolts completed        | 1     |
+| Bolts completed        | 2     |
 | Bolts in progress      | 0     |
-| Bolts remaining        | 1     |
+| Bolts remaining        | 0     |
 | Replanning events      | 0     |
 
 ## Notes
@@ -58,3 +58,11 @@ This unit rewrites `src/features/store-config/`, which still reads the **old** m
 (`grocery_store_rows` / `category_row_assignments`). Bolt 051's deferred retirement migration
 (`bolts/051-location-item-model/deferred-retirement-migration.sql`) is gated on that rewrite
 finishing — land it as part of this unit's completion, not as a separate task. See ADR-9.
+
+**Unit complete 2026-09-04.** Two `simple-construction-bolt`s; 72 tests now cover
+`src/features/store-config/`. The page is off the old model entirely.
+
+The remaining blocker for bolt 051's deferred retirement migration is **unit 003**:
+`src/features/shopping-list/legacy-store-rows.ts` is now the only reader of
+`grocery_store_rows` / `category_row_assignments`. Bolt 054 deletes it, after which migration B's
+preconditions hold (ADR-9).

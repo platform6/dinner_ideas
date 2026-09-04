@@ -2,11 +2,11 @@
 id: 005-first-run-and-desktop
 unit: 002-store-config-page
 intent: 010-grocery-store-location-model
-status: draft
+status: complete
 priority: should
 created: '2026-09-04T14:30:00Z'
 assigned_bolt: 053-store-config-page
-implemented: false
+implemented: true
 ---
 
 # Story: 005-first-run-and-desktop

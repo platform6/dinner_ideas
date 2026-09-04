@@ -1,6 +1,12 @@
 import { supabase } from '@/shared/lib/supabase';
 import { inferLocationType } from '@/features/store-config/location-name';
-import type { Location, PlacementState, ResolvedItem, Store } from '@/features/store-config/types';
+import type {
+  Location,
+  PlacementState,
+  ResolvedItem,
+  Store,
+  SuggestionDismissal,
+} from '@/features/store-config/types';
 
 type ResolutionRow = {
   item_id: string | null;
@@ -158,4 +164,82 @@ export async function countPlacementsAtLocation(locationId: string): Promise<num
   if (categories.error) throw categories.error;
 
   return (items.count ?? 0) + (categories.count ?? 0);
+}
+
+/**
+ * Places an item at a stop — the single write behind both "Same spot" (accepting a suggestion)
+ * and picking a row in the picker. Upserts on `(item_id, store_id)`: re-placing an item moves
+ * it, it never creates a second row (unit 1, story 003).
+ */
+export async function placeItem(store: Store, itemId: string, locationId: string): Promise<void> {
+  const { error } = await supabase.from('item_placements').upsert(
+    {
+      household_id: store.household_id,
+      store_id: store.id,
+      item_id: itemId,
+      location_id: locationId,
+    },
+    { onConflict: 'item_id,store_id' },
+  );
+
+  if (error) throw error;
+}
+
+/**
+ * "Take it off the path" — removes the explicit placement so the item falls back to its
+ * category, or to unassigned. Absence of the row IS the "not placed" state (Resolved Decision
+ * 3), so this is a delete rather than a null-out.
+ */
+export async function unplaceItem(storeId: string, itemId: string): Promise<void> {
+  const { error } = await supabase
+    .from('item_placements')
+    .delete()
+    .eq('store_id', storeId)
+    .eq('item_id', itemId);
+
+  if (error) throw error;
+}
+
+/** Remembers that this suggestion was rejected, so the pairing stops being offered (FR-8). */
+export async function dismissSuggestion(
+  store: Store,
+  itemId: string,
+  suggestedItemId: string,
+): Promise<void> {
+  const { error } = await supabase.from('suggestion_dismissals').upsert(
+    {
+      household_id: store.household_id,
+      store_id: store.id,
+      item_id: itemId,
+      suggested_item_id: suggestedItemId,
+    },
+    { onConflict: 'store_id,item_id,suggested_item_id', ignoreDuplicates: true },
+  );
+
+  if (error) throw error;
+}
+
+/** Every rejected pairing in this store, so the suggestion engine can exclude them. */
+export async function fetchDismissals(storeId: string): Promise<SuggestionDismissal[]> {
+  const { data, error } = await supabase.from('suggestion_dismissals').select('*').eq('store_id', storeId);
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * The `name_key`s of ingredients used by at least one ACTIVE dinner — the default scope of the
+ * "Not on the path yet" section (story 004), matching `storeconfig.md`'s stated default.
+ *
+ * Normalized here with the same rule the registry's generated column uses, so the two agree
+ * without a join the client cannot express.
+ */
+export async function fetchInRecipeNameKeys(): Promise<Set<string>> {
+  const { data, error } = await supabase
+    .from('dinner_ingredients')
+    .select('name, dinners!inner(is_active)')
+    .eq('dinners.is_active', true);
+
+  if (error) throw error;
+  return new Set((data ?? []).map((row) => row.name.trim().toLowerCase()));
 }

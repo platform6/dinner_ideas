@@ -9,11 +9,16 @@ import {
   addLocation,
   countPlacementsAtLocation,
   deleteLocation,
+  dismissSuggestion,
   fetchActiveStore,
+  fetchDismissals,
+  fetchInRecipeNameKeys,
   fetchLocations,
   fetchResolvedItems,
+  placeItem,
   renameLocation,
   reorderLocation,
+  unplaceItem,
 } from '@/features/store-config/api';
 import { theme } from '@/shared/theme';
 import type { Location, ResolvedItem, Store } from '@/features/store-config/types';
@@ -87,6 +92,11 @@ beforeEach(() => {
   vi.mocked(renameLocation).mockResolvedValue(path[0]);
   vi.mocked(deleteLocation).mockResolvedValue(undefined);
   vi.mocked(countPlacementsAtLocation).mockResolvedValue(0);
+  vi.mocked(fetchDismissals).mockResolvedValue([]);
+  vi.mocked(fetchInRecipeNameKeys).mockResolvedValue(new Set(['kale', 'apples', 'cheddar']));
+  vi.mocked(placeItem).mockResolvedValue(undefined);
+  vi.mocked(unplaceItem).mockResolvedValue(undefined);
+  vi.mocked(dismissSuggestion).mockResolvedValue(undefined);
 });
 
 describe('StoreConfigPage — the walking path', () => {
@@ -234,5 +244,80 @@ describe('StoreConfigPage — removing a stop', () => {
 
     const dialog = await screen.findByRole('alertdialog', { name: /remove aisle 3\?/i });
     expect(dialog).toHaveTextContent(/1 grocery points here/i);
+  });
+});
+
+describe('StoreConfigPage — first run and desktop', () => {
+  it('shows a calm starting point when no stops are configured', async () => {
+    vi.mocked(fetchLocations).mockResolvedValue([]);
+    renderPage();
+
+    expect(await screen.findByText('Start where you start')).toBeInTheDocument();
+    expect(screen.getByText(/add the first place you walk into/i)).toBeInTheDocument();
+    // The line that matters most: it says nothing is broken while the path is empty.
+    expect(screen.getByText('Until then, lists stay in alphabetical order.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add the first stop/i })).toBeInTheDocument();
+  });
+
+  it('adds the first stop straight from the first-run panel', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchLocations).mockResolvedValue([]);
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: /add the first stop/i }));
+
+    await waitFor(() => expect(addLocation).toHaveBeenCalledWith(store, 'Produce', 1));
+  });
+
+  it('hides the unassigned section at first run — nothing to be off a path that does not exist', async () => {
+    vi.mocked(fetchLocations).mockResolvedValue([]);
+    renderPage();
+
+    await screen.findByText('Start where you start');
+    expect(screen.queryByText('Not on the path yet')).not.toBeInTheDocument();
+  });
+
+  it('shows the active store as a read-only chip beside the title', async () => {
+    renderPage();
+
+    await screen.findByRole('heading', { name: /walking path/i });
+    expect(screen.getByText('My Store')).toBeInTheDocument();
+    // v1 has no selector — the chip is a label, not a control.
+    expect(screen.queryByRole('button', { name: /my store/i })).not.toBeInTheDocument();
+  });
+
+  it('stays a single column — no second panel at any width', async () => {
+    renderPage();
+
+    await screen.findByRole('heading', { name: /walking path/i });
+    // The retired layout's second panel was a category-per-row selector grid.
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+    expect(screen.queryByText(/category assignments/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('StoreConfigPage — placing an item', () => {
+  it('opens the assign flow from a placement pill on an expanded stop', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByText('Produce'));
+    await user.click(screen.getByRole('button', { name: /where do you find apples/i }));
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'apples' })).toBeInTheDocument();
+  });
+
+  it('writes the placement when a spot is picked', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByText('Produce'));
+    await user.click(screen.getByRole('button', { name: /where do you find apples/i }));
+    await screen.findByRole('dialog');
+    await user.click(screen.getByRole('button', { name: /put apples in bakery/i }));
+
+    await waitFor(() => expect(placeItem).toHaveBeenCalledWith(store, 'i2', 'loc-3'));
   });
 });

@@ -2,7 +2,7 @@
 unit: 002-store-config-page
 intent: 010-grocery-store-location-model
 phase: inception
-status: draft
+status: complete
 created: '2026-09-04T14:30:00Z'
 updated: '2026-09-04T14:30:00Z'
 unit_type: frontend

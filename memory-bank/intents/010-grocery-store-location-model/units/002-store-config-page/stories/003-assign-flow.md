@@ -2,11 +2,11 @@
 id: 003-assign-flow
 unit: 002-store-config-page
 intent: 010-grocery-store-location-model
-status: draft
+status: complete
 priority: must
 created: '2026-09-04T14:30:00Z'
 assigned_bolt: 053-store-config-page
-implemented: false
+implemented: true
 ---
 
 # Story: 003-assign-flow

@@ -4,11 +4,16 @@ import {
   addLocation,
   countPlacementsAtLocation,
   deleteLocation,
+  dismissSuggestion,
   fetchActiveStore,
+  fetchDismissals,
+  fetchInRecipeNameKeys,
   fetchLocations,
   fetchResolvedItems,
+  placeItem,
   renameLocation,
   reorderLocation,
+  unplaceItem,
 } from '@/features/store-config/api';
 import type { Store } from '@/features/store-config/types';
 
@@ -88,4 +93,48 @@ export function useDeleteLocation(storeId: string | undefined) {
  */
 export function useCountPlacementsAtLocation() {
   return useMutation({ mutationFn: (locationId: string) => countPlacementsAtLocation(locationId) });
+}
+
+const dismissalsKey = (storeId: string) => ['store-config', 'dismissals', storeId] as const;
+const inRecipeKey = ['store-config', 'in-recipe-name-keys'] as const;
+
+export function useDismissals(storeId: string | undefined) {
+  return useQuery({
+    queryKey: dismissalsKey(storeId ?? ''),
+    queryFn: () => fetchDismissals(storeId as string),
+    enabled: Boolean(storeId),
+  });
+}
+
+/** The default scope of "Not on the path yet" — ingredients used by at least one active dinner. */
+export function useInRecipeNameKeys() {
+  return useQuery({ queryKey: inRecipeKey, queryFn: fetchInRecipeNameKeys });
+}
+
+/**
+ * Placing and unplacing both invalidate the resolution query — that view is what every part of
+ * the page reads its state from, so a placement that did not refresh it would leave the pills,
+ * the previews and the unassigned section disagreeing.
+ */
+export function usePlaceItem(store: Store | null | undefined) {
+  return usePathMutation(store?.id, ({ itemId, locationId }: { itemId: string; locationId: string }) =>
+    placeItem(store as Store, itemId, locationId),
+  );
+}
+
+export function useUnplaceItem(storeId: string | undefined) {
+  return usePathMutation(storeId, (itemId: string) => unplaceItem(storeId as string, itemId));
+}
+
+export function useDismissSuggestion(store: Store | null | undefined) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ itemId, suggestedItemId }: { itemId: string; suggestedItemId: string }) =>
+      dismissSuggestion(store as Store, itemId, suggestedItemId),
+    onSuccess: () => {
+      if (!store) return;
+      void queryClient.invalidateQueries({ queryKey: dismissalsKey(store.id) });
+    },
+  });
 }

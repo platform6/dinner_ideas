@@ -3,24 +3,31 @@ id: 053-store-config-page
 unit: 002-store-config-page
 intent: 010-grocery-store-location-model
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 003-assign-flow
   - 004-unassigned-section
   - 005-first-run-and-desktop
   - 007-store-config-tests
 created: '2026-09-04T14:30:00Z'
-started: null
-completed: null
+started: '2026-09-04T22:45:00Z'
+completed: '2026-09-04T22:48:51Z'
 current_stage: null
-stages_completed: []
-
+stages_completed:
+  - name: plan
+    completed: '2026-09-04T22:48:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-04T22:55:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-04T23:00:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 052-store-config-page
 enables_bolts: []
 requires_units: []
 blocks: false
-
 complexity:
   avg_complexity: 2
   avg_uncertainty: 2
@@ -54,9 +61,11 @@ flow, and the page reads correctly with nothing configured or at desktop width.
 
 ## Stages
 
-- [ ] **1. plan**: Pending → implementation-plan.md
-- [ ] **2. implement**: Pending → src/features/store-config/
-- [ ] **3. test**: Pending → test-walkthrough.md
+Per `simple-construction-bolt` v1.0.0 (3 stages):
+
+- ✅ **1. Plan**: Complete → implementation-plan.md
+- ✅ **2. Implement**: Complete → src/features/store-config/ + implementation-walkthrough.md
+- ✅ **3. Test**: Complete → 32 new tests (285/285 green) + test-walkthrough.md
 
 ## Dependencies
 

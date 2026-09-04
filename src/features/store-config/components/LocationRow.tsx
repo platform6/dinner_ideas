@@ -3,6 +3,7 @@ import { Box, Button, HStack, IconButton, Input, Stack, Text } from '@chakra-ui/
 
 import { LocationTypeChip } from '@/features/store-config/components/LocationTypeChip';
 import { DeleteLocationConfirm } from '@/features/store-config/components/DeleteLocationConfirm';
+import { PlacementPill } from '@/features/store-config/components/PlacementPill';
 import type { Location, ResolvedItem } from '@/features/store-config/types';
 import { uiIcons } from '@/shared/components/icons';
 
@@ -40,6 +41,7 @@ export function LocationRow({
   isConfirmingRemoval,
   onRequestRemoval,
   onCancelRemoval,
+  onPlaceItem,
 }: {
   location: Location;
   items: ResolvedItem[];
@@ -55,6 +57,8 @@ export function LocationRow({
   isConfirmingRemoval: boolean;
   onRequestRemoval: () => void;
   onCancelRemoval: () => void;
+  /** Opens the assign flow for an item sitting at this stop. */
+  onPlaceItem: (item: ResolvedItem, trigger: HTMLButtonElement) => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -192,9 +196,19 @@ export function LocationRow({
           ) : (
             <>
               {visibleItems.map((item) => (
-                <Text key={item.itemId} textStyle="meta" color="ink.700" pl="41px" py={1} noOfLines={1}>
-                  {item.itemName}
-                </Text>
+                <HStack key={item.itemId} gap={2} pl="41px" py={1} minH="44px">
+                  <Text textStyle="meta" color="ink.700" flex="1" noOfLines={1}>
+                    {item.itemName}
+                  </Text>
+                  <PlacementPill
+                    item={item}
+                    onOpen={() => {
+                      // The pill is its own trigger, so focus returns to it when the sheet closes.
+                      const trigger = document.activeElement as HTMLButtonElement;
+                      onPlaceItem(item, trigger);
+                    }}
+                  />
+                </HStack>
               ))}
               {hiddenItemCount > 0 && (
                 <Text textStyle="meta" color="brand.500" pl="41px" py={1}>
