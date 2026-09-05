@@ -3,16 +3,25 @@ id: 056-store-placement-control
 unit: 002-store-placement-control
 intent: 013-placement-edit-control
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-all-groceries-list
   - 002-category-move
   - 003-uncapped-stop-rows
 created: '2026-09-05T17:40:00Z'
-started: null
-completed: null
+started: '2026-09-05T19:20:00Z'
+completed: '2026-09-05T20:05:00Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-05T19:25:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-05T19:50:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-05T20:05:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 055-placement-review-state
 enables_bolts:

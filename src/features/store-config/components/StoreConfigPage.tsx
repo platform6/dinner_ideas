@@ -1,14 +1,17 @@
 import { useMemo, useRef, useState } from 'react';
-import { Alert, AlertIcon, Box, Center, HStack, Heading, Spinner, Stack, Text } from '@chakra-ui/react';
+import { Alert, AlertIcon, Center, HStack, Heading, Spinner, Stack, Text } from '@chakra-ui/react';
 
 import { AddStopRow } from '@/features/store-config/components/AddStopRow';
 import { AssignSheet } from '@/features/store-config/components/AssignSheet';
 import { FirstRunPanel } from '@/features/store-config/components/FirstRunPanel';
 import { LocationRow } from '@/features/store-config/components/LocationRow';
 import { UnassignedSection } from '@/features/store-config/components/UnassignedSection';
+import { AllGroceriesList } from '@/features/store-config/components/AllGroceriesList';
+import { CategoryPlacementSection } from '@/features/store-config/components/CategoryPlacementSection';
 import {
   useActiveStore,
   useAddLocation,
+  useCategoryPlacements,
   useCountPlacementsAtLocation,
   useDeleteLocation,
   useDismissSuggestion,
@@ -19,7 +22,9 @@ import {
   useRenameLocation,
   useReorderLocation,
   useResolvedItems,
+  useSetCategoryPlacement,
   useUnplaceItem,
+  useUnsetCategoryPlacement,
 } from '@/features/store-config/hooks';
 import type { ResolvedItem } from '@/features/store-config/types';
 
@@ -51,6 +56,9 @@ export function StoreConfigPage() {
   const placeItem = usePlaceItem(store.data);
   const unplaceItem = useUnplaceItem(storeId);
   const dismissSuggestion = useDismissSuggestion(store.data);
+  const categoryPlacements = useCategoryPlacements(storeId);
+  const setCategoryPlacement = useSetCategoryPlacement(store.data);
+  const unsetCategoryPlacement = useUnsetCategoryPlacement(storeId);
 
   const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
   const [removalCount, setRemovalCount] = useState<number | null>(null);
@@ -112,6 +120,7 @@ export function StoreConfigPage() {
   const stops = locations.data ?? [];
   const isBusy = reorderLocation.isPending || deleteLocation.isPending || renameLocation.isPending;
   const isSaving = placeItem.isPending || unplaceItem.isPending;
+  const isMovingCategory = setCategoryPlacement.isPending || unsetCategoryPlacement.isPending;
 
   function openAssignSheet(item: ResolvedItem, trigger: HTMLButtonElement) {
     assignTriggerRef.current = trigger;
@@ -210,13 +219,23 @@ export function StoreConfigPage() {
       )}
 
       {stops.length > 0 && (
-        <Box>
+        <Stack gap={3}>
+          <CategoryPlacementSection
+            placements={categoryPlacements.data ?? []}
+            locations={stops}
+            isSaving={isMovingCategory}
+            onPlace={(category, locationId) => setCategoryPlacement.mutate({ category, locationId })}
+            onUnplace={(category) => unsetCategoryPlacement.mutate(category)}
+          />
+
+          <AllGroceriesList items={allItems} onMove={openAssignSheet} />
+
           <UnassignedSection
             unassignedItems={unassignedItems}
             inRecipeNameKeys={inRecipeNameKeys.data ?? new Set()}
             onPlace={openAssignSheet}
           />
-        </Box>
+        </Stack>
       )}
 
       <AssignSheet

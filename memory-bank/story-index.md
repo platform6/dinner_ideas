@@ -3,9 +3,9 @@
 ## Overview
 
 - **Total stories**: 123
-- **Completed**: 109
+- **Completed**: 112
 - **Generated**: 17
-- **Planned**: 8
+- **Planned**: 5
 - **Last updated**: 2026-09-04
 
 ---
@@ -232,11 +232,11 @@
 - [x] **002-review-write-path** (placement-review-state): `mark_item_reviewed` RPC; ADR-10 - Must - ✅ COMPLETE
 - [x] **003-correct-010-record** (placement-review-state): Amend intent 010 FR-6; supersede its FR-13 - Should - ✅ COMPLETE
 
-**Unit: 002-store-placement-control** — bolts `056`, `057`
+**Unit: 002-store-placement-control** — bolts `056` ✅, `057`
 
-- [ ] **001-all-groceries-list** (store-placement-control): Searchable list of every item + its stop - Must - [ ] PLANNED
-- [ ] **002-category-move** (store-placement-control): First write to `category_placements` - Must - [ ] PLANNED
-- [ ] **003-uncapped-stop-rows** (store-placement-control): Remove `EXPANDED_ITEM_CAP = 4` - Must - [ ] PLANNED
+- [x] **001-all-groceries-list** (store-placement-control): Searchable list of every item + its stop - Must - ✅ COMPLETE
+- [x] **002-category-move** (store-placement-control): First write to `category_placements` - Must - ✅ COMPLETE
+- [x] **003-uncapped-stop-rows** (store-placement-control): Remove `EXPANDED_ITEM_CAP = 4` - Must - ✅ COMPLETE
 - [ ] **004-needs-review-section** (store-placement-control): Re-scope the unassigned section to unreviewed items - Must - [ ] PLANNED
 - [ ] **005-similarity-suggestion-on-review** (store-placement-control): Local similarity proposes a stop; no API - Should - [ ] PLANNED
 - [ ] **006-store-placement-tests** (store-placement-control): Realistic fixtures; no impossible states - Must - [ ] PLANNED
@@ -250,7 +250,7 @@
 
 ## Stories by Status
 
-- **Planned**: 8
+- **Planned**: 5
 - **Generated**: 17
 - **In Progress**: 0
-- **Completed**: 109
+- **Completed**: 112

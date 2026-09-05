@@ -7,9 +7,14 @@ import { PlacementPill } from '@/features/store-config/components/PlacementPill'
 import type { Location, ResolvedItem } from '@/features/store-config/types';
 import { uiIcons } from '@/shared/components/icons';
 
-/** Item rows shown when expanded, before the "+ N more" link takes over. */
-const EXPANDED_ITEM_CAP = 4;
-/** Names joined into the collapsed one-line preview. */
+/**
+ * Names joined into the collapsed one-line preview.
+ *
+ * The COLLAPSED preview abbreviates names and says how many it left out; the count beside the
+ * row is always `items.length`, the true total. The EXPANDED list is never abbreviated — it
+ * used to stop at four, which silently made ~100 of 121 groceries unreachable, because the
+ * pill on each expanded row was one of only two ways into the assign flow (intent 013, FR-3).
+ */
 const PREVIEW_NAME_CAP = 3;
 
 function previewText(items: ResolvedItem[]): string {
@@ -63,9 +68,6 @@ export function LocationRow({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [draftName, setDraftName] = useState(location.name);
-
-  const visibleItems = items.slice(0, EXPANDED_ITEM_CAP);
-  const hiddenItemCount = items.length - visibleItems.length;
 
   function startRename() {
     setDraftName(location.name);
@@ -195,7 +197,7 @@ export function LocationRow({
             </Text>
           ) : (
             <>
-              {visibleItems.map((item) => (
+              {items.map((item) => (
                 <HStack key={item.itemId} gap={2} pl="41px" py={1} minH="44px">
                   <Text textStyle="meta" color="ink.700" flex="1" noOfLines={1}>
                     {item.itemName}
@@ -210,11 +212,6 @@ export function LocationRow({
                   />
                 </HStack>
               ))}
-              {hiddenItemCount > 0 && (
-                <Text textStyle="meta" color="brand.500" pl="41px" py={1}>
-                  + {hiddenItemCount} more
-                </Text>
-              )}
             </>
           )}
         </Stack>

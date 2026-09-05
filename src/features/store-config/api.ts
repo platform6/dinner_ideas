@@ -1,11 +1,14 @@
 import { supabase } from '@/shared/lib/supabase';
 import { inferLocationType } from '@/features/store-config/location-name';
-import type {
-  Location,
-  PlacementState,
-  ResolvedItem,
-  Store,
-  SuggestionDismissal,
+import {
+  INGREDIENT_CATEGORIES,
+  type CategoryPlacementView,
+  type IngredientCategory,
+  type Location,
+  type PlacementState,
+  type ResolvedItem,
+  type Store,
+  type SuggestionDismissal,
 } from '@/features/store-config/types';
 
 type ResolutionRow = {
@@ -183,6 +186,85 @@ export async function placeItem(store: Store, itemId: string, locationId: string
     },
     { onConflict: 'item_id,store_id' },
   );
+
+  if (error) throw error;
+}
+
+/**
+ * Every category paired with the stop it currently resolves to, including the ones sitting
+ * nowhere (FR-2).
+ *
+ * Built from the CHECK set rather than from the rows returned, because a category with no
+ * placement has no row — and it is precisely those that most need to be listed, since a category
+ * you cannot see is a category you cannot place.
+ */
+export async function fetchCategoryPlacements(storeId: string): Promise<CategoryPlacementView[]> {
+  const { data, error } = await supabase
+    .from('category_placements')
+    .select('category, location_id, locations(name, position)')
+    .eq('store_id', storeId);
+
+  if (error) throw error;
+
+  const placed = new Map(
+    (data ?? []).map((row) => [
+      row.category,
+      {
+        locationId: row.location_id,
+        locationName: row.locations?.name ?? null,
+        locationPosition: row.locations?.position ?? null,
+      },
+    ]),
+  );
+
+  return INGREDIENT_CATEGORIES.map((category) => ({
+    category,
+    locationId: placed.get(category)?.locationId ?? null,
+    locationName: placed.get(category)?.locationName ?? null,
+    locationPosition: placed.get(category)?.locationPosition ?? null,
+  }));
+}
+
+/**
+ * Moves a whole category to a stop — every item inheriting from it follows, while items with
+ * their own explicit placement stay put (the resolution order, FR-6).
+ *
+ * Upserts on `(store_id, category)`, mirroring `placeItem`. That conflict target is what makes
+ * this a MOVE rather than an add: a category sits in exactly one place per store, and the unique
+ * constraint enforces it whatever the UI says.
+ *
+ * Unlike `items`, `category_placements` carries ordinary table grants and full RLS policies from
+ * intent 010 — this is simply the first code to write to it.
+ */
+export async function setCategoryPlacement(
+  store: Store,
+  category: IngredientCategory,
+  locationId: string,
+): Promise<void> {
+  const { error } = await supabase.from('category_placements').upsert(
+    {
+      household_id: store.household_id,
+      store_id: store.id,
+      category,
+      location_id: locationId,
+    },
+    { onConflict: 'store_id,category' },
+  );
+
+  if (error) throw error;
+}
+
+/**
+ * Takes a category off the path. Its items fall back to unassigned — a normal state, not an
+ * error. A delete rather than a null-out, because absence of the row IS "not placed"
+ * (Resolved Decision 3), the same rule `unplaceItem` follows.
+ */
+export async function unsetCategoryPlacement(storeId: string, category: IngredientCategory): Promise<void> {
+  const { error } = await supabase
+    .from('category_placements')
+    .delete()
+    .eq('store_id', storeId)
+    .eq('category', category);
 
   if (error) throw error;
 }
