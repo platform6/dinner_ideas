@@ -2,7 +2,7 @@
 unit: 002-store-placement-control
 intent: 013-placement-edit-control
 created: '2026-09-05T19:20:00Z'
-last_updated: '2026-09-05T20:05:00Z'
+last_updated: '2026-09-05T21:15:00Z'
 ---
 
 # Construction Log: 002-store-placement-control
@@ -65,9 +65,41 @@ last_updated: '2026-09-05T20:05:00Z'
 | vitest                                 | 298 / 298 (32 files), from 290 |
 | `tsc -b` / `eslint` / `pnpm run build` | clean                          |
 
+## Bolt 057 — Stage Trail
+
+| Timestamp            | Stage     | Artifact                        |
+| -------------------- | --------- | ------------------------------- |
+| 2026-09-05T20:35:00Z | plan      | `implementation-plan.md`        |
+| 2026-09-05T20:55:00Z | implement | `implementation-walkthrough.md` |
+| 2026-09-05T21:15:00Z | test      | `test-walkthrough.md`           |
+
+## Bolt 057 — Decisions
+
+- **The section was renamed, not edited.** `UnassignedSection` → `NeedsReviewSection`, because
+  its meaning changed: it lists items nobody has checked, not items with no location.
+- **"Looks right" writes no placement.** Agreeing with a category default is a decision, not the
+  absence of one. Writing a placement on every confirmation would silently pin each item and
+  stop the category lever working for it.
+- **`useInRecipeNameKeys` removed entirely**, not hidden. Beyond being useless to a review queue,
+  its scope was _unassigned ∩ used-in-an-active-recipe_ — contradictory predicates, so that list
+  could never have shown anything even if `unassigned` had been reachable. Leaving it would have
+  left a trap for whoever next wanted a "default scope".
+- **Story 005 ships silent, knowingly.** Similarity draws only from explicitly placed items and
+  production has none, so no suggestion appears until the user places something by hand. Raised
+  at the Stage 1 checkpoint and approved. Widening the pool to inherited items would make every
+  suggestion restate the category default.
+
+## Bolt 057 — Findings
+
+1. **A fixture pair was sitting exactly on the similarity cutoff** and would have failed on any
+   tuning change. A test poised on a threshold tests the threshold, not the feature.
+2. **An existing fixture became legitimate mid-intent.** An `unassigned` item carrying a category
+   was impossible before bolt 056; `unsetCategoryPlacement` now makes it reachable.
+3. **The body empty state is only reachable by expanding an empty section** — not dead, but the
+   header line is what people will see. Both asserted.
+
 ## Unit Status
 
-⏳ **In progress.** Bolt 056 complete (stories 001–003). Bolt 057 remains: the review queue,
-similarity suggestions, and story 006's fixture-realism rule.
+✅ **Complete.** Both bolts done, all seven stories delivered.
 
 **Not deployed.** Ships with intent 013's release; intent 010's Checkpoint 4 is still open.

@@ -3,16 +3,25 @@ id: 057-store-placement-control
 unit: 002-store-placement-control
 intent: 013-placement-edit-control
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 004-needs-review-section
   - 005-similarity-suggestion-on-review
   - 006-store-placement-tests
 created: '2026-09-05T17:40:00Z'
-started: null
-completed: null
+started: '2026-09-05T20:30:00Z'
+completed: '2026-09-05T21:15:00Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-05T20:35:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-05T20:55:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-05T21:15:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 055-placement-review-state
   - 056-store-placement-control

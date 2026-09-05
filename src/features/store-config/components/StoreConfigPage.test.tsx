@@ -13,9 +13,9 @@ import {
   fetchActiveStore,
   fetchCategoryPlacements,
   fetchDismissals,
-  fetchInRecipeNameKeys,
   fetchLocations,
   fetchResolvedItems,
+  markItemReviewed,
   placeItem,
   renameLocation,
   reorderLocation,
@@ -117,8 +117,8 @@ beforeEach(() => {
   vi.mocked(deleteLocation).mockResolvedValue(undefined);
   vi.mocked(countPlacementsAtLocation).mockResolvedValue(0);
   vi.mocked(fetchDismissals).mockResolvedValue([]);
-  vi.mocked(fetchInRecipeNameKeys).mockResolvedValue(new Set(['kale', 'apples', 'cheddar']));
   vi.mocked(placeItem).mockResolvedValue(undefined);
+  vi.mocked(markItemReviewed).mockResolvedValue(undefined);
   vi.mocked(unplaceItem).mockResolvedValue(undefined);
   vi.mocked(dismissSuggestion).mockResolvedValue(undefined);
   vi.mocked(fetchCategoryPlacements).mockResolvedValue(categoryPlacements);
@@ -566,5 +566,90 @@ describe('StoreConfigPage — a stop shows the rule behind its items (intent 013
 
     // The category section expands with Dairy's stop picker already open.
     expect(await screen.findByRole('button', { name: 'Put Dairy in Bakery' })).toBeInTheDocument();
+  });
+});
+
+/**
+ * The review queue (intent 013, story 004).
+ *
+ * Every fixture here is `inherited`, because that is what all 121 groceries in production are.
+ * The section this replaces listed `unassigned` items — a state the data model cannot produce
+ * for a healthy household — and was consequently empty on production while its tests passed
+ * against hand-built unassigned fixtures. These cases would fail if the scoping regressed.
+ */
+describe('StoreConfigPage — the review queue (intent 013)', () => {
+  const newlyArrived = resolved({
+    itemId: 'n1',
+    itemName: 'sourdough starter',
+    locationId: 'loc-3',
+    state: 'inherited',
+    locationName: 'Bakery',
+    viaCategory: 'Grains',
+    reviewedAt: null,
+  });
+
+  it('lists an unreviewed INHERITED item — the case the old section could not show', async () => {
+    vi.mocked(fetchResolvedItems).mockResolvedValue([
+      newlyArrived,
+      resolved({
+        itemId: 'n2',
+        itemName: 'kale',
+        locationId: 'loc-1',
+        state: 'inherited',
+        locationName: 'Produce',
+        viaCategory: 'Produce',
+      }),
+    ]);
+    renderPage();
+
+    expect(await screen.findByText('New — needs review')).toBeInTheDocument();
+    // Asserted through the queue's own action, because the name also appears in the Bakery
+    // stop's collapsed preview — correct in the app, ambiguous in a bare text query.
+    expect(
+      await screen.findByRole('button', { name: 'sourdough starter is in the right place' }),
+    ).toBeInTheDocument();
+    // The reviewed item is absent from the queue though it IS in the registry.
+    expect(screen.getByText('1 grocery nobody has checked yet')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'kale is in the right place' })).not.toBeInTheDocument();
+  });
+
+  it('shows where it already sits and how it got there, so the question is "is that right?"', async () => {
+    vi.mocked(fetchResolvedItems).mockResolvedValue([newlyArrived]);
+    renderPage();
+
+    expect(await screen.findByText('Bakery · follows Grains')).toBeInTheDocument();
+  });
+
+  it('"Looks right" marks reviewed and writes NO placement', async () => {
+    vi.mocked(fetchResolvedItems).mockResolvedValue([newlyArrived]);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: 'sourdough starter is in the right place' }));
+
+    await waitFor(() => expect(markItemReviewed).toHaveBeenCalledWith('n1'));
+    // Accepting a category default is a decision, not a placement. Writing one here would
+    // silently pin the item and stop the category lever working for it.
+    expect(placeItem).not.toHaveBeenCalled();
+  });
+
+  it('"Move it" opens the assign flow, and placing marks reviewed too', async () => {
+    vi.mocked(fetchResolvedItems).mockResolvedValue([newlyArrived]);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: 'Move sourdough starter' }));
+    await screen.findByRole('dialog');
+    await user.click(screen.getByRole('button', { name: 'Put sourdough starter in Produce' }));
+
+    await waitFor(() => expect(placeItem).toHaveBeenCalledWith(store, 'n1', 'loc-1'));
+    await waitFor(() => expect(markItemReviewed).toHaveBeenCalledWith('n1'));
+  });
+
+  it('says nothing is outstanding when everything has been checked', async () => {
+    // The default fixture is entirely reviewed — production's state after the backfill.
+    renderPage();
+
+    expect(await screen.findByText('Nothing new to check')).toBeInTheDocument();
   });
 });

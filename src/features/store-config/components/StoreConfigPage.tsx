@@ -5,9 +5,9 @@ import { AddStopRow } from '@/features/store-config/components/AddStopRow';
 import { AssignSheet } from '@/features/store-config/components/AssignSheet';
 import { FirstRunPanel } from '@/features/store-config/components/FirstRunPanel';
 import { LocationRow } from '@/features/store-config/components/LocationRow';
-import { UnassignedSection } from '@/features/store-config/components/UnassignedSection';
 import { AllGroceriesList } from '@/features/store-config/components/AllGroceriesList';
 import { CategoryPlacementSection } from '@/features/store-config/components/CategoryPlacementSection';
+import { NeedsReviewSection } from '@/features/store-config/components/NeedsReviewSection';
 import {
   useActiveStore,
   useAddLocation,
@@ -16,8 +16,8 @@ import {
   useDeleteLocation,
   useDismissSuggestion,
   useDismissals,
-  useInRecipeNameKeys,
   useLocations,
+  useMarkItemReviewed,
   usePlaceItem,
   useRenameLocation,
   useReorderLocation,
@@ -46,7 +46,6 @@ export function StoreConfigPage() {
   const locations = useLocations(storeId);
   const resolved = useResolvedItems(storeId);
   const dismissals = useDismissals(storeId);
-  const inRecipeNameKeys = useInRecipeNameKeys();
 
   const addLocation = useAddLocation(store.data);
   const renameLocation = useRenameLocation(storeId);
@@ -54,6 +53,7 @@ export function StoreConfigPage() {
   const deleteLocation = useDeleteLocation(storeId);
   const countPlacements = useCountPlacementsAtLocation();
   const placeItem = usePlaceItem(store.data);
+  const markReviewed = useMarkItemReviewed(storeId);
   const unplaceItem = useUnplaceItem(storeId);
   const dismissSuggestion = useDismissSuggestion(store.data);
   const categoryPlacements = useCategoryPlacements(storeId);
@@ -94,13 +94,14 @@ export function StoreConfigPage() {
     return grouped;
   }, [allItems]);
 
-  const unassignedItems = useMemo(
-    () =>
-      allItems
-        .filter((item) => item.state === 'unassigned')
-        .sort((a, b) => a.itemName.localeCompare(b.itemName)),
-    [allItems],
-  );
+  /**
+   * The review queue: things nobody has looked at, whatever their placement state.
+   *
+   * Was `state === 'unassigned'`, which is empty by construction — every item inherits a stop
+   * from its category, so that section was permanently empty in production and the assign flow
+   * was unreachable through it (intent 013, FR-5).
+   */
+  const unreviewedItems = useMemo(() => allItems.filter((item) => item.reviewedAt === null), [allItems]);
 
   /** Pairings this item's owner already rejected — excluded from its suggestions. */
   const dismissedItemIds = useMemo(() => {
@@ -246,10 +247,19 @@ export function StoreConfigPage() {
 
           <AllGroceriesList items={allItems} onMove={openAssignSheet} />
 
-          <UnassignedSection
-            unassignedItems={unassignedItems}
-            inRecipeNameKeys={inRecipeNameKeys.data ?? new Set()}
-            onPlace={openAssignSheet}
+          <NeedsReviewSection
+            unreviewedItems={unreviewedItems}
+            allItems={allItems}
+            dismissedItemIds={dismissedItemIds}
+            isSaving={isSaving || markReviewed.isPending}
+            onAccept={(item) => markReviewed.mutate(item.itemId)}
+            onMove={openAssignSheet}
+            onAcceptSuggestion={(item, locationId) =>
+              placeItem.mutate(
+                { itemId: item.itemId, locationId },
+                { onSuccess: () => markReviewed.mutate(item.itemId) },
+              )
+            }
           />
         </Stack>
       )}
@@ -265,7 +275,16 @@ export function StoreConfigPage() {
         onClose={closeAssignSheet}
         onPlace={(locationId) => {
           if (!assigningItemId) return;
-          placeItem.mutate({ itemId: assigningItemId, locationId }, { onSuccess: closeAssignSheet });
+          // Moving an item IS reviewing it — the user has just said where it belongs.
+          placeItem.mutate(
+            { itemId: assigningItemId, locationId },
+            {
+              onSuccess: () => {
+                markReviewed.mutate(assigningItemId);
+                closeAssignSheet();
+              },
+            },
+          );
         }}
         onUnplace={() => {
           if (!assigningItemId) return;

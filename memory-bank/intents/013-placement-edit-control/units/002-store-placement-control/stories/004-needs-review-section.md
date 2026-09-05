@@ -2,11 +2,11 @@
 id: 004-needs-review-section
 unit: 002-store-placement-control
 intent: 013-placement-edit-control
-status: planned
+status: complete
 priority: must
 created: '2026-09-05T17:30:00Z'
 assigned_bolt: 057-store-placement-control
-implemented: false
+implemented: true
 ---
 
 # Story: 004-needs-review-section

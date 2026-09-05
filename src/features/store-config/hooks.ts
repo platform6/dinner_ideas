@@ -8,9 +8,9 @@ import {
   fetchActiveStore,
   fetchCategoryPlacements,
   fetchDismissals,
-  fetchInRecipeNameKeys,
   fetchLocations,
   fetchResolvedItems,
+  markItemReviewed,
   placeItem,
   renameLocation,
   reorderLocation,
@@ -100,7 +100,6 @@ export function useCountPlacementsAtLocation() {
 }
 
 const dismissalsKey = (storeId: string) => ['store-config', 'dismissals', storeId] as const;
-const inRecipeKey = ['store-config', 'in-recipe-name-keys'] as const;
 
 export function useDismissals(storeId: string | undefined) {
   return useQuery({
@@ -111,10 +110,6 @@ export function useDismissals(storeId: string | undefined) {
 }
 
 /** The default scope of "Not on the path yet" — ingredients used by at least one active dinner. */
-export function useInRecipeNameKeys() {
-  return useQuery({ queryKey: inRecipeKey, queryFn: fetchInRecipeNameKeys });
-}
-
 /**
  * Placing and unplacing both invalidate the resolution query — that view is what every part of
  * the page reads its state from, so a placement that did not refresh it would leave the pills,
@@ -124,6 +119,15 @@ export function usePlaceItem(store: Store | null | undefined) {
   return usePathMutation(store?.id, ({ itemId, locationId }: { itemId: string; locationId: string }) =>
     placeItem(store as Store, itemId, locationId),
   );
+}
+
+/**
+ * Marking an item reviewed invalidates the resolution query — that view carries `reviewed_at`,
+ * so the review queue reads its own membership from it. Without this the row the user just
+ * accepted would sit there until something else refetched.
+ */
+export function useMarkItemReviewed(storeId: string | undefined) {
+  return usePathMutation(storeId, (itemId: string) => markItemReviewed(itemId));
 }
 
 export function useUnplaceItem(storeId: string | undefined) {

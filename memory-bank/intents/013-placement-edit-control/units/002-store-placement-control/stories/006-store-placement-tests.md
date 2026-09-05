@@ -2,11 +2,11 @@
 id: 006-store-placement-tests
 unit: 002-store-placement-control
 intent: 013-placement-edit-control
-status: planned
+status: complete
 priority: must
 created: '2026-09-05T17:30:00Z'
 assigned_bolt: 057-store-placement-control
-implemented: false
+implemented: true
 ---
 
 # Story: 006-store-placement-tests

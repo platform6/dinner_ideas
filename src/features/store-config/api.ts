@@ -328,20 +328,3 @@ export async function fetchDismissals(storeId: string): Promise<SuggestionDismis
   if (error) throw error;
   return data;
 }
-
-/**
- * The `name_key`s of ingredients used by at least one ACTIVE dinner — the default scope of the
- * "Not on the path yet" section (story 004), matching `storeconfig.md`'s stated default.
- *
- * Normalized here with the same rule the registry's generated column uses, so the two agree
- * without a join the client cannot express.
- */
-export async function fetchInRecipeNameKeys(): Promise<Set<string>> {
-  const { data, error } = await supabase
-    .from('dinner_ingredients')
-    .select('name, dinners!inner(is_active)')
-    .eq('dinners.is_active', true);
-
-  if (error) throw error;
-  return new Set((data ?? []).map((row) => row.name.trim().toLowerCase()));
-}

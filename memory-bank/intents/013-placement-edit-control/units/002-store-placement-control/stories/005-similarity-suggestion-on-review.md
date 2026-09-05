@@ -2,11 +2,11 @@
 id: 005-similarity-suggestion-on-review
 unit: 002-store-placement-control
 intent: 013-placement-edit-control
-status: planned
+status: complete
 priority: should
 created: '2026-09-05T17:30:00Z'
 assigned_bolt: 057-store-placement-control
-implemented: false
+implemented: true
 ---
 
 # Story: 005-similarity-suggestion-on-review
