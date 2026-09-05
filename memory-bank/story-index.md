@@ -5,7 +5,7 @@
 - **Total stories**: 123
 - **Completed**: 106
 - **Generated**: 17
-- **Planned**: 0
+- **Planned**: 11
 - **Last updated**: 2026-09-04
 
 ---
@@ -224,9 +224,33 @@
 
 ---
 
+### 013-placement-edit-control — [ ] PLANNED (bolts 055, 056, 057, 058)
+
+**Unit: 001-placement-review-state** — bolt `055`
+
+- [ ] **001-reviewed-at-column-and-backfill** (placement-review-state): `items.reviewed_at` + bounded backfill - Must - [ ] PLANNED
+- [ ] **002-review-write-path** (placement-review-state): Write path preserving ADR-7's trigger-owned invariant - Must - [ ] PLANNED
+- [ ] **003-correct-010-record** (placement-review-state): Amend intent 010 FR-6; supersede its FR-13 - Should - [ ] PLANNED
+
+**Unit: 002-store-placement-control** — bolts `056`, `057`
+
+- [ ] **001-all-groceries-list** (store-placement-control): Searchable list of every item + its stop - Must - [ ] PLANNED
+- [ ] **002-category-move** (store-placement-control): First write to `category_placements` - Must - [ ] PLANNED
+- [ ] **003-uncapped-stop-rows** (store-placement-control): Remove `EXPANDED_ITEM_CAP = 4` - Must - [ ] PLANNED
+- [ ] **004-needs-review-section** (store-placement-control): Re-scope the unassigned section to unreviewed items - Must - [ ] PLANNED
+- [ ] **005-similarity-suggestion-on-review** (store-placement-control): Local similarity proposes a stop; no API - Should - [ ] PLANNED
+- [ ] **006-store-placement-tests** (store-placement-control): Realistic fixtures; no impossible states - Must - [ ] PLANNED
+
+**Unit: 003-shopping-list-move** — bolt `058`
+
+- [ ] **001-move-from-shopping-list** (shopping-list-move): Move an item from the list; item placements only - Should - [ ] PLANNED
+- [ ] **002-shopping-list-move-tests** (shopping-list-move): Existing suite must pass unmodified - Must - [ ] PLANNED
+
+---
+
 ## Stories by Status
 
-- **Planned**: 0
+- **Planned**: 11
 - **Generated**: 17
 - **In Progress**: 0
 - **Completed**: 106
