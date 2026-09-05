@@ -4,12 +4,22 @@ import { Box, Button, HStack, IconButton, Input, Stack, Text } from '@chakra-ui/
 import { LocationTypeChip } from '@/features/store-config/components/LocationTypeChip';
 import { DeleteLocationConfirm } from '@/features/store-config/components/DeleteLocationConfirm';
 import { PlacementPill } from '@/features/store-config/components/PlacementPill';
-import type { Location, ResolvedItem } from '@/features/store-config/types';
+import type {
+  CategoryPlacementView,
+  IngredientCategory,
+  Location,
+  ResolvedItem,
+} from '@/features/store-config/types';
 import { uiIcons } from '@/shared/components/icons';
 
-/** Item rows shown when expanded, before the "+ N more" link takes over. */
-const EXPANDED_ITEM_CAP = 4;
-/** Names joined into the collapsed one-line preview. */
+/**
+ * Names joined into the collapsed one-line preview.
+ *
+ * The COLLAPSED preview abbreviates names and says how many it left out; the count beside the
+ * row is always `items.length`, the true total. The EXPANDED list is never abbreviated — it
+ * used to stop at four, which silently made ~100 of 121 groceries unreachable, because the
+ * pill on each expanded row was one of only two ways into the assign flow (intent 013, FR-3).
+ */
 const PREVIEW_NAME_CAP = 3;
 
 function previewText(items: ResolvedItem[]): string {
@@ -30,6 +40,8 @@ function previewText(items: ResolvedItem[]): string {
 export function LocationRow({
   location,
   items,
+  categories,
+  onMoveCategory,
   isFirst,
   isLast,
   isBusy,
@@ -59,13 +71,14 @@ export function LocationRow({
   onCancelRemoval: () => void;
   /** Opens the assign flow for an item sitting at this stop. */
   onPlaceItem: (item: ResolvedItem, trigger: HTMLButtonElement) => void;
+  /** Categories whose placement points here — the RULE that puts most items at this stop. */
+  categories: CategoryPlacementView[];
+  /** Sends the user to the category section to move one. */
+  onMoveCategory: (category: IngredientCategory) => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [draftName, setDraftName] = useState(location.name);
-
-  const visibleItems = items.slice(0, EXPANDED_ITEM_CAP);
-  const hiddenItemCount = items.length - visibleItems.length;
 
   function startRename() {
     setDraftName(location.name);
@@ -189,13 +202,35 @@ export function LocationRow({
 
       {isExpanded && !isRenaming && (
         <Stack gap={0} bg="paper.subtle" borderTopWidth="1px" borderColor="line.subtle" px={3} py={2}>
+          {/*
+            Categories first, and visually distinct from the items. A category placed here is a
+            RULE — it is why most of the items below are here at all — so it reads as a different
+            kind of thing, and moving it moves them all. Listing it among the items would suggest
+            it is one of them (intent 013, FR-3).
+          */}
+          {categories.map((entry) => (
+            <HStack key={entry.category} gap={2} pl="41px" py={1} minH="44px">
+              <Text textStyle="meta" color="ink.700" flex="1" noOfLines={1}>
+                Everything in {entry.category}
+              </Text>
+              <Button
+                size="xs"
+                variant="outline"
+                aria-label={`Move the ${entry.category} category`}
+                onClick={() => onMoveCategory(entry.category)}
+              >
+                Move all
+              </Button>
+            </HStack>
+          ))}
+
           {items.length === 0 ? (
             <Text textStyle="meta" color="ink.500" pl="41px" py={1}>
               Nothing here yet
             </Text>
           ) : (
             <>
-              {visibleItems.map((item) => (
+              {items.map((item) => (
                 <HStack key={item.itemId} gap={2} pl="41px" py={1} minH="44px">
                   <Text textStyle="meta" color="ink.700" flex="1" noOfLines={1}>
                     {item.itemName}
@@ -210,11 +245,6 @@ export function LocationRow({
                   />
                 </HStack>
               ))}
-              {hiddenItemCount > 0 && (
-                <Text textStyle="meta" color="brand.500" pl="41px" py={1}>
-                  + {hiddenItemCount} more
-                </Text>
-              )}
             </>
           )}
         </Stack>

@@ -11,17 +11,20 @@ import {
   deleteLocation,
   dismissSuggestion,
   fetchActiveStore,
+  fetchCategoryPlacements,
   fetchDismissals,
-  fetchInRecipeNameKeys,
   fetchLocations,
   fetchResolvedItems,
+  markItemReviewed,
   placeItem,
   renameLocation,
   reorderLocation,
+  setCategoryPlacement,
   unplaceItem,
+  unsetCategoryPlacement,
 } from '@/features/store-config/api';
 import { theme } from '@/shared/theme';
-import type { Location, ResolvedItem, Store } from '@/features/store-config/types';
+import type { CategoryPlacementView, Location, ResolvedItem, Store } from '@/features/store-config/types';
 
 vi.mock('@/features/store-config/api');
 
@@ -32,6 +35,13 @@ const store: Store = {
   is_active: true,
   created_at: '2026-09-04T00:00:00Z',
 };
+
+/**
+ * Fixtures default to REVIEWED because that is what production looks like after bolt 055's
+ * backfill: every item that predates the feature is marked, and only newly registered ones
+ * are null. A fixture defaulting to unreviewed would describe a state these suites never meet.
+ */
+const REVIEWED = '2026-09-05T00:00:00Z';
 
 function location(overrides: Partial<Location> & Pick<Location, 'id' | 'name' | 'position'>): Location {
   return {
@@ -54,9 +64,23 @@ function resolved(
     locationName: null,
     locationPosition: null,
     viaCategory: null,
+    reviewedAt: REVIEWED,
     ...overrides,
   };
 }
+
+/**
+ * All five categories, always — an unplaced one is a row with a null stop, not an absent row.
+ * `Pantry` is left unplaced on purpose so at least one test sees the state that used to be
+ * unrepresentable in this fixture.
+ */
+const categoryPlacements: CategoryPlacementView[] = [
+  { category: 'Produce', locationId: 'loc-1', locationName: 'Produce', locationPosition: 1 },
+  { category: 'Protein', locationId: 'loc-2', locationName: 'Aisle 3', locationPosition: 2 },
+  { category: 'Dairy', locationId: 'loc-1', locationName: 'Produce', locationPosition: 1 },
+  { category: 'Grains', locationId: 'loc-3', locationName: 'Bakery', locationPosition: 3 },
+  { category: 'Pantry', locationId: null, locationName: null, locationPosition: null },
+];
 
 const path: Location[] = [
   location({ id: 'loc-1', name: 'Produce', position: 1 }),
@@ -93,10 +117,13 @@ beforeEach(() => {
   vi.mocked(deleteLocation).mockResolvedValue(undefined);
   vi.mocked(countPlacementsAtLocation).mockResolvedValue(0);
   vi.mocked(fetchDismissals).mockResolvedValue([]);
-  vi.mocked(fetchInRecipeNameKeys).mockResolvedValue(new Set(['kale', 'apples', 'cheddar']));
   vi.mocked(placeItem).mockResolvedValue(undefined);
+  vi.mocked(markItemReviewed).mockResolvedValue(undefined);
   vi.mocked(unplaceItem).mockResolvedValue(undefined);
   vi.mocked(dismissSuggestion).mockResolvedValue(undefined);
+  vi.mocked(fetchCategoryPlacements).mockResolvedValue(categoryPlacements);
+  vi.mocked(setCategoryPlacement).mockResolvedValue(undefined);
+  vi.mocked(unsetCategoryPlacement).mockResolvedValue(undefined);
 });
 
 describe('StoreConfigPage — the walking path', () => {
@@ -319,5 +346,310 @@ describe('StoreConfigPage — placing an item', () => {
     await user.click(screen.getByRole('button', { name: /put apples in bakery/i }));
 
     await waitFor(() => expect(placeItem).toHaveBeenCalledWith(store, 'i2', 'loc-3'));
+  });
+});
+
+/**
+ * The regression suite for intent 013's founding defect.
+ *
+ * Intent 010 shipped 290 passing tests over a feature nobody could reach, because its fixtures
+ * built `unassigned` items directly — a state the data model cannot produce, since every item
+ * inherits a stop from its category. These cases work from the distribution production actually
+ * has: everything `inherited`, nothing unassigned. If placement ever becomes unreachable again,
+ * they fail.
+ */
+describe('StoreConfigPage — reaching every grocery (intent 013)', () => {
+  const allInherited: ResolvedItem[] = [
+    resolved({
+      itemId: 'g1',
+      itemName: 'whole wheat spaghetti',
+      locationId: 'loc-3',
+      state: 'inherited',
+      locationName: 'Bakery',
+      viaCategory: 'Grains',
+    }),
+    resolved({
+      itemId: 'g2',
+      itemName: 'basmati rice',
+      locationId: 'loc-3',
+      state: 'inherited',
+      locationName: 'Bakery',
+      viaCategory: 'Grains',
+    }),
+    resolved({
+      itemId: 'g3',
+      itemName: 'kale',
+      locationId: 'loc-1',
+      state: 'inherited',
+      locationName: 'Produce',
+      viaCategory: 'Produce',
+    }),
+  ];
+
+  it('finds an INHERITED item by name and opens the move flow — the thing that was impossible', async () => {
+    vi.mocked(fetchResolvedItems).mockResolvedValue(allInherited);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: /All groceries/i }));
+    await user.type(screen.getByLabelText('Search groceries'), 'spag');
+
+    // Present despite being `inherited` — the old section only listed `unassigned`, so this
+    // search returned nothing on production.
+    expect(await screen.findByText('whole wheat spaghetti')).toBeInTheDocument();
+    expect(screen.queryByText('basmati rice')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Move whole wheat spaghetti' }));
+    expect(await screen.findByText('Where do you find it')).toBeInTheDocument();
+  });
+
+  it('says HOW each item got its stop, so the user knows which lever to pull', async () => {
+    vi.mocked(fetchResolvedItems).mockResolvedValue([
+      ...allInherited,
+      resolved({
+        itemId: 'g4',
+        itemName: 'butter',
+        locationId: 'loc-2',
+        state: 'placed',
+        locationName: 'Aisle 3',
+      }),
+    ]);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: /All groceries/i }));
+
+    // Two Grains items share the inherited line; the placed one is unique.
+    expect(await screen.findAllByText('Bakery · follows Grains')).toHaveLength(2);
+    expect(screen.getByText('Aisle 3 · you chose this')).toBeInTheDocument();
+  });
+
+  it('lists every grocery, with no cap and no search required', async () => {
+    const many = Array.from({ length: 12 }, (_, i) =>
+      resolved({
+        itemId: `m${i}`,
+        itemName: `item ${String(i).padStart(2, '0')}`,
+        locationId: 'loc-1',
+        state: 'inherited',
+        locationName: 'Produce',
+        viaCategory: 'Produce',
+      }),
+    );
+    vi.mocked(fetchResolvedItems).mockResolvedValue(many);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: /All groceries/i }));
+
+    // All twelve, including the last — a capped list would stop short.
+    expect(await screen.findByText('item 00')).toBeInTheDocument();
+    expect(screen.getByText('item 11')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /^Move item / })).toHaveLength(12);
+  });
+});
+
+describe('StoreConfigPage — moving a category (intent 013)', () => {
+  it('lists all five categories, including one sitting nowhere', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: /Where each kind of thing lives/i }));
+
+    // Asserted through each category's Move button rather than its bare name: "Produce" is both
+    // a stop on the path and a category, so a text query would match either and prove neither.
+    for (const name of ['Produce', 'Protein', 'Dairy', 'Grains', 'Pantry']) {
+      expect(await screen.findByRole('button', { name: `Move ${name}` })).toBeInTheDocument();
+    }
+    // The unplaced one must still be listed, or it could never be placed.
+    expect(screen.getByText('Nowhere yet')).toBeInTheDocument();
+  });
+
+  it('writes the category placement when a stop is picked', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: /Where each kind of thing lives/i }));
+    await user.click(screen.getByRole('button', { name: 'Move Pantry' }));
+    await user.click(screen.getByRole('button', { name: 'Put Pantry in Bakery' }));
+
+    await waitFor(() => {
+      expect(setCategoryPlacement).toHaveBeenCalledWith(store, 'Pantry', 'loc-3');
+    });
+  });
+
+  it('offers "take it off the path" only for a category that HAS a stop', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: /Where each kind of thing lives/i }));
+
+    // Pantry sits nowhere — nothing to remove.
+    await user.click(screen.getByRole('button', { name: 'Move Pantry' }));
+    expect(screen.queryByRole('button', { name: /Take Pantry off the path/i })).not.toBeInTheDocument();
+
+    // Grains sits at Bakery — removable.
+    await user.click(screen.getByRole('button', { name: 'Move Grains' }));
+    await user.click(screen.getByRole('button', { name: /Take Grains off the path/i }));
+
+    await waitFor(() => {
+      expect(unsetCategoryPlacement).toHaveBeenCalledWith('store-1', 'Grains');
+    });
+  });
+});
+
+describe('StoreConfigPage — a stop lists what it actually holds (intent 013)', () => {
+  it('shows EVERY item at a stop, past the four the old cap allowed', async () => {
+    // Nine at one stop. Under EXPANDED_ITEM_CAP = 4 the last five were unreachable, and the
+    // pill beside each was one of only two ways into the assign flow — which is how ~100 of
+    // 121 groceries ended up unplaceable in production.
+    const nine = Array.from({ length: 9 }, (_, i) =>
+      resolved({
+        itemId: `p${i}`,
+        itemName: `produce ${String(i).padStart(2, '0')}`,
+        locationId: 'loc-1',
+        state: 'inherited',
+        locationName: 'Produce',
+        viaCategory: 'Produce',
+      }),
+    );
+    vi.mocked(fetchResolvedItems).mockResolvedValue(nine);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByText('Produce'));
+
+    // The fifth and ninth are the ones the cap used to swallow.
+    expect(await screen.findByText('produce 04')).toBeInTheDocument();
+    expect(screen.getByText('produce 08')).toBeInTheDocument();
+    expect(screen.queryByText(/\+ \d+ more/)).not.toBeInTheDocument();
+  });
+
+  it('the collapsed count equals the true total, not the number rendered', async () => {
+    const nine = Array.from({ length: 9 }, (_, i) =>
+      resolved({
+        itemId: `p${i}`,
+        itemName: `produce ${String(i).padStart(2, '0')}`,
+        locationId: 'loc-1',
+        state: 'inherited',
+        locationName: 'Produce',
+        viaCategory: 'Produce',
+      }),
+    );
+    vi.mocked(fetchResolvedItems).mockResolvedValue(nine);
+    renderPage();
+
+    // Collapsed: the count beside the row is the whole truth even while the preview abbreviates.
+    expect(await screen.findByText('9')).toBeInTheDocument();
+  });
+});
+
+describe('StoreConfigPage — a stop shows the rule behind its items (intent 013)', () => {
+  it('lists a placed category as an entry distinct from the items', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    // Produce and Dairy both point at loc-1 in the fixture.
+    await user.click(await screen.findByText('Produce'));
+
+    expect(await screen.findByText('Everything in Produce')).toBeInTheDocument();
+    expect(screen.getByText('Everything in Dairy')).toBeInTheDocument();
+    // Distinct from the items sitting there, which keep their own pill.
+    expect(screen.getByText('kale')).toBeInTheDocument();
+  });
+
+  it('"Move all" opens that category\'s picker, so the affordance leads somewhere', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByText('Produce'));
+    await user.click(screen.getByRole('button', { name: 'Move the Dairy category' }));
+
+    // The category section expands with Dairy's stop picker already open.
+    expect(await screen.findByRole('button', { name: 'Put Dairy in Bakery' })).toBeInTheDocument();
+  });
+});
+
+/**
+ * The review queue (intent 013, story 004).
+ *
+ * Every fixture here is `inherited`, because that is what all 121 groceries in production are.
+ * The section this replaces listed `unassigned` items — a state the data model cannot produce
+ * for a healthy household — and was consequently empty on production while its tests passed
+ * against hand-built unassigned fixtures. These cases would fail if the scoping regressed.
+ */
+describe('StoreConfigPage — the review queue (intent 013)', () => {
+  const newlyArrived = resolved({
+    itemId: 'n1',
+    itemName: 'sourdough starter',
+    locationId: 'loc-3',
+    state: 'inherited',
+    locationName: 'Bakery',
+    viaCategory: 'Grains',
+    reviewedAt: null,
+  });
+
+  it('lists an unreviewed INHERITED item — the case the old section could not show', async () => {
+    vi.mocked(fetchResolvedItems).mockResolvedValue([
+      newlyArrived,
+      resolved({
+        itemId: 'n2',
+        itemName: 'kale',
+        locationId: 'loc-1',
+        state: 'inherited',
+        locationName: 'Produce',
+        viaCategory: 'Produce',
+      }),
+    ]);
+    renderPage();
+
+    expect(await screen.findByText('New — needs review')).toBeInTheDocument();
+    // Asserted through the queue's own action, because the name also appears in the Bakery
+    // stop's collapsed preview — correct in the app, ambiguous in a bare text query.
+    expect(
+      await screen.findByRole('button', { name: 'sourdough starter is in the right place' }),
+    ).toBeInTheDocument();
+    // The reviewed item is absent from the queue though it IS in the registry.
+    expect(screen.getByText('1 grocery nobody has checked yet')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'kale is in the right place' })).not.toBeInTheDocument();
+  });
+
+  it('shows where it already sits and how it got there, so the question is "is that right?"', async () => {
+    vi.mocked(fetchResolvedItems).mockResolvedValue([newlyArrived]);
+    renderPage();
+
+    expect(await screen.findByText('Bakery · follows Grains')).toBeInTheDocument();
+  });
+
+  it('"Looks right" marks reviewed and writes NO placement', async () => {
+    vi.mocked(fetchResolvedItems).mockResolvedValue([newlyArrived]);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: 'sourdough starter is in the right place' }));
+
+    await waitFor(() => expect(markItemReviewed).toHaveBeenCalledWith('n1'));
+    // Accepting a category default is a decision, not a placement. Writing one here would
+    // silently pin the item and stop the category lever working for it.
+    expect(placeItem).not.toHaveBeenCalled();
+  });
+
+  it('"Move it" opens the assign flow, and placing marks reviewed too', async () => {
+    vi.mocked(fetchResolvedItems).mockResolvedValue([newlyArrived]);
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: 'Move sourdough starter' }));
+    await screen.findByRole('dialog');
+    await user.click(screen.getByRole('button', { name: 'Put sourdough starter in Produce' }));
+
+    await waitFor(() => expect(placeItem).toHaveBeenCalledWith(store, 'n1', 'loc-1'));
+    await waitFor(() => expect(markItemReviewed).toHaveBeenCalledWith('n1'));
+  });
+
+  it('says nothing is outstanding when everything has been checked', async () => {
+    // The default fixture is entirely reviewed — production's state after the backfill.
+    renderPage();
+
+    expect(await screen.findByText('Nothing new to check')).toBeInTheDocument();
   });
 });

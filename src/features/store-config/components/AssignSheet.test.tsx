@@ -14,6 +14,13 @@ import type { Location, ResolvedItem } from '@/features/store-config/types';
  * fails this file rather than passing against a stub.
  */
 
+/**
+ * Fixtures default to REVIEWED because that is what production looks like after bolt 055's
+ * backfill: every item that predates the feature is marked, and only newly registered ones
+ * are null. A fixture defaulting to unreviewed would describe a state these suites never meet.
+ */
+const REVIEWED = '2026-09-05T00:00:00Z';
+
 function location(id: string, name: string, position: number): Location {
   return {
     id,
@@ -35,6 +42,7 @@ function item(overrides: Partial<ResolvedItem> & Pick<ResolvedItem, 'itemId' | '
     locationName: null,
     locationPosition: null,
     viaCategory: null,
+    reviewedAt: REVIEWED,
     ...overrides,
   };
 }

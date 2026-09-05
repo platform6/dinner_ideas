@@ -1,11 +1,6 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: '14.5';
-  };
   graphql_public: {
     Tables: {
       [_ in never]: never;
@@ -583,6 +578,7 @@ export type Database = {
           id: string;
           name: string;
           name_key: string | null;
+          reviewed_at: string | null;
         };
         Insert: {
           created_at?: string;
@@ -590,6 +586,7 @@ export type Database = {
           id?: string;
           name: string;
           name_key?: string | null;
+          reviewed_at?: string | null;
         };
         Update: {
           created_at?: string;
@@ -597,6 +594,7 @@ export type Database = {
           id?: string;
           name?: string;
           name_key?: string | null;
+          reviewed_at?: string | null;
         };
         Relationships: [
           {
@@ -930,6 +928,7 @@ export type Database = {
           location_position: number | null;
           location_type: string | null;
           name_key: string | null;
+          reviewed_at: string | null;
           state: string | null;
           store_id: string | null;
           via_category: string | null;
@@ -964,6 +963,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      mark_item_reviewed: { Args: { p_item_id: string }; Returns: undefined };
       reorder_grocery_store_row: {
         Args: { p_new_position: number; p_row_id: string };
         Returns: {

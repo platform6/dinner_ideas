@@ -176,6 +176,23 @@ do nothing` — an Item is created the first time its normalized name is seen fo
   - No item, in any state, produces a validation error.
 - **Priority**: Must
 
+> **⚠️ CORRECTED 2026-09-05 — intent `013-placement-edit-control`, bolt 055.**
+>
+> The criterion above calls **unassigned** _"a normal state … everywhere it appears"_. That is
+> false, and the error was load-bearing: it is what led FR-13 to build a whole section around a
+> population that is empty by construction.
+>
+> `dinner_ingredients.category` is `NOT NULL` and CHECK-constrained to five values, so every Item
+> derives one of those five; the cutover placed all five. **Every Item therefore resolves as
+> `inherited`.** `unassigned` is reachable _only_ for a **registry orphan** — an Item whose
+> `dinner_ingredients` rows have all been deleted. Measured on production 2026-09-05:
+> `inherited | 121`, `unassigned | 0`.
+>
+> The resolution **order** above is correct and the view implements it correctly; only the claim
+> about how common the third state is was wrong. The state this FR was reaching for — normal,
+> common, surfaced neutrally — is **unreviewed** (`items.reviewed_at is null`), which intent 013
+> introduces. Read `013` FR-6 alongside this.
+
 ### FR-7: Similarity-suggestion algorithm
 
 - **Description**: When placing an Item with no explicit placement, surface Items that look
@@ -284,7 +301,23 @@ do nothing` — an Item is created the first time its normalized name is seen fo
   - Traps focus, closes on `Escape`, returns focus to the pill/button that opened it.
 - **Priority**: Must
 
-### FR-13: Unassigned ("Not on the path yet")
+### FR-13: Unassigned ("Not on the path yet") — ⚠️ SUPERSEDED
+
+> **SUPERSEDED 2026-09-05 by intent `013-placement-edit-control` FR-5.**
+>
+> This FR is scoped to _"Items with no explicit or inherited placement"_ — a population that is
+> **empty by construction** (see the correction on FR-6 above). It shipped in bolt 053 and was
+> permanently empty in production, which is why no item could be placed at all: this section was
+> one of only two entry points into FR-12's assign flow, and the other was capped at four items
+> per stop.
+>
+> A second, compounding error is visible in the second criterion below: the default scope is
+> _"Items used in at least one recipe"_, intersected with _unassigned_. Those two conditions are
+> **contradictory** — an Item with no surviving ingredient rows cannot also be referenced by an
+> active dinner — so that list could never have shown anything, independent of the first problem.
+>
+> Intent `013` FR-5 re-scopes the section from _unassigned_ to **unreviewed** items, which is the
+> population this FR was actually reaching for. The original text is left intact below.
 
 - **Description**: A calm, findable home for Items with no explicit or inherited placement.
 - **Acceptance Criteria**:

@@ -4,9 +4,9 @@ release: v0.10.0-0f16e95
 commit: 0f16e95
 units: [001-location-item-model, 002-store-config-page, 003-shopping-list-ordering]
 created: '2026-09-05T11:40:00Z'
-updated: '2026-09-05T12:20:00Z'
-status: staging-verified
-current_checkpoint: 3
+updated: '2026-09-05T16:20:00Z'
+status: production-live-checkpoint-4-open
+current_checkpoint: 4
 environments:
   dev:
     status: verified
@@ -15,11 +15,14 @@ environments:
     status: 'PASSED 2026-09-05 — prod-data rehearsal green. Both migrations applied clean against a restored copy of production; both gates passed on real data; both of this release''s pgTAP files ok. See "Staging result" below.'
     target: 'local supabase stack (docker supabase_db_dinner_ideas) loaded with a prod data dump'
   production:
-    status: not-deployed
+    status: 'live 2026-09-05 — DB applied and verified; FE merged, Netlify build in progress at time of writing'
     target: 'Supabase linked gpkqsedtlzxczmarxjia + Netlify main'
-    db: 'PENDING — 20260904180000_location_item_model.sql, 20260904190000_location_item_model_cutover.sql'
-    fe: 'PENDING — dev -> main PR, Netlify main build'
+    db: 'APPLIED 2026-09-05 — 20260904180000 + 20260904190000 (supabase db push --linked); equivalence gate passed on production data'
+    fe: 'MERGED 2026-09-05T15:58:16Z — PR #15, merge commit b50a746'
     edge_function: 'n/a — no function change'
+    smoke: 'PARTIAL — S6/S7/S8 BLOCKED by the post-deploy finding below (no item is ever `unassigned`); S1-S5, S9, S10 still runnable'
+    advisors: "PENDING — needs the user's own Supabase session (this session's MCP is a different account)"
+open_issue: 'POST-DEPLOY FINDING 2026-09-05 — explicit item placement is unreachable in the shipped UI. Release is NOT rolled back; core ordering promise holds. Handed to Construction.'
 ---
 
 # Deployment Plan: intent 010 — grocery store location model (release v0.10.0)
@@ -246,25 +249,101 @@ auth-independent.
     [x] S4  `migration up` applied A and B with no abort; `Aisle 1` inferred as `aisle`
     [x] S5  pgTAP — both location/item files ok; 9 seed-fixture failures, none release-related
     [x] cleanup — prod dump deleted, local stack reset to seeded state
-[ ] Production — Checkpoint 3  (requires staging green)
-    [ ] 0.  git push origin dev                          (local dev is 8 ahead of origin/dev)
-    [ ] 1.  npx --yes supabase migration list --linked   — re-confirm 180000/190000 are remote:""
-    [ ] 2.  DB:  npx --yes supabase db push --linked     — expect both migrations in the output
-    [ ] 3.  re-run G1/G2 against prod post-push as a sanity read (zero rows)
-    [ ] 4.  FE:  open + merge the dev -> main PR; watch the Netlify main build to green
-    [ ] 5.  regen types from prod:
-            npx --yes supabase gen types typescript --linked > src/shared/lib/database.types.ts
-            Expect a real diff this time (unlike v0.9.0): the hand-added tables get their
-            authoritative definitions, and the old grocery_store_rows / category_row_assignments
-            entries stay — correctly, because those tables still exist. Commit to dev.
-[ ] Verify production — Checkpoint 4
-    [ ] db push output confirms both migrations applied
-    [ ] Netlify main build green and live
-    [ ] Smoke S1–S10 below
+[x] Production — Checkpoint 3  DEPLOYED 2026-09-05
+    [x] 0.  git push origin dev                          (97b6645..b6065a1)
+    [x] 1.  migration list --linked                      — both confirmed remote:"" immediately prior
+    [x] 2.  DB:  supabase db push --linked               — both applied; equivalence gate passed on prod data
+    [x] 3.  post-push read: prod matches the rehearsal exactly — 1 store, 8 locations,
+            121 items, 5 category_placements, 0 item_placements, 0 suggestion_dismissals;
+            `Aisle 1` -> type `aisle`; positions 1..8 verbatim. grocery_store_rows and
+            category_row_assignments both still present (rollback path intact).
+    [x] 4.  FE:  PR #15 merged 2026-09-05T15:58:16Z -> main b50a746; Netlify main build triggered
+    [x] 5.  regen types from prod — **no-op**. The plan predicted "expect a real diff this
+            time"; that was wrong. The generator's raw output differs from the committed file
+            only in ordering and formatting, and prettier normalises it back to byte-identical
+            (the commit was rejected as empty). Table/function set is 37 before and 37 after,
+            none added, none removed — the hand-written definitions from bolts 050/051 were
+            already exactly right. Nothing to commit. tsc -b clean, vitest 290/290.
+[~] Verify production — Checkpoint 4  OPEN (blocked, see finding below)
+    [x] db push output confirms both migrations applied
+    [x] Netlify main build triggered by the b50a746 merge (user-confirmed building)
+    [~] Smoke S1–S10 — S6/S7/S8 BLOCKED (no item is ever `unassigned`);
+        S1–S5, S9, S10 still runnable and not yet run
     [ ] get_advisors (security + performance) — six new RLS'd tables and a security_invoker
         view; expect no critical issues, but this is the first release to add policies since
         20260828230000, so read it rather than assume it.
+        Needs the user's own Supabase session.
 ```
+
+## POST-DEPLOY FINDING — explicit item placement is unreachable (2026-09-05)
+
+Found by the product owner within minutes of the deploy, looking at prod: searching
+"Not on the path yet" for `spaghetti` returns nothing. Their first reading was that no recipes
+were selected. That is not the cause — `inRecipeNameKeys` derives from **active dinners**, not
+weekly picks. The real cause is structural.
+
+**Every item resolves as `inherited`. Nothing is ever `unassigned`.**
+
+```
+ state     | count
+ inherited |   121
+```
+
+Why it cannot be otherwise, for a healthy household:
+
+1. `dinner_ingredients.category` is **NOT NULL** and CHECK-constrained to the five values.
+2. An Item's category is the modal category of its ingredient rows, so it is always one of
+   those five.
+3. The cutover placed all five categories (it had five assignments to carry).
+4. `item_location_resolution.state` is `unassigned` only when `item_category` is NULL — which
+   requires an Item with **no matching `dinner_ingredients` rows at all**, i.e. an orphan left
+   by a deleted dinner.
+
+Second-order: `UnassignedSection`'s default list is `unassigned ∩ used-in-an-active-recipe`.
+Those two predicates are contradictory, so that list is **empty by construction**, not merely
+empty today. The search widens past the in-recipe narrowing but stays inside `unassigned`, so
+it cannot reach an in-recipe item either.
+
+**The second entry point does not rescue it.** `LocationRow` exposes a `PlacementPill` per
+item, but `EXPANDED_ITEM_CAP = 4` — only the first four items per location, alphabetically.
+Grains holds 20 items and starts `basmati rice, breadcrumbs, brown rice, burger buns`; both
+spaghetti items sort far below. Across the store roughly **20 of 121 items are reachable**.
+
+**Consequence**: `Bakery`, `Aisle 1` and `Garmantasdf` — the three locations the cutover
+carried across with no category — cannot receive any item through the shipped UI. FR-4, FR-12
+and FR-13 are effectively unreachable in production.
+
+**Why the test suites did not catch it**: the component tests construct `unassigned` items
+directly as fixtures, so they exercise a state the real data never produces. The pre-deploy
+rehearsal verified the migration against production _data_; it did not drive the UI, so it was
+never going to catch this class of defect. Worth remembering for the next data-shaped release —
+a green cutover says nothing about whether the feature built on top of it is reachable.
+
+**Disposition — NOT rolled back.** Deliberate:
+
+- The release's core promise holds. The shopping list sorts by walking path and produces the
+  same order as before the cutover; the equivalence gate proved it and the S10 smoke can still
+  confirm it.
+- Nothing regressed. Per-item placement did not exist before this release, so no capability was
+  lost — a new one is unreachable.
+- Rolling back would surrender the ordering improvement to fix a feature nobody can currently
+  reach. Roll forward.
+
+**Resolution: intent `013-placement-edit-control`** (created 2026-09-05). It covers item and
+category moves, an all-groceries search, and a review state that gives the section a real
+population. Bolt 055 landed the data layer and corrected FR-6 and FR-13 in this intent's
+requirements. Checkpoint 4 here stays open until that intent's UI work ships and S6-S8 can run.
+
+**Originally handed to the Construction Agent.** This is a design gap in the resolution states and the
+assign entry points, not a deployment problem. Two candidate directions, for Construction and
+the product owner to choose between — Operations is not the right place to pick:
+
+1. Let the unassigned section reach `inherited` items too (i.e. rethink what the section is
+   for — "everything you have not explicitly placed" rather than "everything with no
+   location"), or
+2. Remove or raise `EXPANDED_ITEM_CAP` so every item under a location is tappable.
+
+Checkpoint 4 stays **open** until this is resolved and the blocked smoke tests can run.
 
 ## Smoke (Checkpoint 4) — run on prod as a household owner
 

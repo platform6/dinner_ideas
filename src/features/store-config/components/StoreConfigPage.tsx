@@ -1,27 +1,32 @@
 import { useMemo, useRef, useState } from 'react';
-import { Alert, AlertIcon, Box, Center, HStack, Heading, Spinner, Stack, Text } from '@chakra-ui/react';
+import { Alert, AlertIcon, Center, HStack, Heading, Spinner, Stack, Text } from '@chakra-ui/react';
 
 import { AddStopRow } from '@/features/store-config/components/AddStopRow';
 import { AssignSheet } from '@/features/store-config/components/AssignSheet';
 import { FirstRunPanel } from '@/features/store-config/components/FirstRunPanel';
 import { LocationRow } from '@/features/store-config/components/LocationRow';
-import { UnassignedSection } from '@/features/store-config/components/UnassignedSection';
+import { AllGroceriesList } from '@/features/store-config/components/AllGroceriesList';
+import { CategoryPlacementSection } from '@/features/store-config/components/CategoryPlacementSection';
+import { NeedsReviewSection } from '@/features/store-config/components/NeedsReviewSection';
 import {
   useActiveStore,
   useAddLocation,
+  useCategoryPlacements,
   useCountPlacementsAtLocation,
   useDeleteLocation,
   useDismissSuggestion,
   useDismissals,
-  useInRecipeNameKeys,
   useLocations,
+  useMarkItemReviewed,
   usePlaceItem,
   useRenameLocation,
   useReorderLocation,
   useResolvedItems,
+  useSetCategoryPlacement,
   useUnplaceItem,
+  useUnsetCategoryPlacement,
 } from '@/features/store-config/hooks';
-import type { ResolvedItem } from '@/features/store-config/types';
+import type { CategoryPlacementView, IngredientCategory, ResolvedItem } from '@/features/store-config/types';
 
 /**
  * The "Walking path" page (FR-11): ONE ordered list of stops, sections and aisles as visual
@@ -41,7 +46,6 @@ export function StoreConfigPage() {
   const locations = useLocations(storeId);
   const resolved = useResolvedItems(storeId);
   const dismissals = useDismissals(storeId);
-  const inRecipeNameKeys = useInRecipeNameKeys();
 
   const addLocation = useAddLocation(store.data);
   const renameLocation = useRenameLocation(storeId);
@@ -49,16 +53,33 @@ export function StoreConfigPage() {
   const deleteLocation = useDeleteLocation(storeId);
   const countPlacements = useCountPlacementsAtLocation();
   const placeItem = usePlaceItem(store.data);
+  const markReviewed = useMarkItemReviewed(storeId);
   const unplaceItem = useUnplaceItem(storeId);
   const dismissSuggestion = useDismissSuggestion(store.data);
+  const categoryPlacements = useCategoryPlacements(storeId);
+  const setCategoryPlacement = useSetCategoryPlacement(store.data);
+  const unsetCategoryPlacement = useUnsetCategoryPlacement(storeId);
 
   const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
   const [removalCount, setRemovalCount] = useState<number | null>(null);
   const [announcement, setAnnouncement] = useState('');
   const [assigningItemId, setAssigningItemId] = useState<string | null>(null);
+  const [focusCategory, setFocusCategory] = useState<IngredientCategory | null>(null);
   const assignTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const allItems = useMemo(() => resolved.data ?? [], [resolved.data]);
+
+  /** Which categories point at each stop — the rule behind most of a stop's items. */
+  const categoriesByLocation = useMemo(() => {
+    const grouped = new Map<string, CategoryPlacementView[]>();
+    for (const entry of categoryPlacements.data ?? []) {
+      if (!entry.locationId) continue;
+      const list = grouped.get(entry.locationId);
+      if (list) list.push(entry);
+      else grouped.set(entry.locationId, [entry]);
+    }
+    return grouped;
+  }, [categoryPlacements.data]);
 
   /** Items grouped by the stop they resolve to — the source of each row's preview and count. */
   const itemsByLocation = useMemo(() => {
@@ -73,13 +94,14 @@ export function StoreConfigPage() {
     return grouped;
   }, [allItems]);
 
-  const unassignedItems = useMemo(
-    () =>
-      allItems
-        .filter((item) => item.state === 'unassigned')
-        .sort((a, b) => a.itemName.localeCompare(b.itemName)),
-    [allItems],
-  );
+  /**
+   * The review queue: things nobody has looked at, whatever their placement state.
+   *
+   * Was `state === 'unassigned'`, which is empty by construction — every item inherits a stop
+   * from its category, so that section was permanently empty in production and the assign flow
+   * was unreachable through it (intent 013, FR-5).
+   */
+  const unreviewedItems = useMemo(() => allItems.filter((item) => item.reviewedAt === null), [allItems]);
 
   /** Pairings this item's owner already rejected — excluded from its suggestions. */
   const dismissedItemIds = useMemo(() => {
@@ -112,6 +134,7 @@ export function StoreConfigPage() {
   const stops = locations.data ?? [];
   const isBusy = reorderLocation.isPending || deleteLocation.isPending || renameLocation.isPending;
   const isSaving = placeItem.isPending || unplaceItem.isPending;
+  const isMovingCategory = setCategoryPlacement.isPending || unsetCategoryPlacement.isPending;
 
   function openAssignSheet(item: ResolvedItem, trigger: HTMLButtonElement) {
     assignTriggerRef.current = trigger;
@@ -199,6 +222,8 @@ export function StoreConfigPage() {
               onRequestRemoval={() => requestRemoval(stop.id)}
               onCancelRemoval={cancelRemoval}
               onPlaceItem={openAssignSheet}
+              categories={categoriesByLocation.get(stop.id) ?? []}
+              onMoveCategory={setFocusCategory}
             />
           ))}
 
@@ -210,13 +235,33 @@ export function StoreConfigPage() {
       )}
 
       {stops.length > 0 && (
-        <Box>
-          <UnassignedSection
-            unassignedItems={unassignedItems}
-            inRecipeNameKeys={inRecipeNameKeys.data ?? new Set()}
-            onPlace={openAssignSheet}
+        <Stack gap={3}>
+          <CategoryPlacementSection
+            placements={categoryPlacements.data ?? []}
+            locations={stops}
+            isSaving={isMovingCategory}
+            focusCategory={focusCategory}
+            onPlace={(category, locationId) => setCategoryPlacement.mutate({ category, locationId })}
+            onUnplace={(category) => unsetCategoryPlacement.mutate(category)}
           />
-        </Box>
+
+          <AllGroceriesList items={allItems} onMove={openAssignSheet} />
+
+          <NeedsReviewSection
+            unreviewedItems={unreviewedItems}
+            allItems={allItems}
+            dismissedItemIds={dismissedItemIds}
+            isSaving={isSaving || markReviewed.isPending}
+            onAccept={(item) => markReviewed.mutate(item.itemId)}
+            onMove={openAssignSheet}
+            onAcceptSuggestion={(item, locationId) =>
+              placeItem.mutate(
+                { itemId: item.itemId, locationId },
+                { onSuccess: () => markReviewed.mutate(item.itemId) },
+              )
+            }
+          />
+        </Stack>
       )}
 
       <AssignSheet
@@ -230,7 +275,16 @@ export function StoreConfigPage() {
         onClose={closeAssignSheet}
         onPlace={(locationId) => {
           if (!assigningItemId) return;
-          placeItem.mutate({ itemId: assigningItemId, locationId }, { onSuccess: closeAssignSheet });
+          // Moving an item IS reviewing it — the user has just said where it belongs.
+          placeItem.mutate(
+            { itemId: assigningItemId, locationId },
+            {
+              onSuccess: () => {
+                markReviewed.mutate(assigningItemId);
+                closeAssignSheet();
+              },
+            },
+          );
         }}
         onUnplace={() => {
           if (!assigningItemId) return;
