@@ -3,7 +3,7 @@ id: 058-shopping-list-move
 unit: 003-shopping-list-move
 intent: 013-placement-edit-control
 type: simple-construction-bolt
-status: planned
+status: deferred
 stories:
   - 001-move-from-shopping-list
   - 002-shopping-list-move-tests
@@ -26,6 +26,21 @@ complexity:
 ---
 
 # Bolt: 058-shopping-list-move
+
+> **⏸ DEFERRED 2026-09-05 — product owner's decision, not a blocker.**
+>
+> Intent 013's core value is delivered by bolts 055–057: any grocery or category can be moved,
+> everything is reachable by name, and newly arrived items surface for review. This bolt adds a
+> second entry point to a flow that already works.
+>
+> Unit 003 is `Should` and depends on nothing, which is exactly why it was isolated. Deferring it
+> releases intent 013 sooner and closes intent 010's Checkpoint 4, which has been held open since
+> the v0.10.0 deploy.
+>
+> **Nothing here is abandoned.** The plan, stories and cut criterion stand as written; the bolt
+> can be picked up unchanged whenever the shopping-list move is wanted. The question it exists to
+> answer — whether the affordance can be discoverable without degrading checking items off — is
+> better answered after living with the store page for a while.
 
 ## Objective
 

@@ -5,7 +5,7 @@
 - **Total stories**: 123
 - **Completed**: 115
 - **Generated**: 17
-- **Planned**: 2
+- **Deferred**: 2
 - **Last updated**: 2026-09-04
 
 ---
@@ -241,7 +241,7 @@
 - [x] **005-similarity-suggestion-on-review** (store-placement-control): Local similarity proposes a stop; no API - Should - ✅ COMPLETE
 - [x] **006-store-placement-tests** (store-placement-control): Realistic fixtures; no impossible states - Must - ✅ COMPLETE
 
-**Unit: 003-shopping-list-move** — bolt `058`
+**Unit: 003-shopping-list-move** — bolt `058` ⏸ DEFERRED (Should; not blocking the release)
 
 - [ ] **001-move-from-shopping-list** (shopping-list-move): Move an item from the list; item placements only - Should - [ ] PLANNED
 - [ ] **002-shopping-list-move-tests** (shopping-list-move): Existing suite must pass unmodified - Must - [ ] PLANNED
@@ -250,7 +250,7 @@
 
 ## Stories by Status
 
-- **Planned**: 2
+- **Deferred**: 2
 - **Generated**: 17
 - **In Progress**: 0
 - **Completed**: 115
