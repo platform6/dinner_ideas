@@ -10,7 +10,7 @@ created: '2026-09-05T20:05:00Z'
 
 | Check            | Result                                |
 | ---------------- | ------------------------------------- |
-| Unit + component | ✅ **298 / 298** (32 files) — was 290 |
+| Unit + component | ✅ **300 / 300** (32 files) — was 290 |
 | Type check       | ✅ `tsc -b` clean                     |
 | Lint             | ✅ `eslint src` clean                 |
 | Production build | ✅ `built in 4.79s`                   |
@@ -71,6 +71,8 @@ bolt where a convenient fixture would have hidden the very defect being fixed.
 - ✅ An expanded stop shows **all nine** of nine items; no `+ N more`
 - ✅ Collapsed count equals the true total
 - ✅ Every listed item offers the move action
+- ✅ A placed category appears as an entry **distinct from the items** — "Everything in Produce"
+  above the item list, with a "Move all" action that opens that category's picker
 - ⚪ 39 items smooth on mobile — not machine-assertable; the cap removal is the change, and the
   NFR bar is documented
 
@@ -123,6 +125,21 @@ Worth recording because the first is a live ambiguity in the UI too: a user read
 in the category section and "Produce" on the path is looking at two different things with one
 name. It is not wrong — the category genuinely sits at the like-named stop — but it is worth
 watching when bolt 057 adds another section.
+
+### A criterion I initially missed
+
+Story 003's third acceptance criterion — _a placed category appears as an entry distinct from the
+individual items_ — was **not built** in the first pass, and worse, this report's first version
+silently omitted it from the validation list rather than marking it unmet. The bolt was committed
+in that state (`e33fdd2`).
+
+Caught on review of the plan against the commit. Fixed in a follow-up: `LocationRow` now lists
+each category pointing at the stop as _"Everything in X"_ above the items, with a **Move all**
+action that opens that category's picker in the section below — so the affordance leads somewhere
+rather than pointing at a section the user then has to find. Two tests added.
+
+Recording it because the failure mode is the one this whole intent exists to correct: a report
+that lists only the criteria that passed reads exactly like a report where everything passed.
 
 ### Not Covered
 

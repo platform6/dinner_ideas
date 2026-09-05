@@ -542,3 +542,29 @@ describe('StoreConfigPage — a stop lists what it actually holds (intent 013)',
     expect(await screen.findByText('9')).toBeInTheDocument();
   });
 });
+
+describe('StoreConfigPage — a stop shows the rule behind its items (intent 013)', () => {
+  it('lists a placed category as an entry distinct from the items', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    // Produce and Dairy both point at loc-1 in the fixture.
+    await user.click(await screen.findByText('Produce'));
+
+    expect(await screen.findByText('Everything in Produce')).toBeInTheDocument();
+    expect(screen.getByText('Everything in Dairy')).toBeInTheDocument();
+    // Distinct from the items sitting there, which keep their own pill.
+    expect(screen.getByText('kale')).toBeInTheDocument();
+  });
+
+  it('"Move all" opens that category\'s picker, so the affordance leads somewhere', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByText('Produce'));
+    await user.click(screen.getByRole('button', { name: 'Move the Dairy category' }));
+
+    // The category section expands with Dairy's stop picker already open.
+    expect(await screen.findByRole('button', { name: 'Put Dairy in Bakery' })).toBeInTheDocument();
+  });
+});

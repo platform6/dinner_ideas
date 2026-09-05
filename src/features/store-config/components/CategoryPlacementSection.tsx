@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Button, HStack, Stack, Text } from '@chakra-ui/react';
 
 import type { CategoryPlacementView, IngredientCategory, Location } from '@/features/store-config/types';
@@ -20,17 +20,30 @@ export function CategoryPlacementSection({
   placements,
   locations,
   isSaving,
+  focusCategory,
   onPlace,
   onUnplace,
 }: {
   placements: CategoryPlacementView[];
   locations: Location[];
   isSaving: boolean;
+  /**
+   * Set when the user pressed "Move all" on a stop's category entry. Opens this section and
+   * that category's picker, so the affordance on the stop leads somewhere rather than merely
+   * pointing at a section the user then has to find.
+   */
+  focusCategory: IngredientCategory | null;
   onPlace: (category: IngredientCategory, locationId: string) => void;
   onUnplace: (category: IngredientCategory) => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [openCategory, setOpenCategory] = useState<IngredientCategory | null>(null);
+
+  useEffect(() => {
+    if (!focusCategory) return;
+    setIsExpanded(true);
+    setOpenCategory(focusCategory);
+  }, [focusCategory]);
 
   const placedCount = placements.filter((entry) => entry.locationId !== null).length;
 

@@ -26,7 +26,7 @@ import {
   useUnplaceItem,
   useUnsetCategoryPlacement,
 } from '@/features/store-config/hooks';
-import type { ResolvedItem } from '@/features/store-config/types';
+import type { CategoryPlacementView, IngredientCategory, ResolvedItem } from '@/features/store-config/types';
 
 /**
  * The "Walking path" page (FR-11): ONE ordered list of stops, sections and aisles as visual
@@ -64,9 +64,22 @@ export function StoreConfigPage() {
   const [removalCount, setRemovalCount] = useState<number | null>(null);
   const [announcement, setAnnouncement] = useState('');
   const [assigningItemId, setAssigningItemId] = useState<string | null>(null);
+  const [focusCategory, setFocusCategory] = useState<IngredientCategory | null>(null);
   const assignTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const allItems = useMemo(() => resolved.data ?? [], [resolved.data]);
+
+  /** Which categories point at each stop — the rule behind most of a stop's items. */
+  const categoriesByLocation = useMemo(() => {
+    const grouped = new Map<string, CategoryPlacementView[]>();
+    for (const entry of categoryPlacements.data ?? []) {
+      if (!entry.locationId) continue;
+      const list = grouped.get(entry.locationId);
+      if (list) list.push(entry);
+      else grouped.set(entry.locationId, [entry]);
+    }
+    return grouped;
+  }, [categoryPlacements.data]);
 
   /** Items grouped by the stop they resolve to — the source of each row's preview and count. */
   const itemsByLocation = useMemo(() => {
@@ -208,6 +221,8 @@ export function StoreConfigPage() {
               onRequestRemoval={() => requestRemoval(stop.id)}
               onCancelRemoval={cancelRemoval}
               onPlaceItem={openAssignSheet}
+              categories={categoriesByLocation.get(stop.id) ?? []}
+              onMoveCategory={setFocusCategory}
             />
           ))}
 
@@ -224,6 +239,7 @@ export function StoreConfigPage() {
             placements={categoryPlacements.data ?? []}
             locations={stops}
             isSaving={isMovingCategory}
+            focusCategory={focusCategory}
             onPlace={(category, locationId) => setCategoryPlacement.mutate({ category, locationId })}
             onUnplace={(category) => unsetCategoryPlacement.mutate(category)}
           />
