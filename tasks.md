@@ -22,9 +22,10 @@ Status as of 2026-09-01. Intents live in `memory-bank/intents/`.
     yes, that is exactly what `007` shipped: each household's owner pastes their own Anthropic
     key on `/settings`, and Test Connection proves the round-trip.
 
-- **Redesign grocery store config → individual ingredient → Location model.**
-  → `010-grocery-store-location-model` — inception draft, at Checkpoint 2. Blocking open
-  questions for the requester (Chandler): inline item editing? drag-and-drop reorder? Item
-  registry vs. name-keyed mapping (schema-determining)? cutover mapping? does `category`
-  survive? Source: `storeconfig.md`. The visual redesign is a separate design intent (not yet
-  created).
+- **Redesign grocery store config → individual ingredient → Location model.** _(parked —
+  not currently an intent)._ Intent `010-grocery-store-location-model` was drafted then
+  **removed 2026-09-04** (never passed Checkpoint 2). It stayed blocked on questions only
+  Chandler can answer: Item registry vs. name-keyed mapping (schema-determining), cutover
+  mapping, does `category` survive, inline item editing, drag-and-drop reorder. Source brief
+  `storeconfig.md` is still at the repo root; re-create the intent (next free number) once
+  Chandler has weighed in. The visual redesign would be a separate design intent.

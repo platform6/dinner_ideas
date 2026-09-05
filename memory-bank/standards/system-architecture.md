@@ -15,6 +15,33 @@ The React app calls Supabase directly for all data access (dinner catalog, weekl
 1. **Supabase Postgres + RLS** — all data access; the single authorization boundary (below).
 2. **Supabase Edge Functions (Deno)** — stateless serverless handlers for work that cannot run in the browser because it holds a secret. Today just `claude-proxy` (intent `007-claude-integration`): it verifies the caller's Supabase JWT, resolves their household, enforces a per-household daily call cap, resolves that household's **own** Anthropic API key from **Supabase Vault** (via a `service_role`-only `resolve_ai_key()` — the key never reaches the client), calls Claude, and writes one `ai_usage_log` row per attempt. Both JWT verification _and_ RLS gate it. There is no shared Anthropic key. See `decision-index.md` ADR-4.
 
+## Store Layout & Placement (intent `010`)
+
+The grocery-store layout is modelled as **Store → Location → Item**, and it is the one domain
+where meaningful logic lives in Postgres rather than the client:
+
+- **Store** — a household's walking-path configuration; exactly one active per household, with
+  the multi-store schema already in place so v2 is UI-only.
+- **Location** — a stop on the path (`section` or `aisle`), ordered by a single `position` per
+  store. Reordering goes through `reorder_location(uuid, integer)`, a `security invoker` RPC.
+- **Item** — a **derived**, deduped registry of ingredient names (`name_key =
+lower(btrim(name))`). Nothing creates Items from application code: a trigger on
+  `dinner_ingredients` get-or-creates one on every write, so a future recipe-import feature
+  needs no changes here (decision-index **ADR-7**).
+- **Placement** — explicit (`item_placements`) or inherited (`category_placements`). Resolution
+  is explicit → inherited → unassigned, defined **once** in the `item_location_resolution` view
+  (`security_invoker = true`) so the store-config page and the shopping-list sort cannot
+  disagree.
+
+Cross-store and cross-household references are made _unwritable_ by composite foreign keys that
+carry the scope column inside the reference, rather than checked in policies or app code
+(**ADR-8**).
+
+This replaces intent `001` unit `004`'s category→row mapping. Its tables
+(`grocery_store_rows`, `category_row_assignments`) still exist but are retired-in-waiting —
+the drop is written and held outside `supabase/migrations/` until the last reader is gone
+(**ADR-9**).
+
 ## Security Patterns
 
 Row Level Security (RLS) policies on Supabase tables, scoped to the caller's **household**.

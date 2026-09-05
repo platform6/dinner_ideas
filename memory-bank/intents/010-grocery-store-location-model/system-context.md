@@ -2,23 +2,20 @@
 intent: 010-grocery-store-location-model
 phase: inception
 status: context-defined
-updated: '2026-09-01T02:05:00Z'
+updated: '2026-09-04T14:11:32Z'
 ---
 
 # Grocery Store Location Model — System Context
 
 ## System Overview
 
-A brown-field data-model remodel of the grocery-store-config domain, plus the page and the
-shopping-list sort that consume it. No new runtime boundary — still Supabase-direct (no
-backend server, no Edge Function). The change: **broad `category → grocery_store_row`
-mapping** becomes **individual `Item (ingredient) → Location`**, where a Location unifies
-`section` and `aisle` stops in one ordered walking path. New household-scoped tables + one
-forward migration; the `src/features/store-config/` feature and the shopping-list group-order
-function are reworked; `dinner_ingredients` and every other feature are untouched.
-
-Several boundaries are **provisional** pending OQ-C (Item registry vs. name-keyed mapping),
-OQ-D (cutover mapping), OQ-A/OQ-B (deferred inline-edit / drag-and-drop).
+A brown-field data-model remodel of the grocery-store-config domain, the store-config page,
+and the shopping-list sort that consumes it. No new runtime boundary — still Supabase-direct
+(no backend server, no Edge Function). **Broad `category → grocery_store_row` mapping**
+becomes **individual `Item (ingredient) → Location`**, with category-level placement kept as
+an automatic fallback. A multi-store-ready schema lands now (`stores`); v1 UI shows exactly
+one. New: a household-scoped Items registry (`items`) that doesn't exist in this app today,
+kept in sync by a database trigger regardless of which code path creates an ingredient.
 
 ## Context Diagram
 
@@ -26,79 +23,92 @@ OQ-D (cutover mapping), OQ-A/OQ-B (deferred inline-edit / drag-and-drop).
 C4Context
     title System Context - Grocery Store Location Model
 
-    Person(shopper, "Chandler (primary shopper)", "Defines the store walking path; places individual ingredients at stops")
-    Person(member, "Household member", "Uses the resulting walking-order shopping list")
-    System(app, "Dinner Ideas PWA", "React/Vite. Reworked store-config page (one walking path + item-level placement + similarity suggestion); shopping-list groups ordered by Item->Location position")
-    SystemDb_Ext(supabase, "Supabase (Postgres + RLS)", "New: locations (evolves grocery_store_rows, +type), items/ingredient_locations (Item->Location link), similarity query. Forward migration carries existing per-household config across. household_id RLS as 004.")
+    Person(chandler, "Chandler (primary shopper)", "Defines the walking path; places ingredients; the decisions in storeconfig.md are addressed to Chandler directly")
+    Person(member, "Household member", "Reads the walking-order shopping list")
 
-    Rel(shopper, app, "Configures the walking path + ingredient placements")
-    Rel(member, app, "Reads the shopping list in walking order")
-    Rel(app, supabase, "CRUD locations; place items; similarity query; reorder RPC — all household-scoped")
+    System_Boundary(app, "Dinner Ideas PWA") {
+      System(page, "Store config page (\"Walking path\")", "One ordered list; assign bottom sheet with similarity suggestions; unassigned section")
+      System(shop, "Shopping list", "Group order switches to Item -> Location position")
+      System(trigger, "dinner_ingredients trigger", "Resolve-or-create the Items registry row on every ingredient write, from any source")
+    }
+
+    SystemDb_Ext(supabase, "Supabase (Postgres + RLS)", "stores, locations (evolves grocery_store_rows), items (new), item_placements, category_placements (evolves category_row_assignments), suggestion_dismissals. household_id RLS as intent 004.")
+
+    Rel(chandler, page, "Configures the path + places ingredients")
+    Rel(member, shop, "Reads in walking order")
+    Rel(page, supabase, "CRUD locations; place items; similarity read; reorder RPC")
+    Rel(trigger, supabase, "insert into items on conflict do nothing")
 ```
 
 ## Actors
 
 - **Chandler** (Human, requester / primary shopper): defines the store as an ordered path of
-  section + aisle stops and places individual ingredients at those stops. The open questions
-  are addressed to Chandler directly (the handoff forbids silent assumptions).
-- **Household member** (Human): consumes the walking-order shopping list; does not
-  necessarily configure the store.
+  section + aisle stops and places individual ingredients at those stops. `storeconfig.md`'s
+  product/UX decisions are addressed to Chandler and are treated as settled here.
+- **Household member** (Human): reads the walking-order shopping list; does not necessarily
+  configure the store.
 - **Supabase Postgres + RLS**: the only backend. Enforces household isolation on every new
-  table; hosts the race-safe reorder RPC and (for FR-4) a similarity query — possibly with
-  `pg_trgm`.
+  table; hosts the reorder RPC and the Items-registry sync trigger.
 
 ## External Integrations
 
-- **Supabase**: the change surface. New household-scoped tables (`locations`, and per OQ-C
-  either an `items` registry or an `ingredient_locations` mapping); RLS policies mirroring
-  `20260828232000`; the existing `reorder_grocery_store_row` RPC generalised to
-  `reorder_location`; a similarity query (`ILIKE '%token%'` / `pg_trgm` `similarity()`), all
-  scoped to the caller's household. One forward migration carries `grocery_store_rows` +
-  `category_row_assignments` data across (OQ-D), then drops the old shape once safe.
-- **No new external dependency, no Edge Function, no new npm package** (optionally enable the
-  standard `pg_trgm` extension).
+- **Supabase**: the whole change surface. New tables `stores`, `locations` (evolves
+  `grocery_store_rows`), `items` (new registry), `item_placements`, `category_placements`
+  (evolves `category_row_assignments`), `suggestion_dismissals`. A trigger on
+  `dinner_ingredients` (insert/update) does the Items-registry get-or-create. RLS mirrors
+  `20260828232000` on every new table. The reorder RPC generalizes
+  `reorder_grocery_store_row` → `reorder_location`, scoped by `store_id`.
+- **No new external dependency, no Edge Function, no new npm package.** The similarity match
+  (FR-7) runs client-side in TypeScript, not `pg_trgm` or a SQL function.
 
 ## Data Flows
 
 ### Inbound
 
-- Store-config page reads: the household's Locations (ordered by `position`); the Items and
-  their `location_id`; the unassigned Items (alphabetical); similarity matches for an Item
-  being placed.
+- Store-config page reads: the household's active Store's Locations (ordered by `position`);
+  Items and their resolved placement (explicit / inherited / unassigned, FR-6); similarity
+  candidates for an Item being placed (FR-7); the unassigned Items in scope (FR-13).
+- The Items-registry trigger reads: `dinners.household_id` via the inserted/updated
+  `dinner_ingredients` row's `dinner_id`.
 
 ### Outbound
 
-- Add / rename / reorder / delete a Location (reorder via the race-safe RPC).
-- Place an Item at a Location (`update … set location_id = $1`); accept a similarity
-  suggestion is the same single write.
-- Deleting a Location nulls its Items' `location_id` (`on delete set null`).
+- Add / rename / reorder / delete a Location (delete cascades to dependent placements —
+  Resolved Decision #3).
+- Place an Item at a Location: insert/replace its `item_placements` row (unique per
+  `(item_id, store_id)`); accepting a similarity suggestion is the same single write.
+- "Take it off the path": delete the Item's `item_placements` row.
+- Dismiss a suggestion: insert a `suggestion_dismissals` row.
 
 ### Consumed downstream
 
 - The shopping-list group-order function switches its sort key from
-  `category → grocery_store_row.position` to `ingredient → Item → Location.position`;
-  unlocated ingredients still sort after the path, alphabetically. `buildShoppingList`
-  aggregation is unchanged.
+  `category → grocery_store_row.position` to each ingredient's resolved
+  `Item → Location.position` (FR-6, FR-17); unlocated ingredients still sort after the path,
+  alphabetically. `buildShoppingList` aggregation is unchanged.
 
 ## High-Level Constraints
 
-- Supersedes `001` unit `004`'s model + reworks `src/features/store-config/` + the shopping
-  sort. `grocery_store_rows` / `category_row_assignments` are **already** household-scoped —
-  tenancy is not re-solved.
+- Supersedes `001` unit `004`'s model; reworks `src/features/store-config/` + the shopping
+  sort. Tenancy is **not** re-solved — `grocery_store_rows` / `category_row_assignments` are
+  already household-scoped.
 - Append-only migrations. No edits to prior migration files.
-- v1 reorder = existing up/down arrows (OQ-B). v1 has no inline Item / category editing on
-  this page (OQ-A). Both must be addable later with **no schema change**.
+- v1 reorder = up/down arrows (existing RPC pattern, generalized). No inline Item/category
+  editing on this page in v1. Both addable later with **no schema change**.
 - Similarity is suggestion-only; never auto-assigns.
-- The **visual** redesign is a separate design intent — this intent is the functional / data
-  contract.
+- No separate design intent this time — `storeconfig.md`'s "Visual direction" section is the
+  complete visual spec.
 
 ## Key NFR Goals
 
-- Household isolation on every new table (RLS by `household_id`).
-- Unassigned (`location_id = null`) is a first-class valid state — no constraint or UI treats
-  it as an error.
-- `(household_id, position)` stays unique through every add / reorder / delete.
+- Household isolation on every new table (RLS by `household_id`); cross-store safety enforced
+  by composite FKs, not application code.
+- Unassigned (`no item_placements row`) is a first-class valid state — no constraint or UI
+  treats it as an error.
+- `(store_id, position)` stays unique through every add / reorder / delete.
 - Existing configured households get an equivalent walking path + shopping-list order after
   the cutover (no regression).
-- The model does not need a schema change to later add inline editing (OQ-A) or drag-and-drop
-  (OQ-B), and the similarity engine is swappable behind its query interface.
+- The Items-registry sync is trigger-based so a future recipe-import feature (URL / Claude)
+  needs no changes here when it ships.
+- The model does not need a schema change to later add multi-store UI, drag-and-drop, or
+  inline editing; the similarity engine is swappable behind its query interface.

@@ -9,7 +9,7 @@ import { ShoppingListPage } from '@/features/shopping-list/components/ShoppingLi
 import { fetchDinnersByIds } from '@/features/dinners/api';
 import { fetchCurrentPlan } from '@/features/weekly-plan/api';
 import { fetchWeekStartDay } from '@/features/settings/api';
-import { fetchAssignments, fetchRows } from '@/features/store-config/api';
+import { fetchActiveStore, fetchResolvedItems } from '@/features/store-config/api';
 import { theme } from '@/shared/theme';
 import type { DinnerWithIngredients } from '@/features/dinners/types';
 import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/types';
@@ -81,8 +81,8 @@ const threeDinners = [
 describe('ShoppingListPage', () => {
   const mockedFetchCurrentPlan = vi.mocked(fetchCurrentPlan);
   const mockedFetchDinnersByIds = vi.mocked(fetchDinnersByIds);
-  const mockedFetchRows = vi.mocked(fetchRows);
-  const mockedFetchAssignments = vi.mocked(fetchAssignments);
+  const mockedFetchActiveStore = vi.mocked(fetchActiveStore);
+  const mockedFetchResolvedItems = vi.mocked(fetchResolvedItems);
   const mockedWriteText = vi.fn();
 
   function renderPage() {
@@ -114,8 +114,10 @@ describe('ShoppingListPage', () => {
     vi.clearAllMocks();
     vi.mocked(fetchWeekStartDay).mockResolvedValue(0);
     mockedFetchDinnersByIds.mockResolvedValue(threeDinners);
-    mockedFetchRows.mockResolvedValue([]);
-    mockedFetchAssignments.mockResolvedValue([]);
+    // No store configured: every group falls back to alphabetical order, which is what these
+    // tests assert on. The location sort itself is covered in reorder.test.ts.
+    mockedFetchActiveStore.mockResolvedValue(null);
+    mockedFetchResolvedItems.mockResolvedValue([]);
     mockedWriteText.mockResolvedValue(undefined);
   });
 
