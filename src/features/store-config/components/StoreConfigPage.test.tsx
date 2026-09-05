@@ -33,6 +33,13 @@ const store: Store = {
   created_at: '2026-09-04T00:00:00Z',
 };
 
+/**
+ * Fixtures default to REVIEWED because that is what production looks like after bolt 055's
+ * backfill: every item that predates the feature is marked, and only newly registered ones
+ * are null. A fixture defaulting to unreviewed would describe a state these suites never meet.
+ */
+const REVIEWED = '2026-09-05T00:00:00Z';
+
 function location(overrides: Partial<Location> & Pick<Location, 'id' | 'name' | 'position'>): Location {
   return {
     household_id: 'hh-1',
@@ -54,6 +61,7 @@ function resolved(
     locationName: null,
     locationPosition: null,
     viaCategory: null,
+    reviewedAt: REVIEWED,
     ...overrides,
   };
 }

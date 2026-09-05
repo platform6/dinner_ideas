@@ -2,11 +2,11 @@
 id: 001-reviewed-at-column-and-backfill
 unit: 001-placement-review-state
 intent: 013-placement-edit-control
-status: planned
+status: complete
 priority: must
 created: '2026-09-05T17:30:00Z'
 assigned_bolt: 055-placement-review-state
-implemented: false
+implemented: true
 ---
 
 # Story: 001-reviewed-at-column-and-backfill

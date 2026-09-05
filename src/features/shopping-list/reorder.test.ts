@@ -4,6 +4,13 @@ import { reorderGroupsByLocation } from '@/features/shopping-list/reorder';
 import type { ShoppingListGroup } from '@/features/shopping-list/types';
 import type { ResolvedItem } from '@/features/store-config/types';
 
+/**
+ * Fixtures default to REVIEWED because that is what production looks like after bolt 055's
+ * backfill: every item that predates the feature is marked, and only newly registered ones
+ * are null. A fixture defaulting to unreviewed would describe a state these suites never meet.
+ */
+const REVIEWED = '2026-09-05T00:00:00Z';
+
 function group(category: string, ...names: string[]): ShoppingListGroup {
   return {
     category,
@@ -22,6 +29,7 @@ function resolved(name: string, locationPosition: number | null, category = 'Pan
     locationName: locationPosition === null ? null : `Stop ${locationPosition}`,
     locationPosition,
     viaCategory: locationPosition === null ? null : category,
+    reviewedAt: REVIEWED,
   };
 }
 

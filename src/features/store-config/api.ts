@@ -18,6 +18,7 @@ type ResolutionRow = {
   location_name: string | null;
   location_position: number | null;
   via_category: string | null;
+  reviewed_at: string | null;
 };
 
 const PLACEMENT_STATES: readonly string[] = ['placed', 'inherited', 'unassigned'];
@@ -41,6 +42,7 @@ function mapResolvedItem(row: ResolutionRow): ResolvedItem | null {
     locationName: row.location_name,
     locationPosition: row.location_position,
     viaCategory: row.via_category,
+    reviewedAt: row.reviewed_at,
   };
 }
 
@@ -73,7 +75,7 @@ export async function fetchResolvedItems(storeId: string): Promise<ResolvedItem[
   const { data, error } = await supabase
     .from('item_location_resolution')
     .select(
-      'item_id, item_name, name_key, item_category, state, location_id, location_name, location_position, via_category',
+      'item_id, item_name, name_key, item_category, state, location_id, location_name, location_position, via_category, reviewed_at',
     )
     .eq('store_id', storeId);
 
@@ -182,6 +184,24 @@ export async function placeItem(store: Store, itemId: string, locationId: string
     { onConflict: 'item_id,store_id' },
   );
 
+  if (error) throw error;
+}
+
+/**
+ * Marks one item reviewed — "I have looked at where this sits".
+ *
+ * An RPC rather than an `.update()` because `items` carries no application write grant at all:
+ * it is trigger-owned so that grocery identity has exactly one spelling rule (ADR-7), and the
+ * exception this feature needs is a function that names the one column rather than a grant that
+ * withholds the others (ADR-10). A direct update — of `reviewed_at` or anything else — fails
+ * with `permission denied for table items`, by design.
+ *
+ * Idempotent, and the household is resolved server-side, so every caller (accept a stop, move an
+ * item, place one) can fire it unconditionally without checking first or passing a household id.
+ * A foreign or missing id affects zero rows and returns normally.
+ */
+export async function markItemReviewed(itemId: string): Promise<void> {
+  const { error } = await supabase.rpc('mark_item_reviewed', { p_item_id: itemId });
   if (error) throw error;
 }
 

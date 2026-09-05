@@ -29,6 +29,16 @@ export interface ResolvedItem {
   locationPosition: number | null;
   /** The category an inherited placement came through — populated only when `state` is `inherited`. */
   viaCategory: string | null;
+  /**
+   * When someone last confirmed or corrected where this item sits; `null` = nobody has looked.
+   *
+   * Distinct from `state`: an item can be `inherited` and reviewed (the category default is
+   * right, and someone said so) or `inherited` and unreviewed (it just arrived). That
+   * distinction is the whole reason the column exists — `unassigned` cannot serve as
+   * "needs attention" because it is unreachable for anything but a registry orphan
+   * (intent 013, bolt 055).
+   */
+  reviewedAt: string | null;
 }
 
 /** A walking-path stop with the resolved items that currently point at it. */

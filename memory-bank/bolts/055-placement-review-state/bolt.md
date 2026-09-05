@@ -3,16 +3,31 @@ id: 055-placement-review-state
 unit: 001-placement-review-state
 intent: 013-placement-edit-control
 type: ddd-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-reviewed-at-column-and-backfill
   - 002-review-write-path
   - 003-correct-010-record
 created: '2026-09-05T17:40:00Z'
-started: null
-completed: null
+started: '2026-09-05T18:00:00Z'
+completed: '2026-09-05T19:00:00Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: model
+    completed: '2026-09-05T18:05:00Z'
+    artifact: ddd-01-domain-model.md
+  - name: design
+    completed: '2026-09-05T18:15:00Z'
+    artifact: ddd-02-technical-design.md
+  - name: adr-analysis
+    completed: '2026-09-05T18:25:00Z'
+    artifact: adr-010-narrow-write-to-a-trigger-owned-table.md
+  - name: implement
+    completed: '2026-09-05T18:45:00Z'
+    artifact: supabase/migrations/20260905180000_item_review_state.sql
+  - name: test
+    completed: '2026-09-05T19:00:00Z'
+    artifact: ddd-03-test-report.md
 requires_bolts: []
 enables_bolts:
   - 056-store-placement-control

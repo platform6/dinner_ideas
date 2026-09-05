@@ -329,7 +329,12 @@ a green cutover says nothing about whether the feature built on top of it is rea
 - Rolling back would surrender the ordering improvement to fix a feature nobody can currently
   reach. Roll forward.
 
-**Handed to the Construction Agent.** This is a design gap in the resolution states and the
+**Resolution: intent `013-placement-edit-control`** (created 2026-09-05). It covers item and
+category moves, an all-groceries search, and a review state that gives the section a real
+population. Bolt 055 landed the data layer and corrected FR-6 and FR-13 in this intent's
+requirements. Checkpoint 4 here stays open until that intent's UI work ships and S6-S8 can run.
+
+**Originally handed to the Construction Agent.** This is a design gap in the resolution states and the
 assign entry points, not a deployment problem. Two candidate directions, for Construction and
 the product owner to choose between — Operations is not the right place to pick:
 

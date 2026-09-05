@@ -3,9 +3,9 @@
 ## Overview
 
 - **Total stories**: 123
-- **Completed**: 106
+- **Completed**: 109
 - **Generated**: 17
-- **Planned**: 11
+- **Planned**: 8
 - **Last updated**: 2026-09-04
 
 ---
@@ -224,13 +224,13 @@
 
 ---
 
-### 013-placement-edit-control — [ ] PLANNED (bolts 055, 056, 057, 058)
+### 013-placement-edit-control — ⏳ IN PROGRESS (bolt 055 ✅; 056, 057, 058 planned)
 
-**Unit: 001-placement-review-state** — bolt `055`
+**Unit: 001-placement-review-state** — bolt `055` ✅ COMPLETE
 
-- [ ] **001-reviewed-at-column-and-backfill** (placement-review-state): `items.reviewed_at` + bounded backfill - Must - [ ] PLANNED
-- [ ] **002-review-write-path** (placement-review-state): Write path preserving ADR-7's trigger-owned invariant - Must - [ ] PLANNED
-- [ ] **003-correct-010-record** (placement-review-state): Amend intent 010 FR-6; supersede its FR-13 - Should - [ ] PLANNED
+- [x] **001-reviewed-at-column-and-backfill** (placement-review-state): `items.reviewed_at` + idempotent backfill - Must - ✅ COMPLETE
+- [x] **002-review-write-path** (placement-review-state): `mark_item_reviewed` RPC; ADR-10 - Must - ✅ COMPLETE
+- [x] **003-correct-010-record** (placement-review-state): Amend intent 010 FR-6; supersede its FR-13 - Should - ✅ COMPLETE
 
 **Unit: 002-store-placement-control** — bolts `056`, `057`
 
@@ -250,7 +250,7 @@
 
 ## Stories by Status
 
-- **Planned**: 11
+- **Planned**: 8
 - **Generated**: 17
 - **In Progress**: 0
-- **Completed**: 106
+- **Completed**: 109

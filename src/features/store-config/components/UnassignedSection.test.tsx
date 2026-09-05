@@ -7,6 +7,13 @@ import { UnassignedSection } from '@/features/store-config/components/Unassigned
 import { theme } from '@/shared/theme';
 import type { ResolvedItem } from '@/features/store-config/types';
 
+/**
+ * Fixtures default to REVIEWED because that is what production looks like after bolt 055's
+ * backfill: every item that predates the feature is marked, and only newly registered ones
+ * are null. A fixture defaulting to unreviewed would describe a state these suites never meet.
+ */
+const REVIEWED = '2026-09-05T00:00:00Z';
+
 function item(name: string, category: string | null = 'Produce'): ResolvedItem {
   return {
     itemId: `id-${name}`,
@@ -18,6 +25,7 @@ function item(name: string, category: string | null = 'Produce'): ResolvedItem {
     locationName: null,
     locationPosition: null,
     viaCategory: null,
+    reviewedAt: REVIEWED,
   };
 }
 
