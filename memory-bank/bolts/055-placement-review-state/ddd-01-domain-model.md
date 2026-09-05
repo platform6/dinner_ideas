@@ -91,17 +91,22 @@ they are unit 002's to change, not this bolt's.
   move, place) can call it unconditionally. This is the only new write in the bolt.
 
 - **RegistryBackfill** — Operations: `backfillExisting()`. Dependencies: Item repository.
-  Notes: a one-time migration concern, not a runtime service. Its correctness condition is a
-  **bound**, not a filter: it must act on a set determined before any concurrent registration
-  can join it. A predicate-free update over the whole table is wrong, because the
-  ingredient-sync trigger can insert while it runs.
+  Notes: a one-time migration concern, not a runtime service.
+
+  > **⚠️ SUPERSEDED at Stage 2.** This paragraph originally argued the correctness condition was
+  > a **bound** — a set fixed before any concurrent registration could join it. That is wrong.
+  > Under READ COMMITTED the statement already sees only rows committed before its own snapshot,
+  > so a row committing after it stays null for free; a row committing before it is
+  > indistinguishable from a genuinely pre-existing one by any means the database has. The bound
+  > relocates the window rather than narrowing it. See `ddd-02-technical-design.md` → Data Model
+  > → Backfill.
 
 ### Repository Interfaces
 
 - **ItemRepository** — Entity: Item
   - `markReviewed(itemId) -> void` — idempotent; rejects cross-household callers
   - `findUnreviewed(householdId) -> Item[]` — drives unit 002's queue
-  - `existingIdsSnapshot() -> ItemId[]` — migration-time only, for the bounded backfill
+  - ~~`existingIdsSnapshot() -> ItemId[]`~~ — dropped at Stage 2; the bound bought nothing
   - **Not offered**: any operation that writes `name`. Its absence is the design.
 
 ### Ubiquitous Language
