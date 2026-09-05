@@ -5,7 +5,7 @@ commit: 0f16e95
 units: [001-location-item-model, 002-store-config-page, 003-shopping-list-ordering]
 created: '2026-09-05T11:40:00Z'
 updated: '2026-09-05T16:20:00Z'
-status: production-live-checkpoint-4-open
+status: production-live-superseded-by-013
 current_checkpoint: 4
 environments:
   dev:
@@ -22,7 +22,7 @@ environments:
     edge_function: 'n/a — no function change'
     smoke: 'PARTIAL — S6/S7/S8 BLOCKED by the post-deploy finding below (no item is ever `unassigned`); S1-S5, S9, S10 still runnable'
     advisors: "PENDING — needs the user's own Supabase session (this session's MCP is a different account)"
-open_issue: 'POST-DEPLOY FINDING 2026-09-05 — explicit item placement is unreachable in the shipped UI. Release is NOT rolled back; core ordering promise holds. Handed to Construction.'
+open_issue: 'RESOLVED 2026-09-05 by release v0.11.0 (intent 013). Explicit item placement was unreachable in the shipped UI; intent 013 units 001-002 fixed it and are live. S6/S7/S8 are no longer blocked.'
 ---
 
 # Deployment Plan: intent 010 — grocery store location model (release v0.10.0)
@@ -328,6 +328,11 @@ a green cutover says nothing about whether the feature built on top of it is rea
   lost — a new one is unreachable.
 - Rolling back would surrender the ordering improvement to fix a feature nobody can currently
   reach. Roll forward.
+
+**RESOLVED 2026-09-05 — release v0.11.0 is live on production.** Intent
+`013-placement-edit-control` units 001 and 002 shipped: any grocery or category can now be moved,
+everything is reachable by name, and new arrivals surface for review. S6/S7/S8 are unblocked.
+Unit 003 (a shopping-list entry point) was deferred as `Should`.
 
 **Resolution: intent `013-placement-edit-control`** (created 2026-09-05). It covers item and
 category moves, an all-groceries search, and a review state that gives the section a real
