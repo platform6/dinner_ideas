@@ -9,8 +9,12 @@ import type { ShoppingListGroup } from '@/features/shopping-list/types';
  * `lower(btrim(name))` — which is what lets the client and the database agree on identity
  * without a join. A drift in either direction silently stops matching, so
  * `reorder.test.ts` asserts it against a name with different casing and surrounding space.
+ *
+ * Exported because the move affordance (unit 3) has to answer the same question this sort does —
+ * "which `ResolvedItem` is this aggregated line?" — and a second copy of the rule is exactly the
+ * drift described above, just spread across two files instead of one.
  */
-function nameKey(name: string): string {
+export function nameKey(name: string): string {
   return name.trim().toLowerCase();
 }
 

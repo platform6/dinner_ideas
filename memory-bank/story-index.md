@@ -2,11 +2,11 @@
 
 ## Overview
 
-- **Total stories**: 123
-- **Completed**: 115
-- **Generated**: 17
-- **Deferred**: 2
-- **Last updated**: 2026-09-04
+- **Total stories**: 134
+- **Completed**: 134
+- **In Progress**: 0
+- **Deferred**: 0
+- **Last updated**: 2026-09-07
 
 ---
 
@@ -224,7 +224,7 @@
 
 ---
 
-### 013-placement-edit-control — ✅ SHIPPED v0.11.0 (bolts 055, 056, 057 ✅; 058 ⏸ deferred)
+### 013-placement-edit-control — ✅ COMPLETE (bolts 055, 056, 057 shipped v0.11.0; 058 ✅ built, awaiting release)
 
 **Unit: 001-placement-review-state** — bolt `055` ✅ COMPLETE
 
@@ -241,16 +241,22 @@
 - [x] **005-similarity-suggestion-on-review** (store-placement-control): Local similarity proposes a stop; no API - Should - ✅ COMPLETE
 - [x] **006-store-placement-tests** (store-placement-control): Realistic fixtures; no impossible states - Must - ✅ COMPLETE
 
-**Unit: 003-shopping-list-move** — bolt `058` ⏸ DEFERRED (Should; not blocking the release)
+**Unit: 003-shopping-list-move** — bolt `058` ✅ COMPLETE (deferred 2026-09-05, resumed and built 2026-09-07)
 
-- [ ] **001-move-from-shopping-list** (shopping-list-move): Move an item from the list; item placements only - Should - [ ] PLANNED
-- [ ] **002-shopping-list-move-tests** (shopping-list-move): Existing suite must pass unmodified - Must - [ ] PLANNED
+- [x] **001-move-from-shopping-list** (shopping-list-move): Move an item from the list; item placements only - Should - ✅ COMPLETE
+- [x] **002-shopping-list-move-tests** (shopping-list-move): Existing suite must pass unmodified - Must - ✅ COMPLETE
 
 ---
 
 ## Stories by Status
 
-- **Deferred**: 2
-- **Generated**: 17
+- **Completed**: 134
 - **In Progress**: 0
-- **Completed**: 115
+- **Deferred**: 0
+
+> Counts are derived from the `status:` field of every file under
+> `intents/*/units/*/stories/`. The two summaries in this file had drifted apart and from the
+> files themselves (a 123 total against a 134 sum); both were recomputed on 2026-09-07 when bolt
+> 058 closed the last open story. Some intent 010 entries below still read "GENERATED" rather than
+> "COMPLETE" — that is stale labelling in this index's prose only; those story files all carry
+> `status: complete`.

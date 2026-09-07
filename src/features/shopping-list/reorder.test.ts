@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { reorderGroupsByLocation } from '@/features/shopping-list/reorder';
+import { nameKey, reorderGroupsByLocation } from '@/features/shopping-list/reorder';
 import type { ShoppingListGroup } from '@/features/shopping-list/types';
 import type { ResolvedItem } from '@/features/store-config/types';
 
@@ -202,5 +202,24 @@ describe('cutover equivalence: the old model and the new produce the same order'
 
     expect(after).toEqual(before);
     expect(after.at(-1)).toBe('Pantry');
+  });
+});
+
+/**
+ * `nameKey` became exported in bolt 058 so the shopping list's move affordance resolves an
+ * aggregated line to its registry item by the SAME rule this sort uses. These pin the rule at its
+ * new public edge — a caller outside this file now depends on it, so drift breaks two features.
+ */
+describe('nameKey', () => {
+  it('matches items.name_key — lower(btrim(name))', () => {
+    expect(nameKey('  Sharp Cheddar  ')).toBe('sharp cheddar');
+    expect(nameKey('ONION')).toBe('onion');
+  });
+
+  it('agrees with the ResolvedItem.nameKey the sort matches on', () => {
+    // If these two ever disagree, the sort silently stops finding positions and the move
+    // affordance silently stops appearing — neither fails loudly, so it is asserted here.
+    const item = resolved('Kale', 1);
+    expect(nameKey('  kale ')).toBe(item.nameKey);
   });
 });

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Alert,
@@ -7,8 +7,10 @@ import {
   Button,
   Center,
   Checkbox,
+  CloseButton,
   Heading,
   HStack,
+  IconButton,
   Link as ChakraLink,
   Spinner,
   Stack,
@@ -19,10 +21,21 @@ import {
 
 import { useCurrentPlan } from '@/features/weekly-plan/hooks';
 import { buildShoppingList } from '@/features/shopping-list/aggregate';
-import { reorderGroupsByLocation } from '@/features/shopping-list/reorder';
+import { nameKey, reorderGroupsByLocation } from '@/features/shopping-list/reorder';
 import { formatShoppingListText } from '@/features/shopping-list/format';
 import { useShoppingListDinners } from '@/features/shopping-list/hooks';
-import { useActiveStore, useResolvedItems } from '@/features/store-config/hooks';
+import { AssignSheet } from '@/features/store-config/components/AssignSheet';
+import {
+  useActiveStore,
+  useDismissSuggestion,
+  useDismissals,
+  useLocations,
+  useMarkItemReviewed,
+  usePlaceItem,
+  useResolvedItems,
+  useUnplaceItem,
+} from '@/features/store-config/hooks';
+import type { ResolvedItem } from '@/features/store-config/types';
 import { categoryIcon, uiIcons } from '@/shared/components/icons';
 
 function itemKey(category: string, name: string, unit: string) {
@@ -39,7 +52,16 @@ export function ShoppingListPage() {
   // The shopping list reads the SAME resolution view the store-config page does (unit 1,
   // story 004) — one definition of where an ingredient sorts, two consumers.
   const store = useActiveStore();
-  const resolved = useResolvedItems(store.data?.id);
+  const storeId = store.data?.id;
+  const resolved = useResolvedItems(storeId);
+  // Unit 3: the move affordance reuses `/store`'s flow wholesale — same sheet, same suggestions,
+  // same writes. Only the entry point is new.
+  const locations = useLocations(storeId);
+  const dismissals = useDismissals(storeId);
+  const placeItem = usePlaceItem(store.data);
+  const unplaceItem = useUnplaceItem(storeId);
+  const markReviewed = useMarkItemReviewed(storeId);
+  const dismissSuggestion = useDismissSuggestion(store.data);
 
   const isLocked = plan?.locked_at != null;
 
@@ -50,12 +72,70 @@ export function ShoppingListPage() {
   const [isCopying, setIsCopying] = useState(false);
   const [copyOutcome, setCopyOutcome] = useState<{ clipboardOk: boolean } | null>(null);
   // Purely local "picked up in the store" state — never persisted, resets on remount.
+  //
+  // Keyed by category-name-unit, NOT by anything positional: a move changes where an item sits in
+  // the store, never its category, name or unit, so every key survives a re-sort untouched and
+  // this Set needs no migration. `preserves check state across a move` pins that.
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+
+  /** The line the assign sheet is open for — its registry id, plus its row key for scroll anchoring. */
+  const [assigning, setAssigning] = useState<{ itemId: string; rowKey: string } | null>(null);
+  const [moveError, setMoveError] = useState<string | null>(null);
+  const assignTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const rowNodes = useRef(new Map<string, HTMLElement>());
+  const scrollAnchor = useRef<{ rowKey: string; top: number } | null>(null);
 
   const groups = useMemo(() => {
     const built = buildShoppingList(dinners.data ?? []);
     return reorderGroupsByLocation(built, resolved.data ?? []);
   }, [dinners.data, resolved.data]);
+
+  const allItems = useMemo(() => resolved.data ?? [], [resolved.data]);
+  const stops = useMemo(() => locations.data ?? [], [locations.data]);
+
+  /**
+   * Aggregated line → registry item, by the SAME identity rule the sort uses (`items.name_key`).
+   * Imported rather than re-derived: two copies of that normalisation is the drift `reorder.ts`
+   * warns about, just spread across two files.
+   */
+  const itemByNameKey = useMemo(() => {
+    const byKey = new Map<string, ResolvedItem>();
+    for (const item of allItems) byKey.set(item.nameKey, item);
+    return byKey;
+  }, [allItems]);
+
+  const assigningItem = allItems.find((item) => item.itemId === assigning?.itemId) ?? null;
+
+  const dismissedItemIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const dismissal of dismissals.data ?? []) {
+      if (dismissal.item_id === assigning?.itemId) ids.add(dismissal.suggested_item_id);
+    }
+    return ids;
+  }, [dismissals.data, assigning?.itemId]);
+
+  /**
+   * Keeps the row the user just moved under their thumb.
+   *
+   * A re-sort shifts every group below the change, which mid-shop means a part-checked list slides
+   * out from under the reader — the one outcome the story calls worse than not offering the move at
+   * all. So: record the moved row's viewport offset at the moment of the write, and after the new
+   * order paints, scroll by whatever it drifted.
+   *
+   * Runs on `groups` identity rather than on the order alone so a move that does NOT reorder still
+   * clears the anchor; a stale one would misapply itself to somebody else's re-sort later.
+   */
+  useLayoutEffect(() => {
+    const anchor = scrollAnchor.current;
+    if (!anchor) return;
+    scrollAnchor.current = null;
+
+    const node = rowNodes.current.get(anchor.rowKey);
+    if (!node) return;
+
+    const drift = node.getBoundingClientRect().top - anchor.top;
+    if (drift !== 0) window.scrollBy(0, drift);
+  }, [groups]);
   const text = useMemo(() => formatShoppingListText(groups), [groups]);
   const itemCount = useMemo(() => groups.reduce((sum, group) => sum + group.items.length, 0), [groups]);
 
@@ -88,6 +168,9 @@ export function ShoppingListPage() {
     );
   }
 
+  const canMove = stops.length > 0;
+  const isSavingMove = placeItem.isPending || unplaceItem.isPending;
+
   function toggleItem(key: string) {
     setCheckedItems((prev) => {
       const next = new Set(prev);
@@ -95,6 +178,46 @@ export function ShoppingListPage() {
       else next.add(key);
       return next;
     });
+  }
+
+  function openMoveSheet(item: ResolvedItem, rowKey: string, trigger: HTMLButtonElement) {
+    assignTriggerRef.current = trigger;
+    setMoveError(null);
+    setAssigning({ itemId: item.itemId, rowKey });
+  }
+
+  /**
+   * Writes an ITEM placement and nothing else. From the shopping list a move means "this thing is
+   * here", never "everything like it is here" — so the category-placement hooks are not imported
+   * into this file at all. Unreachable beats a comment asking for restraint.
+   *
+   * Moving an item IS reviewing it: the user has just said where it belongs. Same rule as `/store`.
+   */
+  function handlePlace(locationId: string) {
+    if (!assigning) return;
+    const { itemId, rowKey } = assigning;
+
+    const node = rowNodes.current.get(rowKey);
+    scrollAnchor.current = node ? { rowKey, top: node.getBoundingClientRect().top } : null;
+
+    setMoveError(null);
+    placeItem.mutate(
+      { itemId, locationId },
+      {
+        onSuccess: () => {
+          markReviewed.mutate(itemId);
+          setAssigning(null);
+        },
+        onError: () => {
+          // Nothing was written, so nothing moves. The list is rendered from refetched server
+          // state and never optimistically, which is what makes "unchanged" true rather than
+          // merely intended.
+          scrollAnchor.current = null;
+          setAssigning(null);
+          setMoveError(`Couldn’t move ${assigningItem?.itemName ?? 'that item'}. Try again.`);
+        },
+      },
+    );
   }
 
   async function handleCopy() {
@@ -172,6 +295,18 @@ export function ShoppingListPage() {
         </Alert>
       )}
 
+      {/*
+        A failed move closes the sheet and says so here. The sheet is a bottom drawer with an
+        overlay, so a message left underneath it would be a message nobody reads.
+      */}
+      {moveError && (
+        <Alert status="error" borderRadius="field">
+          <AlertIcon />
+          <Text flex={1}>{moveError}</Text>
+          <CloseButton onClick={() => setMoveError(null)} />
+        </Alert>
+      )}
+
       {dinners.data && (
         <>
           <Box sx={{ columns: { base: 1, md: 2 }, columnGap: '28px' }}>
@@ -188,39 +323,72 @@ export function ShoppingListPage() {
                     {group.items.map((item) => {
                       const key = itemKey(group.category, item.name, item.unit);
                       const isChecked = checkedItems.has(key);
+                      // No stops means nowhere to move it to; no registry match means nothing to
+                      // place. Either way the row renders exactly as it did before this unit.
+                      const target = canMove ? itemByNameKey.get(nameKey(item.name)) : undefined;
                       return (
-                        <Checkbox
+                        <HStack
                           key={key}
-                          size="md"
-                          isChecked={isChecked}
-                          onChange={() => toggleItem(key)}
+                          ref={(node: HTMLDivElement | null) => {
+                            if (node) rowNodes.current.set(key, node);
+                            else rowNodes.current.delete(key);
+                          }}
+                          gap={0}
                           w="full"
-                          px={2}
-                          py={1}
                           borderRadius="control"
                           _hover={{ bg: 'paper.subtle' }}
-                          alignItems="center"
-                          sx={{ '.chakra-checkbox__label': { flex: 1, ml: 3 } }}
                         >
-                          <HStack as="span" gap={3}>
-                            <Text
-                              as="span"
-                              fontWeight={500}
-                              color={isChecked ? 'ink.200' : 'ink.500'}
-                              minW="56px"
-                              textDecoration={isChecked ? 'line-through' : 'none'}
-                            >
-                              {item.quantity} {item.unit}
-                            </Text>
-                            <Text
-                              as="span"
-                              color={isChecked ? 'ink.200' : 'ink.900'}
-                              textDecoration={isChecked ? 'line-through' : 'none'}
-                            >
-                              {item.name}
-                            </Text>
-                          </HStack>
-                        </Checkbox>
+                          {/*
+                            The checkbox and the move control are SIBLINGS, not nested. A button
+                            inside the checkbox's label would sit inside the <label> and toggle the
+                            check on its way through — the label keeps `flex={1}`, so checking off
+                            still owns the row bar one button's width.
+                          */}
+                          <Checkbox
+                            size="md"
+                            isChecked={isChecked}
+                            onChange={() => toggleItem(key)}
+                            flex={1}
+                            minW={0}
+                            px={2}
+                            py={1}
+                            alignItems="center"
+                            sx={{ '.chakra-checkbox__label': { flex: 1, ml: 3 } }}
+                          >
+                            <HStack as="span" gap={3}>
+                              <Text
+                                as="span"
+                                fontWeight={500}
+                                color={isChecked ? 'ink.200' : 'ink.500'}
+                                minW="56px"
+                                textDecoration={isChecked ? 'line-through' : 'none'}
+                              >
+                                {item.quantity} {item.unit}
+                              </Text>
+                              <Text
+                                as="span"
+                                color={isChecked ? 'ink.200' : 'ink.900'}
+                                textDecoration={isChecked ? 'line-through' : 'none'}
+                              >
+                                {item.name}
+                              </Text>
+                            </HStack>
+                          </Checkbox>
+
+                          {target && (
+                            <IconButton
+                              size="sm"
+                              variant="ghost"
+                              color="ink.300"
+                              minW="44px"
+                              minH="44px"
+                              flexShrink={0}
+                              aria-label={`Move ${item.name}`}
+                              icon={<uiIcons.storeConfig size={16} strokeWidth={1.8} />}
+                              onClick={(event) => openMoveSheet(target, key, event.currentTarget)}
+                            />
+                          )}
+                        </HStack>
                       );
                     })}
                   </Stack>
@@ -270,6 +438,30 @@ export function ShoppingListPage() {
           )}
         </>
       )}
+
+      {/*
+        Unit 002's sheet, unmodified — same component, same suggestion rules, same copy. A second
+        implementation of "where does this go" would be a second thing to keep in step.
+      */}
+      <AssignSheet
+        item={assigningItem}
+        locations={stops}
+        allItems={allItems}
+        dismissedItemIds={dismissedItemIds}
+        isOpen={assigning !== null}
+        isSaving={isSavingMove}
+        finalFocusRef={assignTriggerRef as React.RefObject<HTMLButtonElement>}
+        onClose={() => setAssigning(null)}
+        onPlace={handlePlace}
+        onUnplace={() => {
+          if (!assigning) return;
+          unplaceItem.mutate(assigning.itemId, { onSuccess: () => setAssigning(null) });
+        }}
+        onDismissSuggestion={(suggestedItemId) => {
+          if (!assigning) return;
+          dismissSuggestion.mutate({ itemId: assigning.itemId, suggestedItemId });
+        }}
+      />
     </Stack>
   );
 }
