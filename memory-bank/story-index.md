@@ -224,7 +224,7 @@
 
 ---
 
-### 013-placement-edit-control — ⏳ IN PROGRESS (bolt 055 ✅; 056, 057, 058 planned)
+### 013-placement-edit-control — ✅ SHIPPED v0.11.0 (bolts 055, 056, 057 ✅; 058 ⏸ deferred)
 
 **Unit: 001-placement-review-state** — bolt `055` ✅ COMPLETE
 

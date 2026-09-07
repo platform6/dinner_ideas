@@ -2,9 +2,9 @@
 unit: 003-shopping-list-move
 intent: 013-placement-edit-control
 phase: inception
-status: ready
+status: deferred
 created: '2026-09-05T17:30:00Z'
-updated: '2026-09-05T17:30:00Z'
+updated: '2026-09-07T00:00:00Z'
 ---
 
 # Unit Brief: Shopping List Move
