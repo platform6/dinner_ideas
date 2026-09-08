@@ -23,10 +23,11 @@ the inbox; the intents are the source of truth.
 
 - **Add an "I'm feeling lucky" UI element to the dinner catalog which auto picks the number of
   dinners set in the settings page, selecting randomly from the catalog.**
-  → **`016-feeling-lucky` — BUILT 2026-09-08** (bolt 066). A "Surprise me" control fills the
+  → **`016-feeling-lucky` — DELIVERED 2026-09-08 (v0.13.0)** (bolt 066). A "Surprise me" control fills the
   week's empty slots, weighted away from recently-eaten dinners via the existing
-  `dinner_last_chosen` view. Non-destructive, so no confirm. vitest 353/353. **Not yet deployed** —
-  frontend only, no migration.
+  `dinner_last_chosen` view. Non-destructive, so no confirm. vitest 353/353. Live on prod, smoke
+  passed: the draw picks dinners not eaten recently without simply returning the oldest three, and
+  pressing it twice gives different sets.
 
   Scoped during inception: it fills empty slots rather than replacing picks (non-destructive, and
   intent 009's Clear Picks already covers a full re-roll), excludes suppressed dinners, and weights
