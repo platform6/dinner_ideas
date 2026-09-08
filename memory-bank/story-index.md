@@ -3,11 +3,11 @@
 ## Overview
 
 - **Total stories**: 162
-- **Completed**: 147
-- **Planned**: 15
+- **Completed**: 152
+- **Planned**: 10
 - **In Progress**: 0
 - **Deferred**: 0
-- **Last updated**: 2026-09-07
+- **Last updated**: 2026-09-08
 
 ---
 
@@ -249,18 +249,18 @@
 
 ---
 
-### 014-recipe-entry — 📋 PLANNED (bolts 059–062; inception complete 2026-09-07)
+### 014-recipe-entry — ⏳ IN PROGRESS (bolt 059 ✅; 060–062 planned)
 
-**Unit: 001-recipe-manual-entry** — bolts `059`, `060` — not cuttable; it is the intent
+**Unit: 001-recipe-manual-entry** — bolt `059` ✅ COMPLETE, `060` planned — not cuttable; it is the intent
 
-- [ ] **001-recipe-entry-route** (recipe-manual-entry): Route + an entry point on the catalog - Must - [ ] PLANNED
-- [ ] **002-dinner-fields-form** (recipe-manual-entry): Name, cuisine, cook time, summary line - Must - [ ] PLANNED
-- [ ] **003-ingredient-lines-editor** (recipe-manual-entry): Quantity / unit / name / category - Must - [ ] PLANNED
-- [ ] **004-cooking-steps-editor** (recipe-manual-entry): Ordered steps, contiguous renumbering - Must - [ ] PLANNED
+- [x] **001-recipe-entry-route** (recipe-manual-entry): Route + an entry point on the catalog - Must - ✅ COMPLETE
+- [x] **002-dinner-fields-form** (recipe-manual-entry): Name, cuisine, cook time, summary line - Must - ✅ COMPLETE
+- [x] **003-ingredient-lines-editor** (recipe-manual-entry): Quantity / unit / name / category - Must - ✅ COMPLETE
+- [x] **004-cooking-steps-editor** (recipe-manual-entry): Ordered steps; numbering DERIVED from order, so no gap is possible - Must - ✅ COMPLETE
 - [ ] **005-atomic-save** (recipe-manual-entry): Three-table write; owns the ADR - Must - [ ] PLANNED
 - [ ] **006-duplicate-name-handling** (recipe-manual-entry): `dinners.name` is globally unique - Must - [ ] PLANNED
 - [ ] **007-manual-entry-tests** (recipe-manual-entry): Validation, save, duplicate name - Must - [ ] PLANNED
-- [ ] **008-tag-editor** (recipe-manual-entry): Attach / create over the shared vocabulary - Must - [ ] PLANNED
+- [x] **008-tag-editor** (recipe-manual-entry): Attach / create over the shared vocabulary - Must - ✅ COMPLETE
 
 **Unit: 002-recipe-import** — bolts `061`, `062` — cuttable; unit 001 ships a complete page
 

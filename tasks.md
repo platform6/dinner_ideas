@@ -56,5 +56,13 @@ Nothing currently. Add new ideas here as bullets; they become intents via
   at 500px: the moved row travelled 599px up the document and stayed on the same viewport pixel
   (0px drift); checked items preserved. At desktop width the check is not applicable — the
   two-column layout fits the whole list, so the page does not scroll.
-- **`014-recipe-entry`** — inception complete (10 FRs, 2 units, 14 stories, bolts 059–062), not
-  started. It is the catalog's first application write path.
+- **`014-recipe-entry`** — **IN PROGRESS.** Bolt 059 ✅ (2026-09-08): `/dinners/new`, the recipe
+  draft, and the four editors that fill it — dinner fields, ingredient lines, cooking steps, tags.
+  An "Add dinner" control on the catalog. 427/427 vitest. **Nothing is written yet** — bolt 060
+  owns the save, the household-scoped `dinners.name` migration and duplicate handling; bolts
+  061–062 are unit 002 (import). It is the catalog's first application write path.
+
+  Two things carried forward from 059: `dinners.instructions` is required by the schema but
+  rendered nowhere in the app (the form captures it, honestly labelled, and does not claim it
+  appears on the catalog card); and the ingredient row's phone layout is unverified, because jsdom
+  has no layout engine — worth an eyeball on a real device before 060 builds on it.

@@ -2,11 +2,11 @@
 id: 004-cooking-steps-editor
 unit: 001-recipe-manual-entry
 intent: 014-recipe-entry
-status: planned
+status: complete
 priority: must
 created: '2026-09-07T03:00:00Z'
 assigned_bolt: 059-recipe-draft-form
-implemented: false
+implemented: true
 ---
 
 # Story: 004-cooking-steps-editor
