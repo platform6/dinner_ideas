@@ -40,8 +40,11 @@ Nothing currently. Add new ideas here as bullets; they become intents via
   failure that cannot be retried. `Should`, cuttable; that specific failure is now unreachable
   since v0.11.2, so its value is the next unforeseen constraint failure.
 
-- **`004-account-model`** deployment status reads `production-live-fe-smoke-pending` — a frontend
-  smoke check was never closed out. The oldest loose thread in the memory bank.
+- **`004-account-model`** — the frontend smoke was **performed 2026-09-08** and passed on every
+  screen; add-tag verified in production and cleaned up; zero console output on load. One item
+  ("assign-category works again") could not be checked as written, because v0.11.0 replaced the
+  page it referred to. **Still open**: the dashboard advisor re-run, which needs the product
+  owner's Supabase account.
 - ~~Intent 013's unit 003 unreleased~~ — **shipped as v0.11.1**, PR #18, 2026-09-08.
 - ~~Bolt 058's scroll-preservation check~~ — **verified on production 2026-09-08.** Single-column
   at 500px: the moved row travelled 599px up the document and stayed on the same viewport pixel
