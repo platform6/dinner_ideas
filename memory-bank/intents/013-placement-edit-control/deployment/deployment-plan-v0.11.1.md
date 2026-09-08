@@ -5,15 +5,15 @@ commit: 6a0f5df
 units: [003-shopping-list-move]
 created: '2026-09-08T00:00:00Z'
 updated: '2026-09-08T00:00:00Z'
-status: build-approved
-current_checkpoint: 1
+status: staging-waived-ready-for-prod
+current_checkpoint: 2
 follows: v0.11.0-b1507bf
 environments:
   dev:
     status: verified
     target: 'local — vitest 317/317, tsc -b, eslint, vite build (Netlify cmd). pgTAP not run: no SQL change (see build record)'
   staging:
-    status: 'pending decision — Checkpoint 2'
+    status: 'n/a — product owner decision 2026-09-08. No data, no schema, no cutover; staging would run the same static bundle against the same live schema production will. The pre-production device check was ALSO waived — see Checkpoint 2.'
   production:
     status: 'not started'
     target: 'Netlify main (frontend only; no Supabase change)'
@@ -64,15 +64,23 @@ cannot fail on data.
 schema. A staging environment would exercise the same static bundle against the same live schema,
 which is what production will do.
 
-→ **Recommendation: n/a, and proceed to the manual check instead.** The verification this release
-actually needs is not a second environment — it is a pair of human eyes on a phone. See below.
+→ **Recommendation was: n/a, and proceed to the manual check instead.**
 
-Product owner's call at Checkpoint 2.
+**Decided 2026-09-08: staging n/a, and the manual device check waived too.** The product owner
+elected to ship without it: _"I'm just going to push to prod as it's fine if this breaks for a
+little bit."_
 
-## The verification that matters: scroll on a real device
+That is a legitimate call for this release — the blast radius of a scroll-anchoring bug is a list
+that jumps while you shop, not lost or corrupted data, and it is reversible with a Netlify revert.
+Recorded as a decision so the gap is visible, not implied.
 
-This is the one gap testing did not close, and it should be checked **before** production, not
-after.
+## The verification that was skipped: scroll on a real device
+
+**Status: NOT PERFORMED. Waived by the product owner 2026-09-08, knowingly.**
+
+This is the one gap testing did not close. The plan originally gated production on it; that gate
+was lifted rather than quietly dropped. It is now a **post-deploy check** — worth doing on the live
+site, since the steps are identical:
 
 | Step | What                                                                                                  |
 | ---- | ----------------------------------------------------------------------------------------------------- |
@@ -85,25 +93,28 @@ after.
 | 7    | Repeat in a **wide desktop window**, where the list is two CSS columns and reflow is less predictable |
 
 If step 5 or 7 fails, that is a Construction fix (bolt 058's `useLayoutEffect` anchor), not a
-deployment problem — and this release should hold rather than ship a re-sort that loses the
-reader's place mid-shop.
+deployment problem. Since this now runs **after** the deploy rather than before it, the response to
+a failure is a Netlify revert plus a new bolt, rather than simply holding the release.
 
 ## Progression
 
-| Checkpoint | Stage                  | State                                        |
-| ---------- | ---------------------- | -------------------------------------------- |
-| 1          | Build approval         | ✅ approved 2026-09-08                       |
-| 2          | Staging decision       | ⏳ recommendation: n/a + manual device check |
-| 3          | Production deploy      | ⏳ pending                                   |
-| 4          | Monitoring / close-out | ⏳ pending                                   |
+| Checkpoint | Stage                  | State                                  |
+| ---------- | ---------------------- | -------------------------------------- |
+| 1          | Build approval         | ✅ approved 2026-09-08                 |
+| 2          | Staging decision       | ✅ n/a; device check waived 2026-09-08 |
+| 3          | Production deploy      | ⏳ in progress                         |
+| 4          | Monitoring / close-out | ⏳ pending                             |
 
 ## Production steps, when approved
 
-1. Manual device check above — **gates the rest**
-2. Open a PR `dev → main`, or merge directly per the product owner's preference
-3. Netlify builds `main` and publishes; confirm the build is green
-4. Smoke: open the shopping list, move an item, confirm it re-sorts and stays reviewed on `/store`
-5. Record the release in this plan's frontmatter and close Checkpoint 4
+1. ~~Manual device check~~ — waived 2026-09-08; now a post-deploy check
+2. **Push `dev` to `origin/dev` first.** As of 2026-09-08 local `dev` is 5 commits ahead of the
+   remote; a PR opened without this would not contain bolt 058 at all
+3. Open a PR `dev → main`, or merge directly per the product owner's preference
+4. Netlify builds `main` and publishes; confirm the build is green
+5. Smoke: open the shopping list, move an item, confirm it re-sorts and stays reviewed on `/store`
+6. **Do the waived scroll check on the live site** — the one thing tests did not cover
+7. Record the release in this plan's frontmatter and close Checkpoint 4
 
 **No Supabase step at any point.** If a deploy instruction in this plan seems to call for one,
 it is wrong.
