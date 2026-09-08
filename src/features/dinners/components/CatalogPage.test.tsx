@@ -14,7 +14,7 @@ import {
 } from '@/features/dinners/api';
 import { addSelection, clearSelections, createPlan, fetchCurrentPlan } from '@/features/weekly-plan/api';
 import { currentPlanningWeekStart, formatWeekRange } from '@/features/weekly-plan/date';
-import { fetchWeekStartDay } from '@/features/settings/api';
+import { fetchDinnersPerWeek, fetchWeekStartDay } from '@/features/settings/api';
 import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/types';
 import type { CatalogDinner } from '@/features/dinners/types';
 
@@ -406,5 +406,100 @@ describe('CatalogPage (pick-3 flow)', () => {
       expect(await screen.findByText(/couldn’t clear your picks, try again/i)).toBeInTheDocument();
       expect(screen.queryByText(/dinners? cleared\./)).not.toBeInTheDocument();
     });
+  });
+});
+
+/**
+ * Intent 015 (bolt 065): the catalog follows households.dinners_per_week.
+ *
+ * This file was NOT in the unit brief's site list — a re-grep at the start of the bolt found five
+ * hard-coded 3s here, including the one that disables unpicked cards. Without that, a household set
+ * to 5 could never pick a fourth dinner from the UI, whatever the database allowed: a setting that
+ * saves, passes its own tests, and does nothing.
+ */
+describe('CatalogPage — dinners per week (intent 015)', () => {
+  const mockedFetchActive = vi.mocked(fetchActiveDinners);
+  const mockedFetchCurrentPlan = vi.mocked(fetchCurrentPlan);
+
+  const fiveDinners = [
+    dinner({ id: '1', name: 'Tacos' }),
+    dinner({ id: '2', name: 'Pasta' }),
+    dinner({ id: '3', name: 'Curry' }),
+    dinner({ id: '4', name: 'Chowder' }),
+    dinner({ id: '5', name: 'Risotto' }),
+  ];
+  const threeSelected = [
+    selectionWithDinner({ id: 'sel-1', dinner_id: '1' }),
+    selectionWithDinner({ id: 'sel-2', dinner_id: '2' }),
+    selectionWithDinner({ id: 'sel-3', dinner_id: '3' }),
+  ];
+
+  function renderPage() {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <CatalogPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(fetchWeekStartDay).mockResolvedValue(0);
+    vi.mocked(fetchLastChosenDates).mockResolvedValue(new Map());
+    vi.mocked(fetchAllTags).mockResolvedValue([]);
+    mockedFetchActive.mockResolvedValue(fiveDinners);
+  });
+
+  it('counts against the household number, not three', async () => {
+    vi.mocked(fetchDinnersPerWeek).mockResolvedValue(5);
+    mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: threeSelected }));
+    renderPage();
+
+    expect(await screen.findByText(/3 of 5/)).toBeInTheDocument();
+  });
+
+  /**
+   * THE ONE THAT MATTERS. At three picks with the household set to five, unpicked cards must stay
+   * selectable — otherwise the setting is inert no matter what the database permits.
+   */
+  it('leaves unpicked dinners selectable at 3 when the household plans 5', async () => {
+    vi.mocked(fetchDinnersPerWeek).mockResolvedValue(5);
+    mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: threeSelected }));
+    renderPage();
+
+    // Wait for "3 of 5" first. Without it this asserts `not.toBeDisabled` while the plan query is
+    // still in flight and nothing is selected yet — which passes whatever the code does. A
+    // sabotage run (selectionDisabled reverted to a literal 3) proved exactly that.
+    expect(await screen.findByText(/3 of 5/)).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Pick Chowder for this week' })).not.toBeDisabled();
+    expect(screen.queryByText(/remove one to swap in another/i)).not.toBeInTheDocument();
+  });
+
+  it('disables unpicked dinners once the household number is reached', async () => {
+    vi.mocked(fetchDinnersPerWeek).mockResolvedValue(3);
+    mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: threeSelected }));
+    renderPage();
+
+    // Wait for the at-capacity notice first: it only renders once the plan query has resolved and
+    // the week is full, so it is the signal that the state under test actually exists. Asserting
+    // `toBeDisabled` immediately after findByRole races the plan load.
+    expect(await screen.findByText(/picked 3 for this week/i)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole('checkbox', { name: 'Pick Chowder for this week' })).toBeDisabled(),
+    );
+  });
+
+  it('is unchanged at the default — the setting must be invisible to a household that never set it', async () => {
+    // fetchDinnersPerWeek left auto-mocked (resolves undefined), so the ?? 3 fallback applies.
+    mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: threeSelected }));
+    renderPage();
+
+    expect(await screen.findByText(/3 of 3/)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole('checkbox', { name: 'Pick Chowder for this week' })).toBeDisabled(),
+    );
   });
 });

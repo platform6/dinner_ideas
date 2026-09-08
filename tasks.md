@@ -6,7 +6,10 @@ Both roadmap items below are now **planned intents** with full inception artifac
 the inbox; the intents are the source of truth.
 
 - **Add a household-level setting for the number of dinners you pick (with a settings page).**
-  → **Now `015-dinners-per-week`.** Inception complete: 6 FRs, 2 units, 7 stories, bolts 063–065.
+  → **Now `015-dinners-per-week`. BUILT 2026-09-08** — all three bolts complete. The column and
+  both triggers (063), the owner-editable control on `/settings` (064), and the client sweep across
+  seven files (065). pgTAP 370/370, vitest 331/331. **NOT YET DEPLOYED** — the migration is
+  unapplied, so 063/064/065 ship as one release.
 
   The 2026-09-01 note called this "a small follow-up". Inception found otherwise: "3" is an
   invariant enforced by two Postgres triggers, one of which already carries a concurrency fix
@@ -36,12 +39,19 @@ Nothing currently. Add new ideas here as bullets; they become intents via
 
 ## Also outstanding (not roadmap items)
 
-- **`004-account-model`** deployment status reads `production-live-fe-smoke-pending` — a frontend
-  smoke check was never closed out. The oldest loose thread in the memory bank.
-- **Intent 013's unit 003** (`bolt 058-shopping-list-move`) is built and committed but has not
-  shipped in any release; v0.11.0 carried units 001–002 only.
-- **Bolt 058's scroll-preservation check** — verified in logic only, because jsdom has no layout
-  engine and the row offsets in its test are simulated. Needs a human on a real device; recorded
-  in that bolt's test report.
+- **`017-plan-rollover-remediation` unit 002** (`bolt 068`) — the catalog still advises retrying a
+  failure that cannot be retried. `Should`, cuttable; that specific failure is now unreachable
+  since v0.11.2, so its value is the next unforeseen constraint failure.
+
+- **`004-account-model`** — the frontend smoke was **performed 2026-09-08** and passed on every
+  screen; add-tag verified in production and cleaned up; zero console output on load. One item
+  ("assign-category works again") could not be checked as written, because v0.11.0 replaced the
+  page it referred to. **Still open**: the dashboard advisor re-run, which needs the product
+  owner's Supabase account.
+- ~~Intent 013's unit 003 unreleased~~ — **shipped as v0.11.1**, PR #18, 2026-09-08.
+- ~~Bolt 058's scroll-preservation check~~ — **verified on production 2026-09-08.** Single-column
+  at 500px: the moved row travelled 599px up the document and stayed on the same viewport pixel
+  (0px drift); checked items preserved. At desktop width the check is not applicable — the
+  two-column layout fits the whole list, so the page does not scroll.
 - **`014-recipe-entry`** — inception complete (10 FRs, 2 units, 14 stories, bolts 059–062), not
   started. It is the catalog's first application write path.

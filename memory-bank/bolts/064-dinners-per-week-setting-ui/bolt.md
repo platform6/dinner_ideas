@@ -3,14 +3,23 @@ id: 064-dinners-per-week-setting-ui
 unit: 001-dinners-per-week-model
 intent: 015-dinners-per-week
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 005-settings-control
 created: '2026-09-07T04:00:00Z'
-started: null
-completed: null
+started: '2026-09-08T19:40:00Z'
+completed: '2026-09-08T18:47:21Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-08T19:50:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-08T20:10:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-08T20:20:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 063-dinners-per-week-rule
 enables_bolts:

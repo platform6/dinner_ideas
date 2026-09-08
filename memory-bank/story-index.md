@@ -3,8 +3,8 @@
 ## Overview
 
 - **Total stories**: 162
-- **Completed**: 137
-- **Planned**: 25
+- **Completed**: 144
+- **Planned**: 18
 - **In Progress**: 0
 - **Deferred**: 0
 - **Last updated**: 2026-09-07
@@ -273,20 +273,20 @@
 
 ---
 
-### 015-dinners-per-week — 📋 PLANNED (bolts 063–065; inception complete 2026-09-07)
+### 015-dinners-per-week — ✅ BUILT (bolts 063–065 complete; not yet deployed)
 
-**Unit: 001-dinners-per-week-model** — bolts `063`, `064` — the rule lives in Postgres
+**Unit: 001-dinners-per-week-model** — bolts `063`, `064` ✅ COMPLETE — the rule lives in Postgres
 
-- [ ] **001-dinners-per-week-column** (dinners-per-week-model): `households.dinners_per_week`, 1–7, default 3 - Must - [ ] PLANNED
-- [ ] **002-selection-cap-honours-setting** (dinners-per-week-model): Trigger compares to N; keeps the `for update` race fix - Must - [ ] PLANNED
-- [ ] **003-lock-honours-setting** (dinners-per-week-model): Lock requires N; the misnamed function is renamed - Must - [ ] PLANNED
-- [ ] **004-rule-tests** (dinners-per-week-model): pgTAP at a non-default N, race included - Must - [ ] PLANNED
-- [ ] **005-settings-control** (dinners-per-week-model): Owner-editable control on `/settings` - Must - [ ] PLANNED
+- [x] **001-dinners-per-week-column** (dinners-per-week-model): `households.dinners_per_week`, 1–7, default 3 - Must - ✅ COMPLETE
+- [x] **002-selection-cap-honours-setting** (dinners-per-week-model): Trigger compares to N; keeps the `for update` race fix - Must - ✅ COMPLETE
+- [x] **003-lock-honours-setting** (dinners-per-week-model): Lock requires N; the misnamed function is renamed - Must - ✅ COMPLETE
+- [x] **004-rule-tests** (dinners-per-week-model): pgTAP at a non-default N (race is a source-level proxy) - Must - ✅ COMPLETE
+- [x] **005-settings-control** (dinners-per-week-model): Owner-editable control on `/settings`, 1–7 - Must - ✅ COMPLETE
 
-**Unit: 002-plan-flow-variable-n** — bolt `065` — the client sweep
+**Unit: 002-plan-flow-variable-n** — bolt `065` ✅ COMPLETE — the client sweep
 
-- [ ] **001-plan-flow-reads-setting** (plan-flow-variable-n): Six sites; no copy names a fixed count - Must - [ ] PLANNED
-- [ ] **002-plan-flow-tests** (plan-flow-variable-n): Tested at a non-default N, and unchanged at the default - Must - [ ] PLANNED
+- [x] **001-plan-flow-reads-setting** (plan-flow-variable-n): **Seven** sites (re-grep found CatalogPage); no copy names a fixed count - Must - ✅ COMPLETE
+- [x] **002-plan-flow-tests** (plan-flow-variable-n): Tested at a non-default N, and unchanged at the default - Must - ✅ COMPLETE
 
 ---
 
@@ -316,8 +316,8 @@
 
 ## Stories by Status
 
-- **Completed**: 137
-- **Planned**: 25
+- **Completed**: 144
+- **Planned**: 18
 - **In Progress**: 0
 - **Deferred**: 0
 

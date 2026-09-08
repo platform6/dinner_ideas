@@ -17,6 +17,7 @@ import { Link as RouterLink } from 'react-router-dom';
 
 import { useAllTags, useDinners, useLastChosenDates, useSetDinnerActive } from '@/features/dinners/hooks';
 import { DinnerCard } from '@/features/dinners/components/DinnerCard';
+import { useDinnersPerWeek } from '@/features/settings/hooks';
 import { CatalogFilters, type CatalogFilterState } from '@/features/dinners/components/CatalogFilters';
 import { applyFilters } from '@/features/dinners/filters';
 import { formatLastChosen } from '@/features/dinners/last-chosen';
@@ -43,6 +44,9 @@ export function CatalogPage() {
   const activeDinners = useDinners();
   const setDinnerActive = useSetDinnerActive();
   const currentPlan = useCurrentPlan();
+  // Intent 015: the week fills at the household's number, not at three. This drives the badge,
+  // the at-capacity notice, and whether unpicked cards are disabled.
+  const dinnersPerWeek = useDinnersPerWeek().data ?? 3;
   const toggleSelection = useToggleSelection();
   const clearSelections = useClearSelections();
   const restoreSelections = useRestoreSelections();
@@ -109,10 +113,12 @@ export function CatalogPage() {
           </Heading>
         </Box>
         <HStack gap={2}>
-          <Badge variant={selectedDinnerIds.size >= 3 ? 'countFull' : 'count'}>
+          <Badge variant={selectedDinnerIds.size >= dinnersPerWeek ? 'countFull' : 'count'}>
             <HStack gap={1}>
               <uiIcons.checkAll size={13} strokeWidth={2} />
-              <Text as="span">{selectedDinnerIds.size} of 3</Text>
+              <Text as="span">
+                {selectedDinnerIds.size} of {dinnersPerWeek}
+              </Text>
             </HStack>
           </Badge>
           <ClearPicksControl
@@ -195,11 +201,11 @@ export function CatalogPage() {
 
       {/* One list-level at-capacity notice instead of the same line repeated on every
           locked card. selectedDinnerIds is empty when the plan is missing or locked,
-          so size >= 3 already covers "don't show" for those cases. */}
-      {selectedDinnerIds.size >= 3 && (
+          so size >= dinnersPerWeek already covers "don't show" for those cases. */}
+      {selectedDinnerIds.size >= dinnersPerWeek && (
         <Alert status="info" borderRadius="field" mb={4}>
           <AlertIcon />
-          You’ve picked 3 for this week — remove one to swap in another.
+          You’ve picked {dinnersPerWeek} for this week — remove one to swap in another.
         </Alert>
       )}
 
@@ -236,7 +242,7 @@ export function CatalogPage() {
                 // would decide its add/remove/create-plan action from the same stale
                 // currentPlan snapshot, risking two plans getting created at once.
                 selectionDisabled:
-                  (selectedDinnerIds.size >= 3 && !selectedDinnerIds.has(dinner.id)) ||
+                  (selectedDinnerIds.size >= dinnersPerWeek && !selectedDinnerIds.has(dinner.id)) ||
                   (toggleSelection.isPending && toggleSelection.variables?.dinnerId !== dinner.id) ||
                   clearSelections.isPending,
                 isTogglingSelection:

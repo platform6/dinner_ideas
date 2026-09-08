@@ -2,11 +2,11 @@
 id: 005-settings-control
 unit: 001-dinners-per-week-model
 intent: 015-dinners-per-week
-status: planned
+status: complete
 priority: must
 created: '2026-09-07T04:00:00Z'
 assigned_bolt: 064-dinners-per-week-setting-ui
-implemented: false
+implemented: true
 ---
 
 # Story: 005-settings-control

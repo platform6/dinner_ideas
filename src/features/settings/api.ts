@@ -35,6 +35,35 @@ export async function updateWeekStartDay(householdId: string, weekStartDay: numb
   if (error) throw error;
 }
 
+/** Three. The `households.dinners_per_week` default, and the fallback when no row is readable. */
+const DEFAULT_DINNERS_PER_WEEK = 3;
+
+/**
+ * How many dinners this household plans per week (intent 015). Same RLS as `week_start_day` —
+ * "Household readable by its members" scopes this to the caller's own household row.
+ */
+export async function fetchDinnersPerWeek(): Promise<number> {
+  const { data, error } = await supabase.from('households').select('dinners_per_week').maybeSingle();
+  if (error) throw error;
+  return data?.dinners_per_week ?? DEFAULT_DINNERS_PER_WEEK;
+}
+
+/**
+ * Owner-only, enforced by the "Household updatable by an owner" RLS policy. A plain PostgREST
+ * update rather than an RPC, for the same reason `updateWeekStartDay` is one: `dinners_per_week`
+ * is not a protected column.
+ *
+ * The 1..7 bound is a database `check` (intent 015, bolt 063); the UI offers exactly that range,
+ * so an out-of-range value is unreachable rather than merely rejected.
+ */
+export async function updateDinnersPerWeek(householdId: string, dinnersPerWeek: number): Promise<void> {
+  const { error } = await supabase
+    .from('households')
+    .update({ dinners_per_week: dinnersPerWeek })
+    .eq('id', householdId);
+  if (error) throw error;
+}
+
 export interface AiConfig {
   /** null = use the server default model. */
   modelOverride: ClaudeModel | null;

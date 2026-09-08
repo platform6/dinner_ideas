@@ -24,6 +24,7 @@ import { buildShoppingList } from '@/features/shopping-list/aggregate';
 import { nameKey, reorderGroupsByLocation } from '@/features/shopping-list/reorder';
 import { formatShoppingListText } from '@/features/shopping-list/format';
 import { useShoppingListDinners } from '@/features/shopping-list/hooks';
+import { useDinnersPerWeek } from '@/features/settings/hooks';
 import { AssignSheet } from '@/features/store-config/components/AssignSheet';
 import {
   useActiveStore,
@@ -48,7 +49,9 @@ export function ShoppingListPage() {
   const selections = plan?.weekly_plan_selections ?? [];
   const dinnerIds = useMemo(() => (plan?.weekly_plan_selections ?? []).map((s) => s.dinner_id), [plan]);
 
-  const dinners = useShoppingListDinners(dinnerIds);
+  // Intent 015: the week is "full" at the household's number, not at three.
+  const dinnersPerWeek = useDinnersPerWeek().data ?? 3;
+  const dinners = useShoppingListDinners(dinnerIds, dinnersPerWeek);
   // The shopping list reads the SAME resolution view the store-config page does (unit 1,
   // story 004) — one definition of where an ingredient sorts, two consumers.
   const store = useActiveStore();
@@ -156,10 +159,10 @@ export function ShoppingListPage() {
     );
   }
 
-  if (selections.length < 3) {
+  if (selections.length < dinnersPerWeek) {
     return (
       <Text textStyle="faint">
-        Pick 3 dinners on{' '}
+        Pick {dinnersPerWeek} {dinnersPerWeek === 1 ? 'dinner' : 'dinners'} on{' '}
         <ChakraLink as={RouterLink} to="/">
           the catalog
         </ChakraLink>{' '}

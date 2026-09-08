@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { fetchWeekStartDay, updateWeekStartDay } from '@/features/settings/api';
+import {
+  fetchDinnersPerWeek,
+  fetchWeekStartDay,
+  updateDinnersPerWeek,
+  updateWeekStartDay,
+} from '@/features/settings/api';
 
 /** Query key for the household's planning-week-start weekday (intent 011). */
 export const weekStartDayKey = ['household', 'week-start-day'] as const;
@@ -24,6 +29,35 @@ export function useUpdateWeekStartDay(householdId: string | null) {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: weekStartDayKey });
+      void queryClient.invalidateQueries({ queryKey: ['weekly-plan'] });
+    },
+  });
+}
+
+/** Query key for how many dinners the household plans per week (intent 015). */
+export const dinnersPerWeekKey = ['household', 'dinners-per-week'] as const;
+
+/** Reads `households.dinners_per_week` (1..7, default 3). */
+export function useDinnersPerWeek() {
+  return useQuery({ queryKey: dinnersPerWeekKey, queryFn: fetchDinnersPerWeek });
+}
+
+/**
+ * Owner-only write of the plan size. Like `useUpdateWeekStartDay` it invalidates
+ * `['weekly-plan', …]` as well as its own key, but for a different reason: this number decides
+ * whether the current plan is FULL, which drives the lock control, the plan page's nudge, and the
+ * shopping-list and cooking-view gates. Without that invalidation the setting would save while
+ * four other screens carried on using the old number until something else happened to refetch.
+ */
+export function useUpdateDinnersPerWeek(householdId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (dinnersPerWeek: number) => {
+      if (!householdId) throw new Error('No household in context');
+      return updateDinnersPerWeek(householdId, dinnersPerWeek);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dinnersPerWeekKey });
       void queryClient.invalidateQueries({ queryKey: ['weekly-plan'] });
     },
   });

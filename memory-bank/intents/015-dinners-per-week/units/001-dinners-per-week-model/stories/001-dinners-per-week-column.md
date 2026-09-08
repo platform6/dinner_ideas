@@ -2,11 +2,11 @@
 id: 001-dinners-per-week-column
 unit: 001-dinners-per-week-model
 intent: 015-dinners-per-week
-status: planned
+status: complete
 priority: must
 created: '2026-09-07T04:00:00Z'
 assigned_bolt: 063-dinners-per-week-rule
-implemented: false
+implemented: true
 ---
 
 # Story: 001-dinners-per-week-column
@@ -20,7 +20,7 @@ implemented: false
 ## Acceptance Criteria
 
 - [ ] **Given** the migration, **When** applied, **Then** `households.dinners_per_week smallint
-    not null default 3 check (dinners_per_week between 1 and 7)` exists.
+  not null default 3 check (dinners_per_week between 1 and 7)` exists.
 - [ ] **Given** existing households, **When** the migration runs, **Then** every one takes the
       default 3 and no behaviour changes — this deploy is a no-op until someone changes a setting.
 - [ ] **Given** RLS, **When** reviewed, **Then** **no new policy is added**. `households` already

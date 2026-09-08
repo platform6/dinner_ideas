@@ -3,8 +3,8 @@ intent: 004-account-model
 build: v0.4.0-f819f32
 commit: f819f32
 created: '2026-08-29T20:33:00Z'
-updated: '2026-08-31T14:25:00Z'
-status: production-live-fe-smoke-pending
+updated: '2026-09-08T00:00:00Z'
+status: production-live-advisor-recheck-pending
 current_checkpoint: 4
 pr: 'https://github.com/platform6/dinner_ideas/pull/8 (merged -> main 9af3d99)'
 prod_commit: b1f86be
@@ -21,7 +21,7 @@ environments:
     {
       status: 'live — DB pushed 2026-08-31T14:18Z, FE on main via Netlify',
       db: 'all 5 migrations remote; founding household "Home" owner platform.six@gmail.com; row counts match rehearsal, 0 null household_id',
-      fe-smoke: pending,
+      fe-smoke: 'PASSED 2026-09-08 — every screen renders as a logged-in user; add-tag works; zero console output on load. See the addendum.',
       target: 'Supabase linked gpkqsedtlzxczmarxjia + Netlify main',
     }
 ---
@@ -65,9 +65,9 @@ app non-functional — nullable `household_id` + household-scoped RLS = nothing 
     - `supabase gen types typescript --linked` vs committed database.types.ts — no schema
       drift (only quote-style + a new __InternalSupabase metadata block from a newer CLI)
 [~] Monitor  — Checkpoint 4
-    [ ] FE smoke on live site as platform.six@gmail.com (catalog/plan/shopping/cooking/
-        store-config render; add-tag + assign-category work again; no household-context
-        console error)
+    [x] FE smoke on live site — DONE 2026-09-08, 8 days late. See the addendum at the end
+        of this file for what was checked and the one item that could not be checked
+        as written.
     [x] advisors run from Supabase dashboard (2026-08-31T14:51Z): 0 ERROR, 0 perf.
         12 WARN/security, all triaged:
           - function_search_path_mutable ×6 — pre-004 funcs (weekly-planning + reorder).
@@ -251,3 +251,53 @@ half-fails or the app breaks:
   "artifact" is the committed SQL migration set.
 - No semver / git tags in this repo; releases are `dev` -> `main` PR merges. `v0.4.0-f819f32`
   is a synthetic label for this deployment record only.
+
+---
+
+## Addendum — FE smoke performed 2026-09-08
+
+Checkpoint 4's remaining frontend smoke, left pending on 2026-08-31 and closed here. Run against
+`https://dinnerideas.netlify.app` in Chrome at 500x635 (phone layout), signed in as the founding
+household's owner. Production is now at v0.11.2, so this exercises the account model as it stands
+after four further releases rather than as it shipped.
+
+| Screen / behaviour                     | Result                                                                                                                                                                |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/` catalog                            | ✅ Filters (All / Quickest / Cuisine / Tags), dinner cards, pick state, Clear picks                                                                                   |
+| `/plan`                                | ✅ Current week with its selections                                                                                                                                   |
+| `/shopping-list`                       | ✅ 17 items, correctly grouped by category                                                                                                                            |
+| `/cooking`                             | ✅ "Black Bean & Sweet Potato Tacos — 30 min · 4 steps"; no empty state                                                                                               |
+| `/store-config`                        | ✅ Walking path with per-stop counts (Dairy 39, Pantry 35, Aisle 1 empty), All groceries, category section, needs-review, 18 move controls                            |
+| `/settings`                            | ✅ Anthropic key ("Key set ✓"), model selector, daily call limit, planning week                                                                                       |
+| **add-tag**                            | ✅ `smoke-test-004` created and linked to a dinner in production, verified by query, then removed                                                                     |
+| **No household-context console error** | ✅ Zero console output on load. Verified with a deliberate probe log first, to prove the console reader was actually capturing rather than silently reporting nothing |
+
+Every screen rendered household-scoped data. The failure mode this smoke existed to catch — a query
+missing its household context returning empty — did not occur anywhere.
+
+### The one item that could not be checked as written
+
+**"assign-category works again"** refers to the intent 001 store-config page, which **v0.11.0
+replaced**. Category assignment is now the category-move flow on the rebuilt `/store-config`, and
+that page renders correctly with its category section present.
+
+Item placement through that page's `AssignSheet` _was_ exercised on production the same day
+(bolt 058's verification: `cod fillet` placed and unplaced, with `category_placements` confirmed
+unchanged). The category-move flow specifically was not exercised.
+
+Recorded rather than ticked: a checklist item whose subject no longer exists cannot be honestly
+marked done. If category moves need explicit verification, that is a fresh check against the
+current UI, not this one.
+
+### Cleanup
+
+`smoke-test-004` was removed from both `dinner_tags` and `tags`. The second deletion was necessary
+because `tags` is a shared vocabulary and the schema deliberately keeps a tag row when its
+association is deleted — removing only the link would have left a test tag in the household's
+vocabulary permanently. Verified afterwards: 0 smoke tags, 0 smoke links, `tags` back to 5.
+
+### Still outstanding
+
+`[ ] re-run dashboard advisors` — a Supabase dashboard action on the product owner's account. This
+session's Supabase MCP connection is a different account, which is why the original record left it
+to them. Unchanged since 2026-08-31.

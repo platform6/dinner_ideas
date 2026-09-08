@@ -10,7 +10,7 @@ function renderControl(props: Partial<Parameters<typeof LockWeekControl>[0]> = {
   const onLock = props.onLock ?? vi.fn();
   render(
     <ChakraProvider theme={theme}>
-      <LockWeekControl selectionCount={3} onLock={onLock} {...props} />
+      <LockWeekControl selectionCount={3} dinnersPerWeek={3} onLock={onLock} {...props} />
     </ChakraProvider>,
   );
   return { onLock };
@@ -20,7 +20,7 @@ describe('LockWeekControl', () => {
   it('renders nothing when fewer than 3 dinners are selected', () => {
     render(
       <ChakraProvider theme={theme}>
-        <LockWeekControl selectionCount={2} onLock={vi.fn()} />
+        <LockWeekControl selectionCount={2} dinnersPerWeek={3} onLock={vi.fn()} />
       </ChakraProvider>,
     );
     expect(screen.queryByRole('button')).not.toBeInTheDocument();

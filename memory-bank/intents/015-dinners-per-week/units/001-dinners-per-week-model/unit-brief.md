@@ -2,7 +2,7 @@
 unit: 001-dinners-per-week-model
 intent: 015-dinners-per-week
 phase: inception
-status: ready
+status: complete
 created: '2026-09-07T04:00:00Z'
 updated: '2026-09-07T04:00:00Z'
 ---

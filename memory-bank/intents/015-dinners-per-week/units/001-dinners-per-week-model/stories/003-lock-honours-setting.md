@@ -2,11 +2,11 @@
 id: 003-lock-honours-setting
 unit: 001-dinners-per-week-model
 intent: 015-dinners-per-week
-status: planned
+status: complete
 priority: must
 created: '2026-09-07T04:00:00Z'
 assigned_bolt: 063-dinners-per-week-rule
-implemented: false
+implemented: true
 ---
 
 # Story: 003-lock-honours-setting

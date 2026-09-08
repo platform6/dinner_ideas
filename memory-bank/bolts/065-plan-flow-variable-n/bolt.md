@@ -3,15 +3,24 @@ id: 065-plan-flow-variable-n
 unit: 002-plan-flow-variable-n
 intent: 015-dinners-per-week
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-plan-flow-reads-setting
   - 002-plan-flow-tests
 created: '2026-09-07T04:00:00Z'
-started: null
-completed: null
+started: '2026-09-08T20:35:00Z'
+completed: '2026-09-08T18:59:23Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-08T20:45:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-08T21:00:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-08T21:10:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 064-dinners-per-week-setting-ui
 enables_bolts: []
