@@ -6,9 +6,10 @@ Both roadmap items below are now **planned intents** with full inception artifac
 the inbox; the intents are the source of truth.
 
 - **Add a household-level setting for the number of dinners you pick (with a settings page).**
-  → **Now `015-dinners-per-week`.** **Bolt 063 built 2026-09-08** — `households.dinners_per_week`
-  (1–7, default 3) with both triggers reading it; pgTAP 370/370. **Not yet deployed.** Bolts 064
-  (the /settings control) and 065 (the client sweep) remain.
+  → **Now `015-dinners-per-week`. BUILT 2026-09-08** — all three bolts complete. The column and
+  both triggers (063), the owner-editable control on `/settings` (064), and the client sweep across
+  seven files (065). pgTAP 370/370, vitest 331/331. **NOT YET DEPLOYED** — the migration is
+  unapplied, so 063/064/065 ship as one release.
 
   The 2026-09-01 note called this "a small follow-up". Inception found otherwise: "3" is an
   invariant enforced by two Postgres triggers, one of which already carries a concurrency fix

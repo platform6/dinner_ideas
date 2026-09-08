@@ -4,8 +4,13 @@ import { Button, HStack, Text } from '@chakra-ui/react';
 import { uiIcons } from '@/shared/components/icons';
 
 interface LockWeekControlProps {
-  /** Dinners currently selected on the plan. The control renders only at exactly 3. */
+  /** Dinners currently selected on the plan. The control renders only once the week is full. */
   selectionCount: number;
+  /**
+   * The household's `dinners_per_week` (intent 015; was a hard-coded 3). Passed in rather than
+   * read here so this stays a presentational component — the page already knows the number.
+   */
+  dinnersPerWeek: number;
   /** Fired when the user confirms the lock. The parent owns the mutation and its error surface. */
   onLock: () => void;
   /** True while the parent's lock mutation is in flight. */
@@ -18,7 +23,7 @@ interface LockWeekControlProps {
  * the error alert, and resetting this control to idle after a pick change (via a `key` change).
  * Mirrors the ClearPicksControl interaction shape (intent 009).
  */
-export function LockWeekControl({ selectionCount, onLock, isLocking }: LockWeekControlProps) {
+export function LockWeekControl({ selectionCount, dinnersPerWeek, onLock, isLocking }: LockWeekControlProps) {
   const [isConfirming, setIsConfirming] = useState(false);
   const keepEditingRef = useRef<HTMLButtonElement>(null);
 
@@ -26,7 +31,7 @@ export function LockWeekControl({ selectionCount, onLock, isLocking }: LockWeekC
     if (isConfirming) keepEditingRef.current?.focus();
   }, [isConfirming]);
 
-  if (selectionCount < 3) return null;
+  if (selectionCount < dinnersPerWeek) return null;
 
   if (!isConfirming) {
     return (

@@ -15,6 +15,7 @@ import {
 
 import { useCurrentPlan } from '@/features/weekly-plan/hooks';
 import { useDinnersWithSteps } from '@/features/cooking-view/hooks';
+import { useDinnersPerWeek } from '@/features/settings/hooks';
 import { cuisineIcon, metaIcons, stepIcon, uiIcons } from '@/shared/components/icons';
 
 export function CookingViewPage() {
@@ -23,7 +24,9 @@ export function CookingViewPage() {
   const selections = plan?.weekly_plan_selections ?? [];
   const dinnerIds = useMemo(() => (plan?.weekly_plan_selections ?? []).map((s) => s.dinner_id), [plan]);
 
-  const dinners = useDinnersWithSteps(dinnerIds);
+  // Intent 015: the week is "full" at the household's number, not at three.
+  const dinnersPerWeek = useDinnersPerWeek().data ?? 3;
+  const dinners = useDinnersWithSteps(dinnerIds, dinnersPerWeek);
   // Independent per-card expand state — several cards may be open at once.
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
@@ -53,10 +56,10 @@ export function CookingViewPage() {
     );
   }
 
-  if (selections.length < 3) {
+  if (selections.length < dinnersPerWeek) {
     return (
       <Text textStyle="faint">
-        Pick 3 dinners on{' '}
+        Pick {dinnersPerWeek} {dinnersPerWeek === 1 ? 'dinner' : 'dinners'} on{' '}
         <ChakraLink as={RouterLink} to="/">
           the catalog
         </ChakraLink>{' '}

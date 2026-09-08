@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ShoppingListPage } from '@/features/shopping-list/components/ShoppingListPage';
 import { fetchDinnersByIds } from '@/features/dinners/api';
 import { fetchCurrentPlan } from '@/features/weekly-plan/api';
-import { fetchWeekStartDay } from '@/features/settings/api';
+import { fetchDinnersPerWeek, fetchWeekStartDay } from '@/features/settings/api';
 import {
   fetchActiveStore,
   fetchDismissals,
@@ -512,5 +512,55 @@ describe('ShoppingListPage — moving an item (intent 013, unit 003)', () => {
     // Nothing moved, so nothing to correct — and, importantly, the anchor is cleared rather than
     // left to misapply itself to an unrelated re-sort later.
     expect(scrollBy).not.toHaveBeenCalled();
+  });
+});
+
+/** Intent 015 (bolt 065): the gate and its copy follow households.dinners_per_week. */
+describe('ShoppingListPage — dinners per week (intent 015)', () => {
+  function renderPage() {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return render(
+      <ChakraProvider theme={theme}>
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter>
+            <ShoppingListPage />
+          </MemoryRouter>
+        </QueryClientProvider>
+      </ChakraProvider>,
+    );
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(fetchWeekStartDay).mockResolvedValue(0);
+    vi.mocked(fetchDinnersByIds).mockResolvedValue(threeDinners);
+    vi.mocked(fetchActiveStore).mockResolvedValue(null);
+    vi.mocked(fetchResolvedItems).mockResolvedValue([]);
+  });
+
+  it('gates at the household number, not at three', async () => {
+    vi.mocked(fetchDinnersPerWeek).mockResolvedValue(5);
+    vi.mocked(fetchCurrentPlan).mockResolvedValue(plan({ weekly_plan_selections: threeSelections }));
+    renderPage();
+
+    // three picks is no longer "full" when the household plans five
+    expect(await screen.findByText(/pick 5 dinners/i)).toBeInTheDocument();
+  });
+
+  it('says "1 dinner", not "1 dinners", when the household plans one', async () => {
+    vi.mocked(fetchDinnersPerWeek).mockResolvedValue(1);
+    vi.mocked(fetchCurrentPlan).mockResolvedValue(plan({ weekly_plan_selections: [] }));
+    renderPage();
+
+    expect(await screen.findByText(/pick 1 dinner\b/i)).toBeInTheDocument();
+    expect(screen.queryByText(/pick 1 dinners/i)).not.toBeInTheDocument();
+  });
+
+  it('shows the list once the household number is met', async () => {
+    vi.mocked(fetchDinnersPerWeek).mockResolvedValue(3);
+    vi.mocked(fetchCurrentPlan).mockResolvedValue(plan({ weekly_plan_selections: threeSelections }));
+    renderPage();
+
+    expect(await screen.findByText('Produce')).toBeInTheDocument();
   });
 });

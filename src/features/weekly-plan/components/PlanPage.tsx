@@ -26,6 +26,7 @@ import {
 } from '@/features/weekly-plan/hooks';
 import { formatWeekRange } from '@/features/weekly-plan/date';
 import { LockWeekControl } from '@/features/weekly-plan/components/LockWeekControl';
+import { useDinnersPerWeek } from '@/features/settings/hooks';
 import { uiIcons } from '@/shared/components/icons';
 
 export function PlanPage() {
@@ -36,6 +37,8 @@ export function PlanPage() {
   // Only needed for the current week's pick/remove actions, which read the live plan snapshot
   // fresh each toggle (see `toggle-selection.ts`) rather than the possibly-stale `week.data`.
   const currentPlan = useCurrentPlan();
+  // Intent 015: "full" is the household's number, not three.
+  const dinnersPerWeek = useDinnersPerWeek().data ?? 3;
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   const isCurrentWeek = offset === 0;
@@ -54,7 +57,7 @@ export function PlanPage() {
   }
   // md+ lays the three picks side by side as vertical cards; phone keeps horizontal rows.
   const threeAcross = useBreakpointValue({ base: false, md: true }, { ssr: false }) ?? false;
-  const isFull = isCurrentWeek && !isLocked && selections.length === 3;
+  const isFull = isCurrentWeek && !isLocked && selections.length === dinnersPerWeek;
 
   if (week.isLoading) {
     return (
@@ -109,15 +112,18 @@ export function PlanPage() {
         </HStack>
       </HStack>
 
-      {isCurrentWeek && !isLocked && selections.length >= 1 && selections.length < 3 && (
-        <Text textStyle="faint">Pick 3 dinners to lock in your week.</Text>
+      {isCurrentWeek && !isLocked && selections.length >= 1 && selections.length < dinnersPerWeek && (
+        <Text textStyle="faint">
+          Pick {dinnersPerWeek} {dinnersPerWeek === 1 ? 'dinner' : 'dinners'} to lock in your week.
+        </Text>
       )}
 
-      {isCurrentWeek && !isLocked && selections.length === 3 && (
+      {isCurrentWeek && !isLocked && selections.length === dinnersPerWeek && (
         <Stack gap={1}>
           <LockWeekControl
             key={selections.map((s) => s.dinner_id).join(',')}
             selectionCount={selections.length}
+            dinnersPerWeek={dinnersPerWeek}
             isLocking={lockPlan.isPending}
             onLock={() => void handleLock()}
           />

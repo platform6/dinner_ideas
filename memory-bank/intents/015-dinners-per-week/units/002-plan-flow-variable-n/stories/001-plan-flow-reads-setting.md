@@ -2,11 +2,11 @@
 id: 001-plan-flow-reads-setting
 unit: 002-plan-flow-variable-n
 intent: 015-dinners-per-week
-status: planned
+status: complete
 priority: must
 created: '2026-09-07T04:00:00Z'
 assigned_bolt: 065-plan-flow-variable-n
-implemented: false
+implemented: true
 ---
 
 # Story: 001-plan-flow-reads-setting

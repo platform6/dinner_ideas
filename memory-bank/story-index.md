@@ -3,8 +3,8 @@
 ## Overview
 
 - **Total stories**: 162
-- **Completed**: 142
-- **Planned**: 20
+- **Completed**: 144
+- **Planned**: 18
 - **In Progress**: 0
 - **Deferred**: 0
 - **Last updated**: 2026-09-07
@@ -273,7 +273,7 @@
 
 ---
 
-### 015-dinners-per-week — ⏳ IN PROGRESS (bolts 063, 064 ✅; 065 planned — nothing reads the setting yet)
+### 015-dinners-per-week — ✅ BUILT (bolts 063–065 complete; not yet deployed)
 
 **Unit: 001-dinners-per-week-model** — bolts `063`, `064` ✅ COMPLETE — the rule lives in Postgres
 
@@ -283,10 +283,10 @@
 - [x] **004-rule-tests** (dinners-per-week-model): pgTAP at a non-default N (race is a source-level proxy) - Must - ✅ COMPLETE
 - [x] **005-settings-control** (dinners-per-week-model): Owner-editable control on `/settings`, 1–7 - Must - ✅ COMPLETE
 
-**Unit: 002-plan-flow-variable-n** — bolt `065` — the client sweep
+**Unit: 002-plan-flow-variable-n** — bolt `065` ✅ COMPLETE — the client sweep
 
-- [ ] **001-plan-flow-reads-setting** (plan-flow-variable-n): Six sites; no copy names a fixed count - Must - [ ] PLANNED
-- [ ] **002-plan-flow-tests** (plan-flow-variable-n): Tested at a non-default N, and unchanged at the default - Must - [ ] PLANNED
+- [x] **001-plan-flow-reads-setting** (plan-flow-variable-n): **Seven** sites (re-grep found CatalogPage); no copy names a fixed count - Must - ✅ COMPLETE
+- [x] **002-plan-flow-tests** (plan-flow-variable-n): Tested at a non-default N, and unchanged at the default - Must - ✅ COMPLETE
 
 ---
 
@@ -316,8 +316,8 @@
 
 ## Stories by Status
 
-- **Completed**: 142
-- **Planned**: 20
+- **Completed**: 144
+- **Planned**: 18
 - **In Progress**: 0
 - **Deferred**: 0
 
