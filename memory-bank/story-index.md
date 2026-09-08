@@ -3,8 +3,8 @@
 ## Overview
 
 - **Total stories**: 162
-- **Completed**: 137
-- **Planned**: 25
+- **Completed**: 141
+- **Planned**: 21
 - **In Progress**: 0
 - **Deferred**: 0
 - **Last updated**: 2026-09-07
@@ -273,14 +273,14 @@
 
 ---
 
-### 015-dinners-per-week — 📋 PLANNED (bolts 063–065; inception complete 2026-09-07)
+### 015-dinners-per-week — ⏳ IN PROGRESS (bolt 063 ✅; 064, 065 planned)
 
-**Unit: 001-dinners-per-week-model** — bolts `063`, `064` — the rule lives in Postgres
+**Unit: 001-dinners-per-week-model** — bolt `063` ✅ COMPLETE; `064` planned — the rule lives in Postgres
 
-- [ ] **001-dinners-per-week-column** (dinners-per-week-model): `households.dinners_per_week`, 1–7, default 3 - Must - [ ] PLANNED
-- [ ] **002-selection-cap-honours-setting** (dinners-per-week-model): Trigger compares to N; keeps the `for update` race fix - Must - [ ] PLANNED
-- [ ] **003-lock-honours-setting** (dinners-per-week-model): Lock requires N; the misnamed function is renamed - Must - [ ] PLANNED
-- [ ] **004-rule-tests** (dinners-per-week-model): pgTAP at a non-default N, race included - Must - [ ] PLANNED
+- [x] **001-dinners-per-week-column** (dinners-per-week-model): `households.dinners_per_week`, 1–7, default 3 - Must - ✅ COMPLETE
+- [x] **002-selection-cap-honours-setting** (dinners-per-week-model): Trigger compares to N; keeps the `for update` race fix - Must - ✅ COMPLETE
+- [x] **003-lock-honours-setting** (dinners-per-week-model): Lock requires N; the misnamed function is renamed - Must - ✅ COMPLETE
+- [x] **004-rule-tests** (dinners-per-week-model): pgTAP at a non-default N (race is a source-level proxy) - Must - ✅ COMPLETE
 - [ ] **005-settings-control** (dinners-per-week-model): Owner-editable control on `/settings` - Must - [ ] PLANNED
 
 **Unit: 002-plan-flow-variable-n** — bolt `065` — the client sweep
@@ -316,8 +316,8 @@
 
 ## Stories by Status
 
-- **Completed**: 137
-- **Planned**: 25
+- **Completed**: 141
+- **Planned**: 21
 - **In Progress**: 0
 - **Deferred**: 0
 

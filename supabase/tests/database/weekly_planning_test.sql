@@ -5,7 +5,7 @@
 -- during Stage 4/5 (see ddd-03-test-report.md).
 
 begin;
-select plan(13);
+select plan(22);
 
 -- account-model (intent 004): weekly_plans.household_id is NOT NULL (default
 -- current_user_household_id()). Run as the founding household's owner (migration 20260828234000)
@@ -23,7 +23,9 @@ select case when (select count(*) from public.dinners) >= 4
   else ok(false, 'expected at least 4 seed dinners to exist for this test to run meaningfully')
 end;
 
--- Max-3 enforcement
+-- Selection-cap enforcement, at the DEFAULT dinners_per_week (3).
+-- Intent 015 made the bound a household setting; these two still exercise the default, and the
+-- non-default cases below are what actually prove the setting is read.
 select throws_ok(
   $$
     with p as (insert into public.weekly_plans (start_date) values (current_date) returning id),
@@ -33,10 +35,10 @@ select throws_ok(
   $$,
   'P0001',
   null,
-  'a 4th distinct-dinner selection for the same plan is rejected by fn_weekly_plan_selections_guard (the max-3 trigger, SQLSTATE P0001) — the unique constraint on (weekly_plan_id, dinner_id) is a separate guard that only fires on a duplicate dinner_id, not exercised by this test'
+  'a 4th distinct-dinner selection is rejected at the default dinners_per_week of 3, by fn_weekly_plan_selections_guard (SQLSTATE P0001) — the unique constraint on (weekly_plan_id, dinner_id) is a separate guard that only fires on a duplicate dinner_id, not exercised by this test'
 );
 
--- Exactly-3-to-lock enforcement
+-- Exactly-N-to-lock enforcement, at the default (3).
 select throws_ok(
   $$
     with p as (insert into public.weekly_plans (start_date) values (current_date) returning id),
@@ -47,7 +49,7 @@ select throws_ok(
   $$,
   'P0001',
   null,
-  'locking a plan without exactly 3 selections is rejected'
+  'locking a plan without exactly dinners_per_week selections is rejected (default 3)'
 );
 
 -- Immutability after lock (built as a single DO block so we can create+lock+attempt-edit atomically)
@@ -146,6 +148,141 @@ select is(
   (select indexdef from pg_indexes where indexname = 'idx_weekly_plans_one_unlocked'),
   'CREATE UNIQUE INDEX idx_weekly_plans_one_unlocked ON public.weekly_plans USING btree (household_id, start_date) NULLS NOT DISTINCT WHERE (locked_at IS NULL)',
   'idx_weekly_plans_one_unlocked is scoped to (household_id, start_date), nulls not distinct'
+);
+
+
+-- ── intent 015: the cap and the lock follow households.dinners_per_week ──────
+-- Each case sets its own dinners_per_week and restores it, because pgTAP runs the whole file in
+-- ONE transaction: a setting left changed would silently alter every later assertion. (A
+-- throws_ok block restores itself, since the failing statement rolls back its own update.)
+
+-- (a) the column exists with the intended bounds and default
+select is(
+  (select column_default::text from information_schema.columns
+    where table_schema='public' and table_name='households' and column_name='dinners_per_week'),
+  '3'::text,
+  'households.dinners_per_week defaults to 3, so the intent 015 deploy is a no-op for existing households'
+);
+
+select throws_ok(
+  $$ update public.households set dinners_per_week = 8 $$,
+  '23514', null,
+  'dinners_per_week is rejected above 7 — a week has seven days'
+);
+
+select throws_ok(
+  $$ update public.households set dinners_per_week = 0 $$,
+  '23514', null,
+  'dinners_per_week is rejected below 1'
+);
+
+-- (b) THE FEATURE: at a NON-DEFAULT setting the cap moves with it.
+--     A suite that only ever exercises 3 has re-tested the old behaviour, not this change.
+select lives_ok(
+  $$
+    do $do$
+    declare v_plan uuid; v_d uuid[];
+    begin
+      update public.households set dinners_per_week = 5;
+      select array_agg(id) into v_d from (select id from public.dinners limit 5) x;
+      insert into public.weekly_plans (start_date) values (current_date + 400) returning id into v_plan;
+      for i in 1..5 loop
+        insert into public.weekly_plan_selections (weekly_plan_id, dinner_id) values (v_plan, v_d[i]);
+      end loop;
+      update public.households set dinners_per_week = 3;
+    end;
+    $do$;
+  $$,
+  'five selections are accepted when dinners_per_week is 5'
+);
+
+select throws_ok(
+  $$
+    do $do$
+    declare v_plan uuid; v_d uuid[];
+    begin
+      update public.households set dinners_per_week = 5;
+      select array_agg(id) into v_d from (select id from public.dinners limit 6) x;
+      insert into public.weekly_plans (start_date) values (current_date + 410) returning id into v_plan;
+      for i in 1..6 loop
+        insert into public.weekly_plan_selections (weekly_plan_id, dinner_id) values (v_plan, v_d[i]);
+      end loop;
+    end;
+    $do$;
+  $$,
+  'P0001', null,
+  'a 6th selection is rejected when dinners_per_week is 5 — the cap follows the setting'
+);
+
+-- (c) locking requires exactly N, not exactly 3
+select lives_ok(
+  $$
+    do $do$
+    declare v_plan uuid; v_d uuid[]; v_rows int;
+    begin
+      update public.households set dinners_per_week = 5;
+      select array_agg(id) into v_d from (select id from public.dinners limit 5) x;
+      insert into public.weekly_plans (start_date) values (current_date + 420) returning id into v_plan;
+      for i in 1..5 loop
+        insert into public.weekly_plan_selections (weekly_plan_id, dinner_id) values (v_plan, v_d[i]);
+      end loop;
+      perform public.lock_weekly_plan(v_plan);
+      -- the meal-history trigger was always N-agnostic; prove it at a non-default N
+      select count(*) into v_rows from public.meal_history where weekly_plan_id = v_plan;
+      if v_rows != 5 then
+        raise exception 'expected 5 meal_history rows at dinners_per_week=5, found %', v_rows;
+      end if;
+      update public.households set dinners_per_week = 3;
+    end;
+    $do$;
+  $$,
+  'a plan locks at exactly 5 when dinners_per_week is 5, and meal_history gets one row per selection'
+);
+
+-- (d) lowering the setting under an existing plan: nothing is deleted, but the plan cannot lock.
+--     This is the "valid but unlockable" state the domain model describes. The refusal must say
+--     how many picks to remove, not just report a count mismatch.
+select throws_ok(
+  $$
+    do $do$
+    declare v_plan uuid; v_d uuid[];
+    begin
+      update public.households set dinners_per_week = 5;
+      select array_agg(id) into v_d from (select id from public.dinners limit 5) x;
+      insert into public.weekly_plans (start_date) values (current_date + 430) returning id into v_plan;
+      for i in 1..5 loop
+        insert into public.weekly_plan_selections (weekly_plan_id, dinner_id) values (v_plan, v_d[i]);
+      end loop;
+      update public.households set dinners_per_week = 3;   -- lowered under the plan
+      if (select count(*) from public.weekly_plan_selections where weekly_plan_id = v_plan) != 5 then
+        raise exception 'lowering the setting deleted selections — it must not';
+      end if;
+      perform public.lock_weekly_plan(v_plan);
+    end;
+    $do$;
+  $$,
+  'P0001', null,
+  'lowering dinners_per_week keeps every pick but makes the plan unlockable until picks are removed'
+);
+
+-- NOTE: the ADR-12 search_path guard for these functions lives in advisor_hardening_test.sql,
+-- which already asserts proconfig on all six hardened functions. Not duplicated here.
+
+-- (f) the misnamed function is gone, not merely shadowed
+select is_empty(
+  $$ select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname = 'public' and p.proname = 'fn_weekly_plans_require_three_on_lock' $$,
+  'fn_weekly_plans_require_three_on_lock is dropped — its name asserted the constant intent 015 removed'
+);
+
+-- (g) the serialisation from 20260827002830 is still in the guard's body.
+--     True multi-session concurrency cannot be exercised from a single pgTAP transaction, so this
+--     is a SOURCE-LEVEL guard, not a race test — recorded as such rather than dressed up as one.
+select matches(
+  (select prosrc from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname='public' and p.proname='fn_weekly_plan_selections_guard'),
+  'for update',
+  'the selection guard still takes `for update` on the plan row (the 20260827002830 race fix)'
 );
 
 -- RLS

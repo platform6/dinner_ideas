@@ -16,11 +16,15 @@ select ok(
     (select proconfig from pg_proc where oid = 'public.fn_weekly_plans_block_edit_after_lock()'::regprocedure), ','
   ), '') like '%search_path=%',
   'fn_weekly_plans_block_edit_after_lock search_path is pinned');
+-- Renamed by intent 015 (bolt 063): the old name asserted the constant that intent removed.
+-- The pin must survive the rename — CREATE OR REPLACE discards a SET applied by ALTER, so the
+-- new definition restates `set search_path = ''` itself (ADR-12). This assertion is what makes
+-- that a caught mistake rather than a silent one.
 select ok(
   coalesce(array_to_string(
-    (select proconfig from pg_proc where oid = 'public.fn_weekly_plans_require_three_on_lock()'::regprocedure), ','
+    (select proconfig from pg_proc where oid = 'public.fn_weekly_plans_require_n_on_lock()'::regprocedure), ','
   ), '') like '%search_path=%',
-  'fn_weekly_plans_require_three_on_lock search_path is pinned');
+  'fn_weekly_plans_require_n_on_lock search_path is pinned (renamed from _require_three_ by intent 015)');
 select ok(
   coalesce(array_to_string(
     (select proconfig from pg_proc where oid = 'public.fn_weekly_plan_selections_guard()'::regprocedure), ','

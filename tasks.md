@@ -6,7 +6,9 @@ Both roadmap items below are now **planned intents** with full inception artifac
 the inbox; the intents are the source of truth.
 
 - **Add a household-level setting for the number of dinners you pick (with a settings page).**
-  → **Now `015-dinners-per-week`.** Inception complete: 6 FRs, 2 units, 7 stories, bolts 063–065.
+  → **Now `015-dinners-per-week`.** **Bolt 063 built 2026-09-08** — `households.dinners_per_week`
+  (1–7, default 3) with both triggers reading it; pgTAP 370/370. **Not yet deployed.** Bolts 064
+  (the /settings control) and 065 (the client sweep) remain.
 
   The 2026-09-01 note called this "a small follow-up". Inception found otherwise: "3" is an
   invariant enforced by two Postgres triggers, one of which already carries a concurrency fix

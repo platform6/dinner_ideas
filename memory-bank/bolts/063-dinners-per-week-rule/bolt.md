@@ -3,17 +3,32 @@ id: 063-dinners-per-week-rule
 unit: 001-dinners-per-week-model
 intent: 015-dinners-per-week
 type: ddd-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-dinners-per-week-column
   - 002-selection-cap-honours-setting
   - 003-lock-honours-setting
   - 004-rule-tests
 created: '2026-09-07T04:00:00Z'
-started: null
-completed: null
+started: '2026-09-08T18:00:00Z'
+completed: '2026-09-08T18:05:49Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: model
+    completed: '2026-09-08T18:10:00Z'
+    artifact: ddd-01-domain-model.md
+  - name: design
+    completed: '2026-09-08T18:25:00Z'
+    artifact: ddd-02-technical-design.md
+  - name: adr-analysis
+    completed: '2026-09-08T18:40:00Z'
+    artifact: adr-012-restate-set-search-path-when-replacing-a-function.md
+  - name: implement
+    completed: '2026-09-08T18:55:00Z'
+    artifact: supabase/migrations/20260908190000_dinners_per_week.sql
+  - name: test
+    completed: '2026-09-08T19:20:00Z'
+    artifact: ddd-03-test-report.md
 requires_bolts: []
 enables_bolts:
   - 064-dinners-per-week-setting-ui
