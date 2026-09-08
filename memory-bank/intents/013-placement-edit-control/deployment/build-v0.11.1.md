@@ -29,8 +29,9 @@ there is no order to get wrong.
 
 ## Source
 
-- Branch: `dev` @ `6a0f5df`, working tree clean apart from an unrelated `D3.zip` deletion the
-  product owner has not staged
+- Branch: `dev` @ `6a0f5df`, working tree clean. An unrelated `D3.zip` was removed by the product
+  owner in `5f7d909`, the same commit that added these records; it is not part of the release
+  payload
 - Unreleased vs `origin/main` (`6ba1b37`, PR #16): **5 commits**
 
 | Commit    | Contents                                          | Surface |
