@@ -9,7 +9,7 @@ last_updated: '2026-09-08T19:20:00Z'
 
 ## Status
 
-⏳ **In progress** — started 2026-09-08.
+✅ **Complete 2026-09-08.** Both bolts built the same day.
 
 | Bolt                            | Stories            | Status      |
 | ------------------------------- | ------------------ | ----------- |
@@ -30,6 +30,28 @@ context, and the freshly strengthened pgTAP suite around it, is at its most valu
 - **2026-09-08T18:40:00Z**: 063 stage-complete — adr-analysis → implement (ADR-12)
 - **2026-09-08T18:55:00Z**: 063 stage-complete — implement → test
 - **2026-09-08T19:20:00Z**: 063 completed — all 5 stages done
+- **2026-09-08T19:40:00Z**: 064-dinners-per-week-setting-ui started — Stage 1: plan
+- **2026-09-08T19:50:00Z**: 064 stage-complete — plan → implement
+- **2026-09-08T20:10:00Z**: 064 stage-complete — implement → test
+- **2026-09-08T20:20:00Z**: 064 completed — all 3 stages done
+
+## Unit outcome
+
+`households.dinners_per_week` exists, both triggers read it, and an owner can set it on
+`/settings`. **Nothing reads it yet** — every screen still hard-codes 3. That is unit 002
+(bolt 065), and until it lands the setting is writable but inert.
+
+**Not deployable on its own.** Bolt 063's migration is unapplied to production, so the control
+would fail against prod today. 063, 064 and 065 ship together.
+
+Two notes from 064 worth keeping:
+
+- `database.types.ts` was regenerated from **`--local`**, putting the committed types ahead of
+  production for the first time in this project. A routine `--linked` regen before the migration
+  ships would silently revert it and break the build.
+- The owner-only hint was being rendered twice for a member — my own plan said one copy sufficed
+  and I added a second anyway. Caught by a **pre-existing** assertion failing on multiple matches,
+  which is the argument for not adjusting old tests to accommodate new work.
 
 ## Outcome
 
