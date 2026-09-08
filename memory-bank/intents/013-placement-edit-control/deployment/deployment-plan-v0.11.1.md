@@ -5,8 +5,8 @@ commit: 6a0f5df
 units: [003-shopping-list-move]
 created: '2026-09-08T00:00:00Z'
 updated: '2026-09-08T00:00:00Z'
-status: staging-waived-ready-for-prod
-current_checkpoint: 2
+status: production-live
+current_checkpoint: 4
 follows: v0.11.0-b1507bf
 environments:
   dev:
@@ -15,8 +15,12 @@ environments:
   staging:
     status: 'n/a — product owner decision 2026-09-08. No data, no schema, no cutover; staging would run the same static bundle against the same live schema production will. The pre-production device check was ALSO waived — see Checkpoint 2.'
   production:
-    status: 'not started'
+    status: 'live 2026-09-08'
     target: 'Netlify main (frontend only; no Supabase change)'
+    fe: 'LIVE 2026-09-08 — PR #18 merged, origin/main c4ca6d9. Verified: ShoppingListPage.tsx on origin/main contains the move affordance; 0f2a837 is on origin/main.'
+    db: 'n/a — no migration in this release'
+    edge_function: 'n/a'
+    note: 'PR #17 merged first and shipped NOTHING — dev had not been pushed, so it carried only already-published docs commits. Corrected by pushing dev and merging again as PR #18.'
 ---
 
 # Deployment Plan: intent 013 — the deferred unit (release v0.11.1)
@@ -126,3 +130,30 @@ it is wrong.
   we are in Operations.
 - **Advisors** — v0.11.0 left these for the product owner to monitor, since this session's
   Supabase MCP is a different account. Unchanged: no SQL ships here, so no new advisor surface.
+
+---
+
+## Post-deploy record — 2026-09-08
+
+**Shipped as PR #18, `origin/main` @ `c4ca6d9`.**
+
+### The first merge shipped nothing
+
+PR #17 was merged and Netlify built green — but `dev` had never been pushed, so the PR carried only
+documentation commits that were already on the remote. Bolt 058 was not in it.
+`git branch -r --contains 0f2a837` returned nothing at that point.
+
+A green Netlify build says the bundle compiled, not that the feature is in it. The reliable check is
+the artifact: `git show origin/main:<file> | grep`, or the live site itself. Recorded because the
+tell was available and cheap — PR #17's diff would have shown only `.md` files.
+
+Fixed by `git push origin dev` and merging again.
+
+### The waived scroll check is still outstanding
+
+Deliberately waived at Checkpoint 2 and never performed. It is now a genuine post-deploy item
+against the live site: mid-shop, scroll into a part-checked list, move an item whose group jumps to
+the top, and confirm the list does not slide out from under you. Phone first, then a wide window
+for the two-column layout.
+
+It remains the one criterion in this release that testing did not cover.
