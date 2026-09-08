@@ -4,9 +4,9 @@ release: v0.11.0-b1507bf
 commit: b1507bf
 units: [001-placement-review-state, 002-store-placement-control]
 created: '2026-09-05T21:40:00Z'
-updated: '2026-09-05T21:40:00Z'
-status: planned
-current_checkpoint: 3
+updated: '2026-09-05T22:00:00Z'
+status: production-live
+current_checkpoint: 4
 environments:
   dev:
     status: verified
@@ -14,10 +14,10 @@ environments:
   staging:
     status: 'n/a — product owner decision 2026-09-05. Additive column + backfill + one RPC; no data cutover, no equivalence gate that can fail on production data. The prod-data rehearsal v0.10.0 ran existed for gates this release does not have.'
   production:
-    status: not-deployed
+    status: 'live 2026-09-05'
     target: 'Supabase linked gpkqsedtlzxczmarxjia + Netlify main'
-    db: 'PENDING — 20260905180000_item_review_state.sql'
-    fe: 'PENDING — dev -> main PR, Netlify main build'
+    db: 'APPLIED 2026-09-05 — 20260905180000_item_review_state.sql (supabase db push --linked)'
+    fe: 'LIVE 2026-09-05T20:42:44Z — PR #16 merged, main 6ba1b37; Netlify build green (user-confirmed)'
     edge_function: 'n/a — no function change'
     advisors: "product owner will monitor (this session's Supabase MCP is a different account)"
 ---
@@ -73,19 +73,33 @@ alphabetical rather than breaking, as it did in v0.10.0.
     [x] vitest 305/305 · tsc -b · eslint · pnpm run build
     [x] pgTAP 358/358, and again after a clean-slate 23-migration reset
 [x] Staging — n/a by decision (see above)
-[ ] Production — Checkpoint 3
-    [ ] 0.  git push origin dev                      (already in sync — verify)
-    [ ] 1.  npx --yes supabase migration list --linked   — confirm 20260905180000 is remote:""
-    [ ] 2.  DB:  npx --yes supabase db push --linked
-    [ ] 3.  post-push read: reviewed_at exists, backfill complete, RPC present
-    [ ] 4.  FE:  open + merge the dev -> main PR; watch Netlify to green
-    [ ] 5.  regen types from prod — expect a no-op after prettier, as in v0.10.0
-[ ] Verify production — Checkpoint 4
-    [ ] db push output confirms the migration applied
-    [ ] Netlify main build green
-    [ ] Smoke T1–T8 below
-    [ ] get_advisors — product owner monitoring
-    [ ] **Close intent 010's Checkpoint 4** — S6/S7/S8 become runnable; S1-S5, S9, S10 still owed
+[x] Production — Checkpoint 3  DEPLOYED 2026-09-05
+    [x] 0.  dev in sync with origin/dev
+    [x] 1.  migration list --linked — 20260905180000 confirmed remote:"" immediately prior
+    [x] 2.  DB:  supabase db push --linked — applied
+    [x] 3.  post-push read against prod:
+            - items.reviewed_at present, with its comment
+            - mark_item_reviewed present, SECURITY DEFINER, search_path pinned to ''
+            - execute granted to authenticated + service_role, NOT anon
+            - items still grants only SELECT/REFERENCES/TRIGGER/TRUNCATE/MAINTAIN —
+              no INSERT/UPDATE/DELETE, so ADR-10's invariant holds on production
+            - 121 items, 0 unreviewed: the queue starts empty, not full
+            - item_location_resolution projects reviewed_at
+            Production dumps deleted from the scratchpad after reading.
+    [x] 4.  FE:  PR #16 merged 2026-09-05T20:42:44Z -> main 6ba1b37; Netlify green
+    [x] 5.  regen types from prod (3ab7372) — the column and RPC already matched; the only
+            diff was a __InternalSupabase.PostgrestVersion '14.5' marker the generator emits
+            from prod but not from the local stack. A future regen from local drops it again;
+            that is a PostgREST version difference, not a mistake.
+[~] Verify production — Checkpoint 4  (2026-09-05)
+    [x] db push output confirms the migration applied
+    [x] Netlify main build green and live (user-confirmed)
+    [~] Smoke T1-T8 — product owner confirmed the release "looks good"; individual results
+        not itemised. T7 in particular has an invisible failure mode (see below) and is
+        worth a deliberate look rather than inference from the page working.
+    [ ] get_advisors — product owner monitoring, open
+    [x] **Intent 010's Checkpoint 4 unblocked** — its S6/S7/S8 were blocked on precisely the
+        placement gap this release fixes
 ```
 
 ## Smoke (Checkpoint 4) — on prod as a household owner
@@ -126,3 +140,20 @@ T2 is the release's reason to exist. T7 is the subtle one: accepting must not pi
 - With ADR-9's gate #4 now satisfied, the destructive retirement of `grocery_store_rows` /
   `category_row_assignments` is landable. **Not in this release** — it should be its own, and it
   should wait until this one has been verified, because those tables are still the rollback path.
+
+## Checkpoint 4 note — what is and is not confirmed
+
+The product owner confirmed the release looks good on production, 2026-09-05, after watching the
+Netlify build go green. Recorded as their confirmation rather than as an itemised smoke pass,
+because that is what it was.
+
+**T7 is the one worth a deliberate look.** Pressing "Looks right" must mark the item reviewed and
+write **no** placement — the row should leave the queue while its line still reads
+`follows <category>`. If it flips to `you chose this`, a placement was written, which silently
+pins the item and stops the category lever working for it. That failure is invisible unless
+looked for: the queue empties either way, and the page behaves normally.
+
+It is covered by a unit test (`expect(placeItem).not.toHaveBeenCalled()`), so the risk is low —
+but the test proves the wiring, not the deployed build.
+
+Still open: `get_advisors`, which the product owner is monitoring.
