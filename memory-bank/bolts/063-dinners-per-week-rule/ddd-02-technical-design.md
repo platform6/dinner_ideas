@@ -50,13 +50,17 @@ using `alter function … set search_path = ''`. That migration exists because i
 advisor run reported `function_search_path_mutable` six times; the finding was triaged, fixed and
 verified from a fresh schema dump.
 
-A naive `create or replace` here would **silently undo that security fix** for two of the six
-functions. Nothing would fail. Tests would pass. The regression would surface only on the next
-dashboard advisor run — which, per intent 004's record, is _still outstanding_.
+A naive `create or replace` here would undo that security fix for two of the six functions.
+
+> **⚠ Corrected at Stage 5.** This section originally continued: "Nothing would fail. Tests would
+> pass. The regression would surface only on the next dashboard advisor run." **That was wrong.**
+> `supabase/tests/database/advisor_hardening_test.sql` — which this design did not know about —
+> asserts `proconfig` on all six hardened functions, and catches exactly this. Proven by sabotage
+> in Stage 5. The mechanism is real; the silence was not. See ADR-12 and the test report.
 
 **Therefore**: every function this bolt replaces must carry `set search_path = ''` **in the CREATE
-itself**, not rely on the earlier ALTER. And a pgTAP assertion must pin `proconfig`, the same way
-bolt 067 pinned the index definition.
+itself**, not rely on the earlier ALTER. The pgTAP guard already exists and must be repointed when a
+hardened function is renamed, or it aborts on a `regprocedure` cast.
 
 This hazard is not specific to this bolt. Any future migration doing `create or replace` on any of
 the six functions listed in `20260831120000` has it. Worth an ADR.
