@@ -5,7 +5,7 @@ commit: 1223ed7
 units: [001-dinners-per-week-model, 002-plan-flow-variable-n]
 created: '2026-09-08T21:35:00Z'
 updated: '2026-09-08T21:35:00Z'
-status: production-live
+status: production-live-verified
 current_checkpoint: 4
 follows: v0.11.2-44542b4
 environments:
@@ -164,16 +164,21 @@ dashboard advisor run would have said so.
 migration landed. That window is closed: a `--linked` regen is safe again, and would additionally
 restore the `__InternalSupabase` block the local generator omits. Not required, and not done.
 
-### Outstanding — the end-to-end check
+### The end-to-end check — PERFORMED 2026-09-08, PASSED
 
-No automated test covers _"change the setting and watch four screens follow"_; it needs the
-deployed app. Steps, on the live site:
+The one thing no automated test could cover: changing the setting on the live site and watching the
+other screens follow. Run by the product owner against production after the deploy. **Passed.**
 
-1. `/settings` → Planning week → set **Dinners per week** to 5
-2. `/` catalog → the badge reads "N of 5"; a fourth dinner is selectable
-3. `/plan` → the nudge asks for 5; the lock control appears only at 5
-4. `/shopping-list` → gated until 5 are picked
-5. Set it back to 3
+That closes the gap this intent's own test reports flagged twice rather than glossed:
 
-If step 2 fails, the likely culprit is `selectionDisabled` on the catalog — the site the inception
-snapshot missed and the re-grep found.
+- Bolt 064 could prove the setting-to-screens path only at the query-invalidation level, not end to
+  end.
+- Bolt 065 gave `PlanPage` and `CookingViewPage` no component tests at a non-default N. The live
+  check exercised both.
+
+It also confirms `selectionDisabled` on the catalog — the site the inception snapshot missed and
+the Stage 1 re-grep found. Shipped at a literal 3, this check is exactly where it would have
+failed: the setting would save, every screen would agree it was 5, and a fourth dinner still could
+not be picked.
+
+**Nothing outstanding from this release.**

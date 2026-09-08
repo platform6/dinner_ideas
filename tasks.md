@@ -8,8 +8,8 @@ the inbox; the intents are the source of truth.
 - **Add a household-level setting for the number of dinners you pick (with a settings page).**
   → **`015-dinners-per-week` — SHIPPED as v0.12.0, 2026-09-08** (PR #20). The column and both
   triggers, the owner-editable control on `/settings`, and the client sweep across seven files.
-  pgTAP 370/370, vitest 331/331. **Outstanding**: the end-to-end check — set the number to 5 on
-  the live site and confirm the catalog, plan and shopping list all follow.
+  pgTAP 370/370, vitest 331/331. **End-to-end verified on production 2026-09-08** — the setting changed and the catalog,
+  plan and shopping list all followed. Nothing outstanding.
 
   The 2026-09-01 note called this "a small follow-up". Inception found otherwise: "3" is an
   invariant enforced by two Postgres triggers, one of which already carries a concurrency fix
