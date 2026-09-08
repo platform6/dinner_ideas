@@ -3,9 +3,17 @@
 --
 -- These assertions mirror the checks that were run directly against the live linked
 -- "dinner ideas" project during Stage 5 (see ddd-03-test-report.md) via `supabase db query`,
--- wrapped in its own rolled-back transaction (including a transactional drop/restore of
--- idx_weekly_plans_one_unlocked, so it never collided with the real household plan). Kept
--- here as a durable, re-runnable regression suite for local/CI use.
+-- wrapped in its own rolled-back transaction. Kept here as a durable, re-runnable regression
+-- suite for local/CI use.
+--
+-- HISTORICAL NOTE (intent 017, bolt 067): that live run also had to drop and restore
+-- idx_weekly_plans_one_unlocked inside its transaction, because the real household held a draft
+-- plan the household-wide index would have collided with. This file used to describe that as a
+-- difference between CI and "the live project". It was not a fixture quirk — it was the
+-- household-wide scope of that index announcing itself, a release cycle before it took production
+-- down on 2026-09-08. The index is now scoped per planning week (ADR-11) and the workaround is no
+-- longer needed. Recorded because the lesson generalises: when a test has to work around real
+-- data, ask why production violates what CI assumes before writing the workaround.
 
 begin;
 select plan(9);
@@ -23,8 +31,13 @@ select has_column('public', 'meal_history', 'week_start_date', 'meal_history has
 select col_is_unique('public', 'meal_history', array['weekly_plan_id', 'dinner_id'], 'meal_history has a unique (weekly_plan_id, dinner_id)');
 
 -- Trigger behavior: locking a plan (via the RPC) writes 3 meal_history rows.
--- Safe against a fresh local/CI database (no pre-existing unlocked plan to collide with
--- idx_weekly_plans_one_unlocked, unlike the live project — see ddd-03-test-report.md).
+-- Since intent 017 the uniqueness index is scoped to (household_id, start_date), so this no longer
+-- depends on there being no pre-existing draft — only on there being none for the same week.
+--
+-- Note the trigger's dedupe is `on conflict (weekly_plan_id, dinner_id)` — per PLAN, not per week.
+-- Two plans for one week therefore contribute two sets of history for that week; production shows
+-- exactly that for the week of 2026-08-30. Deliberately out of scope for bolt 067, which fixed the
+-- uniqueness scope only.
 select lives_ok(
   $$
   do $do$
