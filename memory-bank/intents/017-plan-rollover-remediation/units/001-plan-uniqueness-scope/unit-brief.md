@@ -2,7 +2,7 @@
 unit: 001-plan-uniqueness-scope
 intent: 017-plan-rollover-remediation
 phase: inception
-status: ready
+status: complete
 created: '2026-09-08T00:00:00Z'
 updated: '2026-09-08T00:00:00Z'
 ---

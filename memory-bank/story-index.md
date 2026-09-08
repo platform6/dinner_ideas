@@ -2,9 +2,9 @@
 
 ## Overview
 
-- **Total stories**: 158
-- **Completed**: 134
-- **Planned**: 24
+- **Total stories**: 162
+- **Completed**: 137
+- **Planned**: 25
 - **In Progress**: 0
 - **Deferred**: 0
 - **Last updated**: 2026-09-07
@@ -300,10 +300,24 @@
 
 ---
 
+### 017-plan-rollover-remediation — ⏳ IN PROGRESS (bolt 067 ✅; 068 planned)
+
+**Unit: 001-plan-uniqueness-scope** — bolt `067` ✅ COMPLETE — fixes a live production outage
+
+- [x] **001-scope-index-to-week** (plan-uniqueness-scope): `unique (household_id, start_date)` where unlocked - Must - ✅ COMPLETE
+- [x] **002-uniqueness-tests** (plan-uniqueness-scope): Rewrote the case that asserted the bug; +3 assertions - Must - ✅ COMPLETE
+- [x] **003-stale-draft-remediation** (plan-uniqueness-scope): Stale draft locked at the product owner's direction - Must - ✅ COMPLETE
+
+**Unit: 002-plan-create-failure-surface** — bolt `068` — cuttable; a message improvement
+
+- [ ] **001-honest-pick-failure-message** (plan-create-failure-surface): Branch on the error code, not "try again" - Should - [ ] PLANNED
+
+---
+
 ## Stories by Status
 
-- **Completed**: 134
-- **Planned**: 24
+- **Completed**: 137
+- **Planned**: 25
 - **In Progress**: 0
 - **Deferred**: 0
 

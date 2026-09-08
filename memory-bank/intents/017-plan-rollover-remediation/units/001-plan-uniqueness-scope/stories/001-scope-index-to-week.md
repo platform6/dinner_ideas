@@ -2,11 +2,11 @@
 id: 001-scope-index-to-week
 unit: 001-plan-uniqueness-scope
 intent: 017-plan-rollover-remediation
-status: planned
+status: complete
 priority: must
 created: '2026-09-08T00:00:00Z'
 assigned_bolt: 067-plan-uniqueness-scope
-implemented: false
+implemented: true
 ---
 
 # Story: 001-scope-index-to-week

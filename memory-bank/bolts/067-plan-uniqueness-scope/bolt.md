@@ -3,16 +3,31 @@ id: 067-plan-uniqueness-scope
 unit: 001-plan-uniqueness-scope
 intent: 017-plan-rollover-remediation
 type: ddd-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-scope-index-to-week
   - 002-uniqueness-tests
   - 003-stale-draft-remediation
 created: '2026-09-08T00:00:00Z'
-started: null
-completed: null
+started: '2026-09-08T16:00:00Z'
+completed: '2026-09-08T16:46:10Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: model
+    completed: '2026-09-08T16:10:00Z'
+    artifact: ddd-01-domain-model.md
+  - name: design
+    completed: '2026-09-08T16:25:00Z'
+    artifact: ddd-02-technical-design.md
+  - name: adr-analysis
+    completed: '2026-09-08T16:40:00Z'
+    artifact: adr-011-scope-a-stale-invariant-rather-than-remove-it.md
+  - name: implement
+    completed: '2026-09-08T16:55:00Z'
+    artifact: supabase/migrations/20260908170000_plan_uniqueness_per_week.sql
+  - name: test
+    completed: '2026-09-08T17:20:00Z'
+    artifact: ddd-03-test-report.md
 requires_bolts: []
 enables_bolts:
   - 068-plan-create-failure-surface

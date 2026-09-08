@@ -5,7 +5,7 @@
 -- during Stage 4/5 (see ddd-03-test-report.md).
 
 begin;
-select plan(10);
+select plan(13);
 
 -- account-model (intent 004): weekly_plans.household_id is NOT NULL (default
 -- current_user_household_id()). Run as the founding household's owner (migration 20260828234000)
@@ -76,22 +76,76 @@ select throws_ok(
   'deleting a selection from a locked plan is rejected'
 );
 
--- At most one unlocked (draft) plan may exist at a time (idx_weekly_plans_one_unlocked) —
--- added after a code-review finding: two concurrent "no current plan" reads could each
--- create their own plan, silently orphaning one pick. See 20260827002830_weekly_planning_concurrency_fixes.sql.
+-- ── idx_weekly_plans_one_unlocked ────────────────────────────────────────────
+-- At most one unlocked (draft) plan per household PER PLANNING WEEK.
+--
+-- Added by 20260827002830 after a code-review finding: two concurrent "no current plan" reads
+-- could each create their own plan, silently orphaning one pick. Rescoped to the planning week by
+-- intent 017 (bolt 067, ADR-11) after the household-wide version blocked creating a new week's
+-- plan while an earlier draft was still unlocked — a production outage on 2026-09-08.
+--
+-- NOTE for future readers: the pre-017 version of this block inserted TWO plans at `current_date`
+-- and asserted the second was rejected. That assertion holds under both the old and the new index,
+-- so it never actually exercised the household-wide scope — which is why the suite stayed green
+-- while production broke. The `different week is accepted` case below is the one that would have
+-- caught it, and is the reason this block is now four assertions rather than one.
+
+-- Each case below uses its OWN future week (+100, +200, +300). pgTAP runs the whole file in one
+-- transaction, so plans created by one assertion are still present in the next; sharing
+-- `current_date` made these order-dependent and (c) failed on (b)'s leftover draft. Distinct weeks
+-- keep each assertion independent of the others and of any seed data.
+
+-- (a) same household, SAME week → still rejected. This is bolt 027's protection, preserved.
 select throws_ok(
   $$
     do $do$
     begin
-      insert into public.weekly_plans (start_date) values (current_date);
-      -- this must fail: an unlocked plan already exists
-      insert into public.weekly_plans (start_date) values (current_date);
+      insert into public.weekly_plans (start_date) values (current_date + 100);
+      -- must fail: a draft for this same week already exists
+      insert into public.weekly_plans (start_date) values (current_date + 100);
     end;
     $do$;
   $$,
   '23505',
   null,
-  'a second unlocked weekly plan is rejected while one already exists'
+  'a second unlocked plan for the SAME week is rejected'
+);
+
+-- (b) same household, DIFFERENT week → accepted. THE REGRESSION TEST for the 2026-09-08 outage:
+--     a stale draft from an earlier week must not block planning the current one.
+select lives_ok(
+  $$
+    do $do$
+    begin
+      insert into public.weekly_plans (start_date) values (current_date + 200);
+      insert into public.weekly_plans (start_date) values (current_date + 207);
+    end;
+    $do$;
+  $$,
+  'a draft for the current week is accepted while an older week''s draft is still unlocked'
+);
+
+-- (c) a week that already has a LOCKED plan may be re-planned. Production already contained such
+--     a pair (week of 2026-08-30) and fetchPlanByStartDate resolves duplicates by newest, so the
+--     index must not forbid this.
+select lives_ok(
+  $$
+    do $do$
+    begin
+      insert into public.weekly_plans (start_date, locked_at)
+        values (current_date + 300, now());
+      insert into public.weekly_plans (start_date) values (current_date + 300);
+    end;
+    $do$;
+  $$,
+  'a draft is accepted for a week that already has a locked plan'
+);
+
+-- (d) the index definition itself, so a future edit cannot silently narrow or widen it.
+select is(
+  (select indexdef from pg_indexes where indexname = 'idx_weekly_plans_one_unlocked'),
+  'CREATE UNIQUE INDEX idx_weekly_plans_one_unlocked ON public.weekly_plans USING btree (household_id, start_date) NULLS NOT DISTINCT WHERE (locked_at IS NULL)',
+  'idx_weekly_plans_one_unlocked is scoped to (household_id, start_date), nulls not distinct'
 );
 
 -- RLS

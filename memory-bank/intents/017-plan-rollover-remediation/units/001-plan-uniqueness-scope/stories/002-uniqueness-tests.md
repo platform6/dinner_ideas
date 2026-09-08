@@ -2,11 +2,11 @@
 id: 002-uniqueness-tests
 unit: 001-plan-uniqueness-scope
 intent: 017-plan-rollover-remediation
-status: planned
+status: complete
 priority: must
 created: '2026-09-08T00:00:00Z'
 assigned_bolt: 067-plan-uniqueness-scope
-implemented: false
+implemented: true
 ---
 
 # Story: 002-uniqueness-tests
@@ -20,7 +20,7 @@ implemented: false
 ## Acceptance Criteria
 
 - [ ] **Given** `weekly_planning_test.sql`'s case `'a second unlocked weekly plan is rejected
-    while one already exists'`, **When** this story lands, **Then** it is **rewritten** to
+  while one already exists'`, **When** this story lands, **Then** it is **rewritten** to
       assert rejection for the **same week** — not deleted.
 - [ ] **Given** the new rule, **When** tested, **Then** a case asserts a plan for a **different**
       week is accepted while an unlocked draft exists.
