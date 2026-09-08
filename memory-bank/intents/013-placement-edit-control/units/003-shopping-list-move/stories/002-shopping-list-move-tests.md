@@ -2,11 +2,11 @@
 id: 002-shopping-list-move-tests
 unit: 003-shopping-list-move
 intent: 013-placement-edit-control
-status: planned
+status: complete
 priority: must
 created: '2026-09-05T17:30:00Z'
 assigned_bolt: 058-shopping-list-move
-implemented: false
+implemented: true
 ---
 
 # Story: 002-shopping-list-move-tests

@@ -2,11 +2,12 @@
 
 ## Overview
 
-- **Total stories**: 123
-- **Completed**: 115
-- **Generated**: 17
-- **Deferred**: 2
-- **Last updated**: 2026-09-04
+- **Total stories**: 158
+- **Completed**: 134
+- **Planned**: 24
+- **In Progress**: 0
+- **Deferred**: 0
+- **Last updated**: 2026-09-07
 
 ---
 
@@ -224,7 +225,7 @@
 
 ---
 
-### 013-placement-edit-control — ⏳ IN PROGRESS (bolt 055 ✅; 056, 057, 058 planned)
+### 013-placement-edit-control — ✅ COMPLETE (bolts 055, 056, 057 shipped v0.11.0; 058 ✅ built, awaiting release)
 
 **Unit: 001-placement-review-state** — bolt `055` ✅ COMPLETE
 
@@ -241,16 +242,74 @@
 - [x] **005-similarity-suggestion-on-review** (store-placement-control): Local similarity proposes a stop; no API - Should - ✅ COMPLETE
 - [x] **006-store-placement-tests** (store-placement-control): Realistic fixtures; no impossible states - Must - ✅ COMPLETE
 
-**Unit: 003-shopping-list-move** — bolt `058` ⏸ DEFERRED (Should; not blocking the release)
+**Unit: 003-shopping-list-move** — bolt `058` ✅ COMPLETE (deferred 2026-09-05, resumed and built 2026-09-07)
 
-- [ ] **001-move-from-shopping-list** (shopping-list-move): Move an item from the list; item placements only - Should - [ ] PLANNED
-- [ ] **002-shopping-list-move-tests** (shopping-list-move): Existing suite must pass unmodified - Must - [ ] PLANNED
+- [x] **001-move-from-shopping-list** (shopping-list-move): Move an item from the list; item placements only - Should - ✅ COMPLETE
+- [x] **002-shopping-list-move-tests** (shopping-list-move): Existing suite must pass unmodified - Must - ✅ COMPLETE
+
+---
+
+### 014-recipe-entry — 📋 PLANNED (bolts 059–062; inception complete 2026-09-07)
+
+**Unit: 001-recipe-manual-entry** — bolts `059`, `060` — not cuttable; it is the intent
+
+- [ ] **001-recipe-entry-route** (recipe-manual-entry): Route + an entry point on the catalog - Must - [ ] PLANNED
+- [ ] **002-dinner-fields-form** (recipe-manual-entry): Name, cuisine, cook time, summary line - Must - [ ] PLANNED
+- [ ] **003-ingredient-lines-editor** (recipe-manual-entry): Quantity / unit / name / category - Must - [ ] PLANNED
+- [ ] **004-cooking-steps-editor** (recipe-manual-entry): Ordered steps, contiguous renumbering - Must - [ ] PLANNED
+- [ ] **005-atomic-save** (recipe-manual-entry): Three-table write; owns the ADR - Must - [ ] PLANNED
+- [ ] **006-duplicate-name-handling** (recipe-manual-entry): `dinners.name` is globally unique - Must - [ ] PLANNED
+- [ ] **007-manual-entry-tests** (recipe-manual-entry): Validation, save, duplicate name - Must - [ ] PLANNED
+- [ ] **008-tag-editor** (recipe-manual-entry): Attach / create over the shared vocabulary - Must - [ ] PLANNED
+
+**Unit: 002-recipe-import** — bolts `061`, `062` — cuttable; unit 001 ships a complete page
+
+- [ ] **001-paste-box-and-sizing** (recipe-import): Paste box; trim from the end at the 50 KB cap - Must - [ ] PLANNED
+- [ ] **002-extraction-prompt** (recipe-import): Both layers; no step dropped; tags from the existing vocabulary - Must - [ ] PLANNED
+- [ ] **003-response-parsing** (recipe-import): Strict parse; step-less or malformed is a failure - Must - [ ] PLANNED
+- [ ] **004-proxy-error-messages** (recipe-import): Five reachable codes, five distinct messages - Must - [ ] PLANNED
+- [ ] **005-draft-review-handoff** (recipe-import): Draft lands in unit 001's form; no save here - Must - [ ] PLANNED
+- [ ] **006-import-tests** (recipe-import): Unit 001's page tests must pass unmodified - Must - [ ] PLANNED
+
+---
+
+### 015-dinners-per-week — 📋 PLANNED (bolts 063–065; inception complete 2026-09-07)
+
+**Unit: 001-dinners-per-week-model** — bolts `063`, `064` — the rule lives in Postgres
+
+- [ ] **001-dinners-per-week-column** (dinners-per-week-model): `households.dinners_per_week`, 1–7, default 3 - Must - [ ] PLANNED
+- [ ] **002-selection-cap-honours-setting** (dinners-per-week-model): Trigger compares to N; keeps the `for update` race fix - Must - [ ] PLANNED
+- [ ] **003-lock-honours-setting** (dinners-per-week-model): Lock requires N; the misnamed function is renamed - Must - [ ] PLANNED
+- [ ] **004-rule-tests** (dinners-per-week-model): pgTAP at a non-default N, race included - Must - [ ] PLANNED
+- [ ] **005-settings-control** (dinners-per-week-model): Owner-editable control on `/settings` - Must - [ ] PLANNED
+
+**Unit: 002-plan-flow-variable-n** — bolt `065` — the client sweep
+
+- [ ] **001-plan-flow-reads-setting** (plan-flow-variable-n): Six sites; no copy names a fixed count - Must - [ ] PLANNED
+- [ ] **002-plan-flow-tests** (plan-flow-variable-n): Tested at a non-default N, and unchanged at the default - Must - [ ] PLANNED
+
+---
+
+### 016-feeling-lucky — 📋 PLANNED (bolt 066; blocked on 015; inception complete 2026-09-07)
+
+**Unit: 001-lucky-pick** — bolt `066`
+
+- [ ] **001-weighted-draw** (lucky-pick): Pure, seedable, biased away from recently-eaten - Must - [ ] PLANNED
+- [ ] **002-lucky-control** (lucky-pick): Fills empty slots only; disabled states say why - Must - [ ] PLANNED
+- [ ] **003-lucky-tests** (lucky-pick): Bias measured across many seeded draws - Must - [ ] PLANNED
 
 ---
 
 ## Stories by Status
 
-- **Deferred**: 2
-- **Generated**: 17
+- **Completed**: 134
+- **Planned**: 24
 - **In Progress**: 0
-- **Completed**: 115
+- **Deferred**: 0
+
+> Counts are derived from the `status:` field of every file under
+> `intents/*/units/*/stories/`. The two summaries in this file had drifted apart and from the
+> files themselves (a 123 total against a 134 sum); both were recomputed on 2026-09-07 when bolt
+> 058 closed the last open story. Some intent 010 entries below still read "GENERATED" rather than
+> "COMPLETE" — that is stale labelling in this index's prose only; those story files all carry
+> `status: complete`.

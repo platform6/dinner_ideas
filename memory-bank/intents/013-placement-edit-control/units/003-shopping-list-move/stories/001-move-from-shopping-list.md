@@ -2,11 +2,11 @@
 id: 001-move-from-shopping-list
 unit: 003-shopping-list-move
 intent: 013-placement-edit-control
-status: planned
+status: complete
 priority: should
 created: '2026-09-05T17:30:00Z'
 assigned_bolt: 058-shopping-list-move
-implemented: false
+implemented: true
 ---
 
 # Story: 001-move-from-shopping-list

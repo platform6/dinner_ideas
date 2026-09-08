@@ -142,3 +142,18 @@
 | memory-bank\intents\008-claude-proxy-review-remediation\requirements.md                                 | in-progress | units-defined   | Intent has 2 units (0/2 complete) |
 
 ---
+
+## 2026-09-07T00:00:00Z - Status Sync
+
+**Triggered by**: analyze-context integrity check (master agent)
+
+| Artifact                                                                                       | Old Status                                      | New Status                                               | Reason                                              |
+| ---------------------------------------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------- |
+| memory-bank/intents/013-placement-edit-control/units/001-placement-review-state/unit-brief.md  | ready                                           | complete                                                 | All bolts complete (055); 3/3 stories done          |
+| memory-bank/intents/013-placement-edit-control/units/002-store-placement-control/unit-brief.md | ready                                           | complete                                                 | All bolts complete (056, 057); 6/6 stories done     |
+| memory-bank/intents/013-placement-edit-control/units/003-shopping-list-move/unit-brief.md      | ready                                           | deferred                                                 | Bolt 058 deferred, unstarted; excluded from v0.11.0 |
+| memory-bank/story-index.md (013 header)                                                        | "IN PROGRESS (bolt 055; 056, 057, 058 planned)" | "SHIPPED v0.11.0 (055, 056, 057 complete; 058 deferred)" | Header stale after bolts 056-057 and release        |
+
+**Note**: intent 013 `requirements.md` left at `status: complete` — matches project convention where intent status tracks inception completion (all 13 intents read `complete`).
+
+---

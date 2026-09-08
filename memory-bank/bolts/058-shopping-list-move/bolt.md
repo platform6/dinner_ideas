@@ -3,15 +3,24 @@ id: 058-shopping-list-move
 unit: 003-shopping-list-move
 intent: 013-placement-edit-control
 type: simple-construction-bolt
-status: deferred
+status: complete
 stories:
   - 001-move-from-shopping-list
   - 002-shopping-list-move-tests
 created: '2026-09-05T17:40:00Z'
-started: null
-completed: null
+started: '2026-09-07T00:05:00Z'
+completed: '2026-09-07T19:14:12Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-07T00:20:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-07T00:45:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-07T01:15:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 055-placement-review-state
   - 057-store-placement-control
