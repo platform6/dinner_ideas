@@ -156,3 +156,62 @@ export function useLockPlan() {
     },
   });
 }
+
+export interface LuckyPickArgs {
+  currentPlan: CurrentPlan | null;
+  /** Dinner ids to add, already drawn and already filtered for eligibility. */
+  dinnerIds: string[];
+}
+
+export interface LuckyPickResult {
+  /** How many landed. Less than `dinnerIds.length` only if an insert failed partway. */
+  added: number;
+}
+
+/**
+ * Adds several dinners to the week in one action (intent 016).
+ *
+ * Deliberately NOT `useToggleSelection` called in a loop. `CatalogPage` carries the comment
+ * explaining why: two picks in flight decide their create-plan action from the same stale
+ * `currentPlan`, and two plans get created. Intent 017's outage was a different symptom in that
+ * same area, so this resolves the plan ONCE and reuses the id for every insert.
+ *
+ * Inserts run sequentially rather than in parallel. Intent 015's cap trigger serialises on the plan
+ * row anyway, so concurrent inserts would only race each other for the last slot and surface an
+ * error for no benefit.
+ *
+ * A partial failure keeps what landed: if the third of four inserts fails, the first two stand and
+ * the caller is told how many succeeded. Rolling them back would be worse — the user asked for
+ * dinners, and some dinners is closer to that than none.
+ */
+export function useLuckyPick() {
+  const queryClient = useQueryClient();
+  const weekStart = useWeekStartDay();
+
+  return useMutation<LuckyPickResult, Error, LuckyPickArgs>({
+    mutationFn: async ({ currentPlan, dinnerIds }) => {
+      const usable = currentPlan !== null && currentPlan.locked_at === null;
+      const planId = usable
+        ? currentPlan.id
+        : (await createPlan(currentPlanningWeekStart(weekStart.data ?? 0))).id;
+
+      let added = 0;
+      try {
+        for (const dinnerId of dinnerIds) {
+          await addSelection(planId, dinnerId);
+          added += 1;
+        }
+      } catch (error) {
+        if (added === 0) throw error;
+        // Some landed. Report success-with-a-shortfall rather than failing the whole action and
+        // leaving the user unsure what happened to the picks that did save.
+        return { added };
+      }
+
+      return { added };
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: currentPlanKey });
+    },
+  });
+}

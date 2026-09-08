@@ -3,8 +3,8 @@
 ## Overview
 
 - **Total stories**: 162
-- **Completed**: 144
-- **Planned**: 18
+- **Completed**: 147
+- **Planned**: 15
 - **In Progress**: 0
 - **Deferred**: 0
 - **Last updated**: 2026-09-07
@@ -290,13 +290,13 @@
 
 ---
 
-### 016-feeling-lucky — 📋 PLANNED (bolt 066; blocked on 015; inception complete 2026-09-07)
+### 016-feeling-lucky — ✅ BUILT (bolt 066 complete; not yet deployed)
 
-**Unit: 001-lucky-pick** — bolt `066`
+**Unit: 001-lucky-pick** — bolt `066` ✅ COMPLETE
 
-- [ ] **001-weighted-draw** (lucky-pick): Pure, seedable, biased away from recently-eaten - Must - [ ] PLANNED
-- [ ] **002-lucky-control** (lucky-pick): Fills empty slots only; disabled states say why - Must - [ ] PLANNED
-- [ ] **003-lucky-tests** (lucky-pick): Bias measured across many seeded draws - Must - [ ] PLANNED
+- [x] **001-weighted-draw** (lucky-pick): Pure, seedable, biased away from recently-eaten - Must - ✅ COMPLETE
+- [x] **002-lucky-control** (lucky-pick): Fills empty slots only; disabled states say why - Must - ✅ COMPLETE
+- [x] **003-lucky-tests** (lucky-pick): Bias measured across 2000 seeded draws - Must - ✅ COMPLETE
 
 ---
 
@@ -316,8 +316,8 @@
 
 ## Stories by Status
 
-- **Completed**: 144
-- **Planned**: 18
+- **Completed**: 147
+- **Planned**: 15
 - **In Progress**: 0
 - **Deferred**: 0
 

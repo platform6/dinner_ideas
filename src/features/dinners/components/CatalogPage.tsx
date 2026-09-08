@@ -26,9 +26,12 @@ import {
   useCurrentPlan,
   useRestoreSelections,
   useToggleSelection,
+  useLuckyPick,
 } from '@/features/weekly-plan/hooks';
 import { currentPlanningWeekStart, formatWeekRange } from '@/features/weekly-plan/date';
 import { ClearPicksControl } from '@/features/weekly-plan/components/ClearPicksControl';
+import { LuckyPickControl } from '@/features/weekly-plan/components/LuckyPickControl';
+import { drawLucky } from '@/features/weekly-plan/lucky-draw';
 import { useWeekStartDay } from '@/features/settings/hooks';
 import { uiIcons } from '@/shared/components/icons';
 
@@ -50,6 +53,7 @@ export function CatalogPage() {
   const toggleSelection = useToggleSelection();
   const clearSelections = useClearSelections();
   const restoreSelections = useRestoreSelections();
+  const luckyPick = useLuckyPick();
   const lastChosenDates = useLastChosenDates();
   const allTags = useAllTags();
   const weekStart = useWeekStartDay();
@@ -94,6 +98,32 @@ export function CatalogPage() {
     return new Set(plan.weekly_plan_selections.map((s) => s.dinner_id));
   }, [currentPlan.data]);
 
+  /**
+   * Who the draw may choose from. Suppressed dinners are excluded because `useDinners()` only
+   * returns active ones — suppression is a user decision (intent 001 FR-7) and randomness must not
+   * overrule it. Already-picked are excluded so no dinner appears twice in a week.
+   */
+  const luckyCandidates = useMemo(
+    () =>
+      (activeDinners.data ?? [])
+        .filter((dinner) => !selectedDinnerIds.has(dinner.id))
+        .map((dinner) => ({
+          id: dinner.id,
+          lastChosenDate: lastChosenDates.data?.get(dinner.id) ?? null,
+        })),
+    [activeDinners.data, selectedDinnerIds, lastChosenDates.data],
+  );
+
+  const slotsToFill = Math.max(0, dinnersPerWeek - selectedDinnerIds.size);
+
+  function handleLuckyPick() {
+    // Math.random() lives HERE, at the edge, not inside drawLucky — which takes its source as an
+    // argument so its randomness and its bias can both be asserted (intent 016, story 003).
+    const drawn = drawLucky(luckyCandidates, slotsToFill, Math.random);
+    if (drawn.length === 0) return;
+    luckyPick.mutate({ currentPlan: currentPlan.data ?? null, dinnerIds: drawn });
+  }
+
   const cuisines = useMemo(() => {
     if (!activeDinners.data) return [];
     return [...new Set(activeDinners.data.map((dinner) => dinner.cuisine_type))].sort();
@@ -121,6 +151,13 @@ export function CatalogPage() {
               </Text>
             </HStack>
           </Badge>
+          <LuckyPickControl
+            slotsToFill={slotsToFill}
+            candidateCount={luckyCandidates.length}
+            isLocked={isLocked}
+            isPicking={luckyPick.isPending}
+            onPick={handleLuckyPick}
+          />
           <ClearPicksControl
             key={[...selectedDinnerIds].sort().join(',')}
             count={selectedDinnerIds.size}
@@ -175,6 +212,21 @@ export function CatalogPage() {
           {clearSelections.isError
             ? 'Couldn’t clear your picks, try again.'
             : 'Couldn’t undo that, try again.'}
+        </Alert>
+      )}
+
+      {luckyPick.isError && (
+        <Alert status="error" borderRadius="field" mb={4}>
+          <AlertIcon />
+          Couldn&rsquo;t pick for you, try again.
+        </Alert>
+      )}
+
+      {luckyPick.isSuccess && luckyPick.data.added < (luckyPick.variables?.dinnerIds.length ?? 0) && (
+        <Alert status="info" borderRadius="field" mb={4}>
+          <AlertIcon />
+          Added {luckyPick.data.added} of {luckyPick.variables?.dinnerIds.length} — the rest didn&rsquo;t
+          save.
         </Alert>
       )}
 
