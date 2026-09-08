@@ -3,16 +3,25 @@ id: 066-lucky-pick
 unit: 001-lucky-pick
 intent: 016-feeling-lucky
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-weighted-draw
   - 002-lucky-control
   - 003-lucky-tests
 created: '2026-09-07T04:10:00Z'
-started: null
-completed: null
+started: '2026-09-08T22:00:00Z'
+completed: '2026-09-08T19:48:11Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-08T22:10:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-08T22:40:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-08T22:50:00Z'
+    artifact: test-walkthrough.md
 requires_bolts: []
 enables_bolts: []
 requires_units:

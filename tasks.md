@@ -1,15 +1,15 @@
 # Roadmap / task inbox
 
-Status as of 2026-09-07. Intents live in `memory-bank/intents/`.
+Status as of 2026-09-08. Intents live in `memory-bank/intents/`.
 
 Both roadmap items below are now **planned intents** with full inception artifacts. This file is
 the inbox; the intents are the source of truth.
 
 - **Add a household-level setting for the number of dinners you pick (with a settings page).**
-  → **Now `015-dinners-per-week`. BUILT 2026-09-08** — all three bolts complete. The column and
-  both triggers (063), the owner-editable control on `/settings` (064), and the client sweep across
-  seven files (065). pgTAP 370/370, vitest 331/331. **NOT YET DEPLOYED** — the migration is
-  unapplied, so 063/064/065 ship as one release.
+  → **`015-dinners-per-week` — SHIPPED as v0.12.0, 2026-09-08** (PR #20). The column and both
+  triggers, the owner-editable control on `/settings`, and the client sweep across seven files.
+  pgTAP 370/370, vitest 331/331. **End-to-end verified on production 2026-09-08** — the setting changed and the catalog,
+  plan and shopping list all followed. Nothing outstanding.
 
   The 2026-09-01 note called this "a small follow-up". Inception found otherwise: "3" is an
   invariant enforced by two Postgres triggers, one of which already carries a concurrency fix
@@ -23,8 +23,10 @@ the inbox; the intents are the source of truth.
 
 - **Add an "I'm feeling lucky" UI element to the dinner catalog which auto picks the number of
   dinners set in the settings page, selecting randomly from the catalog.**
-  → **Now `016-feeling-lucky`.** Inception complete: 5 FRs, 1 unit, 3 stories, bolt 066.
-  **Blocked on 015** — it cannot fill to a number that does not exist yet.
+  → **`016-feeling-lucky` — BUILT 2026-09-08** (bolt 066). A "Surprise me" control fills the
+  week's empty slots, weighted away from recently-eaten dinners via the existing
+  `dinner_last_chosen` view. Non-destructive, so no confirm. vitest 353/353. **Not yet deployed** —
+  frontend only, no migration.
 
   Scoped during inception: it fills empty slots rather than replacing picks (non-destructive, and
   intent 009's Clear Picks already covers a full re-roll), excludes suppressed dinners, and weights

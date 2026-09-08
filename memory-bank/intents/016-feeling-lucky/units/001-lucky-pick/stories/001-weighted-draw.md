@@ -2,11 +2,11 @@
 id: 001-weighted-draw
 unit: 001-lucky-pick
 intent: 016-feeling-lucky
-status: planned
+status: complete
 priority: must
 created: '2026-09-07T04:10:00Z'
 assigned_bolt: 066-lucky-pick
-implemented: false
+implemented: true
 ---
 
 # Story: 001-weighted-draw

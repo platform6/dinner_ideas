@@ -503,3 +503,133 @@ describe('CatalogPage — dinners per week (intent 015)', () => {
     );
   });
 });
+
+/**
+ * Intent 016 (bolt 066): "Surprise me" fills the week's remaining picks.
+ *
+ * The case that matters most is the LAST one. Adding K dinners by calling useToggleSelection K
+ * times would decide each create-plan action from the same stale currentPlan and create K plans —
+ * the hazard CatalogPage already carries a comment about, and a cousin of intent 017's outage.
+ */
+describe('CatalogPage — surprise me (intent 016)', () => {
+  const mockedFetchActive = vi.mocked(fetchActiveDinners);
+  const mockedFetchCurrentPlan = vi.mocked(fetchCurrentPlan);
+  const mockedCreatePlan = vi.mocked(createPlan);
+  const mockedAddSelection = vi.mocked(addSelection);
+
+  const sixDinners = [
+    dinner({ id: '1', name: 'Tacos' }),
+    dinner({ id: '2', name: 'Pasta' }),
+    dinner({ id: '3', name: 'Curry' }),
+    dinner({ id: '4', name: 'Chowder' }),
+    dinner({ id: '5', name: 'Risotto' }),
+    dinner({ id: '6', name: 'Ramen' }),
+  ];
+
+  function renderPage() {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <CatalogPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(fetchWeekStartDay).mockResolvedValue(0);
+    vi.mocked(fetchLastChosenDates).mockResolvedValue(new Map());
+    vi.mocked(fetchAllTags).mockResolvedValue([]);
+    mockedFetchActive.mockResolvedValue(sixDinners);
+    mockedCreatePlan.mockResolvedValue(plan({ id: 'new-plan' }));
+    mockedAddSelection.mockResolvedValue(undefined);
+  });
+
+  it('fills every empty slot in one press', async () => {
+    mockedFetchCurrentPlan.mockResolvedValue(null);
+    const user = userEvent.setup();
+    renderPage();
+
+    // Wait for the catalog to actually load, then for the button to be ENABLED — not merely
+    // present. Clicking a disabled button is a no-op, so `findByRole` alone gives a green click
+    // and zero mutations: the same async-find trap that produced a worthless assertion in bolt 065.
+    await screen.findByText('Tacos');
+    const surprise = await screen.findByRole('button', { name: /surprise me/i });
+    await waitFor(() => expect(surprise).not.toBeDisabled());
+    await user.click(surprise);
+
+    // Default dinners_per_week is 3 and nothing is picked, so three slots.
+    await waitFor(() => expect(mockedAddSelection).toHaveBeenCalledTimes(3));
+  });
+
+  it('never draws a dinner that is already picked', async () => {
+    mockedFetchCurrentPlan.mockResolvedValue(
+      plan({
+        weekly_plan_selections: [
+          selectionWithDinner({ id: 'sel-1', dinner_id: '1' }),
+          selectionWithDinner({ id: 'sel-2', dinner_id: '2' }),
+        ],
+      }),
+    );
+    const user = userEvent.setup();
+    renderPage();
+
+    // Wait for the catalog to actually load, then for the button to be ENABLED — not merely
+    // present. Clicking a disabled button is a no-op, so `findByRole` alone gives a green click
+    // and zero mutations: the same async-find trap that produced a worthless assertion in bolt 065.
+    await screen.findByText('Tacos');
+    const surprise = await screen.findByRole('button', { name: /surprise me/i });
+    await waitFor(() => expect(surprise).not.toBeDisabled());
+    await user.click(surprise);
+
+    // One empty slot, and it must not be filled with dinner 1 or 2.
+    await waitFor(() => expect(mockedAddSelection).toHaveBeenCalledTimes(1));
+    const picked = mockedAddSelection.mock.calls[0][1];
+    expect(['1', '2']).not.toContain(picked);
+  });
+
+  it('keeps the picks that were already there', async () => {
+    mockedFetchCurrentPlan.mockResolvedValue(
+      plan({ weekly_plan_selections: [selectionWithDinner({ id: 'sel-1', dinner_id: '1' })] }),
+    );
+    const user = userEvent.setup();
+    renderPage();
+
+    // Wait for the catalog to actually load, then for the button to be ENABLED — not merely
+    // present. Clicking a disabled button is a no-op, so `findByRole` alone gives a green click
+    // and zero mutations: the same async-find trap that produced a worthless assertion in bolt 065.
+    await screen.findByText('Tacos');
+    const surprise = await screen.findByRole('button', { name: /surprise me/i });
+    await waitFor(() => expect(surprise).not.toBeDisabled());
+    await user.click(surprise);
+
+    await waitFor(() => expect(mockedAddSelection).toHaveBeenCalledTimes(2));
+    // Non-destructive: nothing was removed to make room, which is why there is no confirm step.
+    expect(vi.mocked(clearSelections)).not.toHaveBeenCalled();
+  });
+
+  /**
+   * THE ONE THAT MATTERS. Three dinners added to a week with no plan yet must create ONE plan.
+   */
+  it('creates the plan exactly once, not once per dinner', async () => {
+    mockedFetchCurrentPlan.mockResolvedValue(null);
+    const user = userEvent.setup();
+    renderPage();
+
+    // Wait for the catalog to actually load, then for the button to be ENABLED — not merely
+    // present. Clicking a disabled button is a no-op, so `findByRole` alone gives a green click
+    // and zero mutations: the same async-find trap that produced a worthless assertion in bolt 065.
+    await screen.findByText('Tacos');
+    const surprise = await screen.findByRole('button', { name: /surprise me/i });
+    await waitFor(() => expect(surprise).not.toBeDisabled());
+    await user.click(surprise);
+
+    await waitFor(() => expect(mockedAddSelection).toHaveBeenCalledTimes(3));
+    expect(mockedCreatePlan).toHaveBeenCalledTimes(1);
+    // …and every selection went to that same plan.
+    const planIds = new Set(mockedAddSelection.mock.calls.map((c) => c[0]));
+    expect(planIds).toEqual(new Set(['new-plan']));
+  });
+});
