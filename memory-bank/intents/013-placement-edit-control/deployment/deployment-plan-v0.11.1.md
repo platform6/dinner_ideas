@@ -149,11 +149,23 @@ tell was available and cheap — PR #17's diff would have shown only `.md` files
 
 Fixed by `git push origin dev` and merging again.
 
-### The waived scroll check is still outstanding
+### The waived scroll check — performed 2026-09-08, PASSED
 
-Deliberately waived at Checkpoint 2 and never performed. It is now a genuine post-deploy item
-against the live site: mid-shop, scroll into a part-checked list, move an item whose group jumps to
-the top, and confirm the list does not slide out from under you. Phone first, then a wide window
-for the two-column layout.
+Waived at Checkpoint 2, then carried out against the live site once v0.11.2 unblocked picking.
 
-It remains the one criterion in this release that testing did not cover.
+Chrome at 500 x 635 (single column, genuinely scrollable), three items checked off, scrolled to
+mid-list, then an item moved so its category group jumped from 5th to 2nd:
+
+| Measure                     | Before | After | Delta     |
+| --------------------------- | ------ | ----- | --------- |
+| `scrollY`                   | 709    | 110   | **-599**  |
+| Moved row's viewport offset | 338    | 338   | **0**     |
+| Checked items               | 3      | 3     | preserved |
+
+**Zero drift** — the row moved 599px up the document and stayed on the same pixel. The anchor works
+under real browser reflow.
+
+Separately: at 1920px the check is not applicable, because the two-column layout fits all 17 items
+and the page does not scroll at all. The two-column reflow risk is moot at this list size.
+
+**Nothing outstanding from this release.**

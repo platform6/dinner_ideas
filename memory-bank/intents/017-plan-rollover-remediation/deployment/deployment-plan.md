@@ -5,8 +5,8 @@ commit: 44542b4
 units: [001-plan-uniqueness-scope]
 created: '2026-09-08T17:45:00Z'
 updated: '2026-09-08T17:45:00Z'
-status: build-approved
-current_checkpoint: 1
+status: production-live
+current_checkpoint: 4
 follows: v0.11.1-6a0f5df
 severity: outage-fix
 environments:
@@ -14,10 +14,13 @@ environments:
     status: verified
     target: 'local — pgTAP 361/361 on clean-slate reset (24-migration chain), vitest 317/317, tsc -b, eslint, vite build'
   staging:
-    status: 'pending decision — Checkpoint 2'
+    status: 'n/a — product owner decision 2026-09-08. Widening change; no data shape can fail it, and the invariant was already exercised against production data in a rolled-back transaction.'
   production:
-    status: 'not started'
+    status: 'live 2026-09-08'
     target: 'Supabase linked gpkqsedtlzxczmarxjia + Netlify main'
+    db: 'APPLIED 2026-09-08 — 20260908170000_plan_uniqueness_per_week.sql via supabase db push --linked. VERIFIED: pg_indexes reports btree (household_id, start_date) NULLS NOT DISTINCT WHERE (locked_at IS NULL), and the index comment matches. Smoke-tested against live data in a rolled-back transaction: a draft for a second week is ACCEPTED (previously 23505) and a same-week duplicate is still REJECTED.'
+    fe: 'MERGED 2026-09-08 — PR #19, origin/main 050b410. Verified: the migration file is present on origin/main and 44542b4 is on origin/main. No application code in this release, so no behaviour change is expected from the merge itself.'
+    edge_function: 'n/a'
 ---
 
 # Deployment Plan: intent 017 — plan rollover remediation (release v0.11.2)
@@ -91,19 +94,19 @@ Product owner's call at Checkpoint 2.
 
 ## Progression
 
-| Checkpoint | Stage                  | State                  |
-| ---------- | ---------------------- | ---------------------- |
-| 1          | Build approval         | ✅ approved 2026-09-08 |
-| 2          | Staging decision       | ⏳ recommendation: n/a |
-| 3          | Production deploy      | ⏳ pending             |
-| 4          | Monitoring / close-out | ⏳ pending             |
+| Checkpoint | Stage                  | State                       |
+| ---------- | ---------------------- | --------------------------- |
+| 1          | Build approval         | ✅ approved 2026-09-08      |
+| 2          | Staging decision       | ✅ n/a, 2026-09-08          |
+| 3          | Production deploy      | ✅ live 2026-09-08 (PR #19) |
+| 4          | Monitoring / close-out | ✅ closed 2026-09-08        |
 
 ## Production steps, when approved
 
-1. **`git push origin dev`** — 2 commits are local-only. PR #17 shipped nothing precisely because
-   this step was missed; do not repeat it
-2. Apply the migration: `npx supabase db push --linked`
-3. **Verify the index actually changed**, rather than trusting the command's exit code:
+1. ✅ **`git push origin dev`** — done 2026-09-08, `origin/dev` @ `fe3160c`
+2. ✅ Apply the migration — done 2026-09-08 via `npx supabase db push --linked`
+3. ✅ **Verify the index actually changed** — done; `pg_indexes` confirms the composite key
+   (original instruction retained below, because it is the step worth repeating), rather than trusting the command's exit code:
    ```sql
    select indexdef from pg_indexes where indexname = 'idx_weekly_plans_one_unlocked';
    -- expect: ... USING btree (household_id, start_date) NULLS NOT DISTINCT WHERE (locked_at IS NULL)
@@ -111,7 +114,7 @@ Product owner's call at Checkpoint 2.
    This check exists because the migration's own design notes flag the failure mode: a
    `create ... if not exists` would silently no-op. The migration uses `drop` + `create`, but the
    verification is cheap and the failure would be invisible.
-4. Open a PR `dev → main` and merge. **Confirm the PR diff shows the migration and the two pgTAP
+4. ✅ **Opened and merged as PR #19** (`origin/main` 050b410). **Confirm the PR diff shows the migration and the two pgTAP
    files** — a PR showing only `.md` is the PR #17 failure repeating
 5. Netlify builds `main`; confirm green. No behaviour change is expected — this release contains
    no application code
@@ -128,3 +131,37 @@ Product owner's call at Checkpoint 2.
   is a different account. This release adds no table, policy or function, so no new advisor surface.
 - **Unit 002 (bolt 068)** remains planned: the catalog still advises retrying a failure that cannot
   be retried.
+
+---
+
+## Post-deploy record — 2026-09-08
+
+**v0.11.2 is live.** Migration applied at 17:5x UTC; PR #19 merged to `origin/main` @ `050b410`.
+
+### Verified rather than assumed
+
+| Check                      | Result                                                                               |
+| -------------------------- | ------------------------------------------------------------------------------------ |
+| `pg_indexes` definition    | `btree (household_id, start_date) NULLS NOT DISTINCT WHERE (locked_at IS NULL)`      |
+| Index comment              | Matches the new rule                                                                 |
+| Live smoke, rolled back    | Second-week draft **ACCEPTED** (was `23505`); same-week duplicate still **REJECTED** |
+| Stray rows afterwards      | 0                                                                                    |
+| Migration on `origin/main` | Present; `44542b4` is on `origin/main`                                               |
+| Unreleased code remaining  | None                                                                                 |
+
+The index definition was checked directly rather than inferred from the push command's exit code —
+the migration's design notes flag that a `create ... if not exists` would silently no-op, and that
+failure would be invisible.
+
+### What this closes
+
+Next week's rollover will not break. The workaround that unblocked the household — locking a stale
+draft by hand — is no longer needed, and required database access a product owner should not need
+for ordinary use.
+
+### Still open
+
+- **The scroll check** from v0.11.1, waived and never performed. Now checkable against the live
+  site.
+- **Bolt 068** (unit 002): the catalog still advises retrying a failure that cannot be retried.
+  `Should`, and this particular failure is now unreachable.

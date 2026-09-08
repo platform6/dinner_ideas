@@ -36,12 +36,16 @@ Nothing currently. Add new ideas here as bullets; they become intents via
 
 ## Also outstanding (not roadmap items)
 
+- **`017-plan-rollover-remediation` unit 002** (`bolt 068`) — the catalog still advises retrying a
+  failure that cannot be retried. `Should`, cuttable; that specific failure is now unreachable
+  since v0.11.2, so its value is the next unforeseen constraint failure.
+
 - **`004-account-model`** deployment status reads `production-live-fe-smoke-pending` — a frontend
   smoke check was never closed out. The oldest loose thread in the memory bank.
-- **Intent 013's unit 003** (`bolt 058-shopping-list-move`) is built and committed but has not
-  shipped in any release; v0.11.0 carried units 001–002 only.
-- **Bolt 058's scroll-preservation check** — verified in logic only, because jsdom has no layout
-  engine and the row offsets in its test are simulated. Needs a human on a real device; recorded
-  in that bolt's test report.
+- ~~Intent 013's unit 003 unreleased~~ — **shipped as v0.11.1**, PR #18, 2026-09-08.
+- ~~Bolt 058's scroll-preservation check~~ — **verified on production 2026-09-08.** Single-column
+  at 500px: the moved row travelled 599px up the document and stayed on the same viewport pixel
+  (0px drift); checked items preserved. At desktop width the check is not applicable — the
+  two-column layout fits the whole list, so the page does not scroll.
 - **`014-recipe-entry`** — inception complete (10 FRs, 2 units, 14 stories, bolts 059–062), not
   started. It is the catalog's first application write path.
