@@ -5,18 +5,21 @@ commit: 1223ed7
 units: [001-dinners-per-week-model, 002-plan-flow-variable-n]
 created: '2026-09-08T21:35:00Z'
 updated: '2026-09-08T21:35:00Z'
-status: build-approved
-current_checkpoint: 1
+status: production-live
+current_checkpoint: 4
 follows: v0.11.2-44542b4
 environments:
   dev:
     status: verified
     target: 'local — pgTAP 370/370 on clean-slate reset, vitest 331/331, tsc -b, eslint, vite build'
   staging:
-    status: 'pending decision — Checkpoint 2'
+    status: 'n/a — product owner decision 2026-09-08. Additive column with a default; no backfill, no constraint on existing rows; a no-op until someone changes the setting. The trigger rewrite is covered by pgTAP at a non-default N on a clean-slate chain.'
   production:
-    status: 'not started'
+    status: 'live 2026-09-08'
     target: 'Supabase linked gpkqsedtlzxczmarxjia + Netlify main'
+    db: 'APPLIED 2026-09-08 — 20260908190000_dinners_per_week.sql. VERIFIED on prod: dinners_per_week default 3 / smallint; only fn_weekly_plans_require_n_on_lock exists (old name gone); BOTH replaced functions still report search_path="" (ADR-12 held through a real deploy); household value is 3, so no behaviour change. Live smoke in a rolled-back transaction: 5 selections accepted at N=5, 6th rejected with the real limit in the message, lock at 5 wrote 5 meal_history rows.'
+    fe: 'MERGED 2026-09-08 — PR #20, origin/main 520134c. Verified on the artifact: the migration, dinners_per_week in database.types.ts (3 occurrences), and the Dinners per week control are all present on origin/main; nothing remains unreleased.'
+    edge_function: 'n/a'
 ---
 
 # Deployment Plan: intent 015 — dinners per week (release v0.12.0)
@@ -93,26 +96,26 @@ Product owner's call at Checkpoint 2.
 
 ## Progression
 
-| Checkpoint | Stage                  | State                  |
-| ---------- | ---------------------- | ---------------------- |
-| 1          | Build approval         | ✅ approved 2026-09-08 |
-| 2          | Staging decision       | ⏳ recommendation: n/a |
-| 3          | Production deploy      | ⏳ pending             |
-| 4          | Monitoring / close-out | ⏳ pending             |
+| Checkpoint | Stage                  | State                       |
+| ---------- | ---------------------- | --------------------------- |
+| 1          | Build approval         | ✅ approved 2026-09-08      |
+| 2          | Staging decision       | ✅ n/a, 2026-09-08          |
+| 3          | Production deploy      | ✅ live 2026-09-08 (PR #20) |
+| 4          | Monitoring / close-out | ✅ closed 2026-09-08        |
 
 ## Production steps, when approved
 
-1. **`git push origin dev`** — 6 commits are local-only. PR #17 shipped nothing because this was
+1. ✅ **`git push origin dev`** — done, `origin/dev` @ `2b39b29`. (Was: 6 commits local-only.) PR #17 shipped nothing because this was
    missed; the check is that the PR diff shows source files, not only `.md`
-2. Apply the migration: `npx supabase db push --linked`
-3. **Verify the schema actually changed**, rather than trusting the exit code:
+2. ✅ Apply the migration — done 2026-09-08
+3. ✅ **Verify the schema actually changed** — done; all four checks pass. Instructions kept below because this is the step worth repeating, rather than trusting the exit code:
    ```sql
    select column_default, data_type from information_schema.columns
     where table_name='households' and column_name='dinners_per_week';
    select proname from pg_proc where proname like 'fn_weekly_plans_require%';
    -- expect: default 3; _require_n_on_lock present, _require_three_on_lock absent
    ```
-4. Open a PR `dev → main` and merge
+4. ✅ **Merged as PR #20** (`origin/main` 520134c)
 5. Netlify builds `main`; confirm green
 6. **Smoke the feature end to end** — the check no test covers:
    - `/settings` → Planning week → set "Dinners per week" to 5
@@ -130,3 +133,47 @@ Product owner's call at Checkpoint 2.
   functions but **restates `set search_path = ''` in both** (ADR-12), and
   `advisor_hardening_test.sql` asserts it, so no new `function_search_path_mutable` finding is
   expected. Intent 004's advisor re-run remains outstanding separately.
+
+---
+
+## Post-deploy record — 2026-09-08
+
+**v0.12.0 is live.** Migration applied, then PR #20 merged to `origin/main` @ `520134c`.
+
+### Verified rather than assumed
+
+| Check                                        | Result                                                                                       |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `dinners_per_week` on prod                   | `3 / smallint`                                                                               |
+| Lock function                                | only `fn_weekly_plans_require_n_on_lock`; old name absent                                    |
+| **`search_path` on both replaced functions** | `search_path=""` — **ADR-12 held through a real deploy**                                     |
+| Household's value                            | `3`, so the deploy changed no behaviour                                                      |
+| Live smoke, rolled back                      | 5 accepted at N=5; 6th rejected naming the real limit; lock at 5 wrote 5 `meal_history` rows |
+| Stray rows afterwards                        | 0                                                                                            |
+| Artifact on `origin/main`                    | migration present, `dinners_per_week` in the committed types, the control present            |
+| Unreleased code remaining                    | none                                                                                         |
+
+The `search_path` check is the one worth dwelling on. Without ADR-12's rule — restating
+`set search_path = ''` inside the `CREATE` rather than relying on the `ALTER` in
+`20260831120000` — both functions would now be silently unpinned in production, and only a future
+dashboard advisor run would have said so.
+
+### The types are no longer ahead of production
+
+`database.types.ts` was regenerated from `--local` during bolt 064 and was ahead of prod until this
+migration landed. That window is closed: a `--linked` regen is safe again, and would additionally
+restore the `__InternalSupabase` block the local generator omits. Not required, and not done.
+
+### Outstanding — the end-to-end check
+
+No automated test covers _"change the setting and watch four screens follow"_; it needs the
+deployed app. Steps, on the live site:
+
+1. `/settings` → Planning week → set **Dinners per week** to 5
+2. `/` catalog → the badge reads "N of 5"; a fourth dinner is selectable
+3. `/plan` → the nudge asks for 5; the lock control appears only at 5
+4. `/shopping-list` → gated until 5 are picked
+5. Set it back to 3
+
+If step 2 fails, the likely culprit is `selectionDisabled` on the catalog — the site the inception
+snapshot missed and the re-grep found.
