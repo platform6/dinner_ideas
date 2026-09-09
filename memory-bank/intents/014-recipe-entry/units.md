@@ -38,12 +38,14 @@ the catalog page.
 **Delivers**: a household member can add a dinner. It appears in the catalog, is pickable for a
 week, cooks correctly in the cooking view, and is reachable by tag filter.
 
-**Key decision it must make**: how to keep the three-table save atomic (see system context, "There
+**Key decision it must make**: how to keep the four-table save atomic (see system context, "There
 is no transaction from the browser"). ADR-1 points at a Postgres function; client-side
 compensation is the alternative. This unit records the choice as an ADR.
 
-It carries a migration either way: resolved decision 3 scopes `dinners.name` uniqueness to the
-household, which is a schema change no amount of client-side cleverness avoids.
+~~It carries a migration either way: resolved decision 3 scopes `dinners.name` uniqueness to the
+household.~~ **Corrected 2026-09-08 (bolt 060):** intent 004 already did that on 2026-08-28, so
+there was no certain migration. The unit ships one regardless — `fn_create_dinner` — chosen on the
+atomicity argument alone (ADR-13).
 
 **Why it is not cuttable**: it _is_ the intent. Everything else is a faster way to fill the form
 it owns.

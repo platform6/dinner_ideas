@@ -221,8 +221,8 @@ name; no new registry code is needed, and none may be added.
   - The new dinner appears in the catalog and is immediately pickable for a week
   - The created dinner renders in the **cooking view** with its numbered steps exactly as a
     founding dinner does — never the "No steps available for this dinner yet." empty state
-  - `dinners.name` uniqueness is **scoped to the household** by an additive migration in this
-    intent, replacing the global constraint inherited from the pre-account-model schema
+  - `dinners.name` uniqueness is **scoped to the household** — already true; see the correction
+    under Schema Constraints. No migration is needed for it.
   - A clashing name within the household is reported as a plain "you already have a dinner
     with that name", never as a raw constraint violation
   - A failed save leaves no partial dinner: either the dinner and all its ingredients, steps
@@ -304,9 +304,19 @@ name; no new registry code is needed, and none may be added.
 - **`dinner_steps` enforces `step_number > 0` and `unique (dinner_id, step_number)`.** The schema
   comment permits non-contiguous numbering, but all founding data is contiguous and this intent
   keeps it that way.
-- **`dinners.name` is globally unique** today, an artifact of the pre-account-model schema.
-  This intent **changes it** to unique per household (resolved decision 3), which is the one
-  certain migration in the intent.
+- **`dinners.name` is unique PER HOUSEHOLD** — `dinners_household_id_name_key unique nulls not
+distinct (household_id, name)`.
+
+  > **Corrected 2026-09-08 (bolt 060).** This section originally read "globally unique today… this
+  > intent changes it… the one certain migration in the intent". That was already false when
+  > written: **intent 004 rescoped it on 2026-08-28** in
+  > `20260828231000_account_model_household_id_columns.sql`, and production carries exactly one
+  > unique constraint on `dinners`. Resolved decision 3 was answered before this intent existed.
+  >
+  > Consequence: the intent had **no certain migration**. Bolt 060 ships one anyway — the
+  > `fn_create_dinner` function — but chose that on the atomicity argument alone (ADR-13), not
+  > because a migration was free.
+
 - **`tags.name` is lowercase-enforced** by `check (name = lower(name))` and unique across the
   shared vocabulary. `normalizeTagName` already exists for this and must be reused.
 - **`rosie-approved` is a presentation-significant tag** (`isRosieApproved` drives the catalog

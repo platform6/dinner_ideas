@@ -32,7 +32,11 @@ implemented: true
 
 ## Technical Notes
 
-- Routing follows whatever the app already does for `/store` and `/settings`; no new pattern.
+- Routing follows the app's existing mechanism; no new pattern. **Note (bolt 059):** there is no
+  `/store` route — it is `/store-config`. And every existing route is a single flat segment, so the
+  chosen `/dinners/new` is the app's first two-segment path. That is a URL-shape change only:
+  `AuthGate` wraps `<Routes>` wholesale, so the route inherits protection with no new mechanism,
+  which is what this note was actually asking for.
 - The catalog's control should read as "add", not "import" — importing is one of two ways in, not
   the headline.
 

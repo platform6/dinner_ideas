@@ -13,7 +13,7 @@ A change to the existing React PWA, with **at most one additive migration**. No 
 Function, no new external dependency, no new RLS policy, no change to any existing table.
 
 The possible migration is a single question, isolated below under "There is no transaction from
-the browser": making a three-table save atomic may call for one Postgres function. That is the
+the browser": making a four-table save atomic may call for one Postgres function. That is the
 owning unit's decision to make with an ADR, not something to assume here.
 
 Otherwise: every table this intent writes
@@ -23,7 +23,7 @@ already exist and are all already used by shipped code. This intent is the **fir
 dinner catalog from the application — until now the only writer was a seed migration.
 
 The shape is three slices: a form that produces a draft, an extraction path that fills the same
-draft from pasted text, and a save that writes three tables together.
+draft from pasted text, and a save that writes four tables together.
 
 ## Context Diagram
 
@@ -43,7 +43,7 @@ flowchart TB
     end
 
     subgraph db["Supabase Postgres (all existing)"]
-        dinners[("dinners<br/>name UNIQUE globally")]
+        dinners[("dinners<br/>name UNIQUE per household")]
         ing[("dinner_ingredients<br/>category CHECK ×5")]
         steps[("dinner_steps<br/>step_number > 0, unique per dinner")]
         items[("items — registry")]
@@ -78,7 +78,7 @@ flowchart TB
 | The recipe draft shape and its validation | NEW    | One client-side type both producers fill      |
 | The extraction prompt and its parser      | NEW    | A new caller of the proxy, not a change to it |
 | Paste sizing / trimming                   | NEW    | Client-side, against the frozen 50 KB cap     |
-| The three-table save                      | NEW    | First application writer of the catalog       |
+| The four-table save                       | NEW    | First application writer of the catalog       |
 | An entry point on the catalog page        | CHANGE | One control added to `CatalogPage`            |
 
 ## What This Intent Must Not Touch
@@ -126,16 +126,20 @@ so, and nothing should. A new grocery arrives with `reviewed_at` null and surfac
 review queue — the flow shipped in v0.11.0. That is the designed behaviour (ADR-7), and the only
 thing this intent owes it is _not interfering_.
 
-### `dinners.name` is globally unique
+### `dinners.name` is unique per household
 
-A pre-account-model artifact: the constraint is not scoped to household. With one founding
-household it cannot bite in practice, but the UI must still report a clash in plain language
-rather than surfacing a Postgres error. Open question 3 asks whether to fix the constraint; this
-intent assumes not.
+**Corrected 2026-09-08 (bolt 060).** This section previously described the constraint as global —
+a pre-account-model artifact awaiting open question 3. It is not: **intent 004 rescoped it on
+2026-08-28** (`dinners_household_id_name_key unique nulls not distinct (household_id, name)`),
+verified against production.
+
+What survives unchanged is the requirement that matters to this intent: a clash must be reported
+in plain language rather than as a Postgres error. Bolt 060's `mapSaveError` turns `23505` into
+"You already have a dinner called X", and the raw constraint text never reaches the interface.
 
 ### There is no transaction from the browser
 
-PostgREST inserts are separate HTTP calls. "Either all three tables or none" (FR-8) cannot be had
+PostgREST inserts are separate HTTP calls. "Either all four tables or none" (FR-8) cannot be had
 by wrapping them in a transaction from the client. The options are:
 
 1. **One Postgres function** taking the whole recipe and doing three inserts in one transaction.

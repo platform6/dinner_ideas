@@ -47,7 +47,7 @@ This bolt owns a real design decision with a durable consequence, and it **ships
 Bolt 055 took the same shape for the same reason — a narrow write path whose correctness had to be
 argued before it was coded.
 
-**The decision**: PostgREST inserts are separate HTTP calls, so "all three tables or none" cannot
+**The decision**: PostgREST inserts are separate HTTP calls, so "all four tables or none" cannot
 be had from the browser. Either a Postgres function does the three inserts in one transaction (one
 additive migration; correct by construction; what ADR-1's principle points at), or the client
 compensates by deleting the dinner on failure (no migration; both children cascade; but the
@@ -58,21 +58,25 @@ that makes the bolt simpler** — choose the one that makes the invariant hold, 
 
 ## Scope
 
-| Story                       | Priority | Note                                            |
-| --------------------------- | -------- | ----------------------------------------------- |
-| 005-atomic-save             | Must     | The four-table write, the migration, the ADR    |
-| 006-duplicate-name-handling | Must     | `dinners.name` is globally unique               |
-| 007-manual-entry-tests      | Must     | Component tests, plus pgTAP if a function lands |
+| Story                       | Priority | Note                                              |
+| --------------------------- | -------- | ------------------------------------------------- |
+| 005-atomic-save             | Must     | The four-table write, the migration, the ADR      |
+| 006-duplicate-name-handling | Must     | 23505 → English; constraint already per-household |
+| 007-manual-entry-tests      | Must     | Component tests, plus pgTAP if a function lands   |
 
-## The migration is certain
+## ~~The migration is certain~~ — WRONG, corrected 2026-09-08
 
-Resolved decision 3: `dinners.name` uniqueness becomes per-household, replacing the global
-constraint inherited from the pre-account-model schema. No client-side approach avoids that, so
-this bolt carries a migration regardless of how the atomicity question is answered.
+This section claimed resolved decision 3 forced a `dinners.name` migration, so the bolt "carries a
+migration regardless" and "avoids a migration" could not count for compensation.
 
-Which means: **do not let "avoids a migration" count as a point in favour of client-side
-compensation.** The migration is already there. Judge the two options only on whether the invariant
-holds.
+**Intent 004 had already done it**, on 2026-08-28
+(`20260828231000_account_model_household_id_columns.sql`). Production carries exactly one unique
+constraint on `dinners`: `dinners_household_id_name_key unique nulls not distinct (household_id,
+name)`. There was no certain migration.
+
+The instruction still stands and was followed — **judge the two options only on whether the
+invariant holds** — but on its own merits, not on this false premise. The chosen function _does_
+add a migration compensation would have avoided, and ADR-13 records that as a real cost.
 
 ## Risks
 
@@ -85,7 +89,7 @@ holds.
 ## Definition of Done
 
 - A dinner saves completely or not at all, by whichever mechanism the ADR chose
-- `dinners.name` is unique per household; the old global constraint is gone
+- ~~`dinners.name` is unique per household; the old global constraint is gone~~ — already true since intent 004; no work
 - Tags are written to `dinner_tags`; a new one is created lowercase, an existing one reused
 - It appears in the catalog, is pickable, and cooks correctly in the cooking view
 - A duplicate name reads as English and preserves the draft

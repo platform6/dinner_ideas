@@ -184,9 +184,11 @@ button with an `aria-label`, matching the suppressed control beside it.
 ## What this bolt must NOT do
 
 - **No save.** No write of any kind — bolt 060 owns `dinners` + `dinner_ingredients` +
-  `dinner_steps` + `dinner_tags` and the household-scoped name migration.
-- **No migration.** `dinners.name` is still globally `unique`; scoping it to the household is bolt
-  060's, and duplicate-name handling is story 006.
+  `dinner_steps` + `dinner_tags`.
+- **No migration.** ~~`dinners.name` is still globally `unique`; scoping it to the household is
+  bolt 060's~~ — **corrected 2026-09-08 (bolt 060): it was already per-household**, rescoped by
+  intent 004 on 2026-08-28. This bolt still ships no migration; the claim about _why_ was wrong.
+  Duplicate-name handling remains story 006's.
 - **Nothing Claude-related.** Unit 002 owns every line of that.
 - **No edit or delete** of an existing dinner (FR-9).
 - **No walking-path placement**, and no write to `items`, `item_placements` or

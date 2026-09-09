@@ -25,10 +25,11 @@ implemented: true
 - [ ] **Given** a hand-typed tag not yet in the vocabulary, **When** saved, **Then** it is
       created in `tags` (lowercase, via `normalizeTagName`); an existing one is reused, never
       duplicated.
-- [ ] **Given** this intent, **When** its migration lands, **Then** `dinners.name` uniqueness is
-      scoped to the household, replacing the inherited global constraint.
+- [x] ~~**Given** this intent, **When** its migration lands, **Then** `dinners.name` uniqueness is
+      scoped to the household, replacing the inherited global constraint.~~ **Already true** —
+      intent 004 did this on 2026-08-28. Satisfied with no work; see Technical Notes.
 - [ ] **Given** a save that fails partway, **When** it returns, **Then** no partial dinner exists:
-      either all three tables carry the recipe, or none of them do.
+      either all four tables carry the recipe, or none of them do.
 - [ ] **Given** the save, **When** it writes, **Then** `household_id` comes from the caller's
       household and the existing RLS insert policies are used unchanged — no new policy, no
       `service_role` path.
@@ -44,10 +45,14 @@ implemented: true
 
 **This story owns the intent's one real design decision, and must record it as an ADR.**
 
-It also carries a certain migration regardless of that decision: `dinners.name` becomes unique
-per household (resolved decision 3). No client-side approach avoids that, so this bolt ships a
-migration either way — pick the atomicity mechanism on its merits, not on whether it "adds"
-a migration that is already there.
+> **Corrected 2026-09-08 (bolt 060).** This note claimed the story "carries a certain migration"
+> because `dinners.name` had to be rescoped per household. **It did not.** Intent 004 rescoped it
+> on 2026-08-28; production carries only `dinners_household_id_name_key`.
+>
+> The instruction the note was protecting — _pick the atomicity mechanism on its merits_ — was
+> right, and was followed. But its supporting argument was false: the function **does** add a
+> migration that compensation would have avoided. ADR-13 records that cost rather than resting on
+> the dead premise.
 
 PostgREST inserts are separate HTTP calls; there is no transaction from the browser. Two options:
 
