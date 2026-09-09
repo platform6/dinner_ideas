@@ -68,3 +68,70 @@ Five cases failed on this first. Worth knowing before the next form in this code
 **Responsive layout is unverified.** The ingredient row switches `templateAreas` at `sm`, and jsdom
 has no layout engine — every test passes at any width. The phone stacking needs a human eye on a
 real device, and it is the sensible thing to check before bolt 060 builds on top of it.
+
+---
+
+## Bolt 060 — recipe save (2026-09-08)
+
+Stories 005, 006, 007. The catalog becomes writable. **Unit 001 complete.**
+
+**450 / 450 vitest** (+22), **394 / 394 pgTAP** on a clean-slate reset (+22), `tsc -b`, `eslint`,
+`vite build` clean. One migration: `20260908230000_create_dinner_rpc.sql`.
+
+### The decision (ADR-13)
+
+A `security invoker` Postgres function writes all four tables in one transaction, called once over
+RPC. The domain model settled it: seven of the Dinner aggregate's eight invariants are properties
+of a **complete** Dinner, so a `dinners` row with no ingredients is not an incomplete Dinner — it
+is not a Dinner. The aggregate boundary and the transaction boundary are the same boundary.
+
+**The argument that actually decided it is not in any story.** Story 005 rejects client-side
+compensation because the compensating delete can fail, which invites "so retry the delete". The
+real reason is that **the window is a visibility window, not only a failure window**: between the
+`dinners` insert and the children, the row is committed and queryable, so another member's catalog
+lists a dinner with no ingredients and can pick it for the week — on the path where nothing goes
+wrong at all. Compensation is cleanup for the failure case; this is the success case.
+
+### Findings
+
+**1. The migration this bolt was told it must ship had already shipped.** The brief says "the
+migration is certain" and story 006 says `dinners.name` is unique globally. Intent 004 rescoped it
+on 2026-08-28; production carries only `dinners_household_id_name_key UNIQUE NULLS NOT DISTINCT
+(household_id, name)`. Resolved decision 3 was answered before intent 014 was written.
+
+This mattered beyond a smaller migration: the brief's _supporting_ argument — "the function costs
+no extra migration, so don't count that against it" — was false. The function does add a migration
+compensation would have avoided. The decision stands because it was made on whether the invariant
+holds, which was the brief's actual instruction. ADR-13 and the design doc were corrected rather
+than left standing on a dead premise.
+
+**Third stale spec premise in this unit**, after `dinners.instructions` and the `/store` route.
+The pattern is worth naming: a story's technical notes describe the codebase _as it was when the
+story was written_, and this project moves faster than its specs. Check, do not trust.
+
+**2. `security invoker` against a 19:1 majority — and now a failing test if changed.** The other
+19 functions are definer because they deliberately bypass RLS. This one must not: all five tables
+carry household-scoped INSERT policies from intent 004, so `invoker` satisfies story 005's "no new
+policy, no service_role" by construction. `advisor_hardening_test.sql` now asserts
+`prosecdef = false`, so the "someone fixes it for consistency" hazard is caught rather than
+commented.
+
+**3. Contiguity made unrepresentable rather than enforced.** Steps arrive as an ordered `text[]`
+and are numbered by `unnest(...) with ordinality`. There is no parameter in which a gap could be
+expressed. Bolt 059 reached the same shape from the other end by deriving the number from array
+position instead of storing it.
+
+**4. A test whose harness was wrong, not its assertion.** "Goes to the catalog once it saves"
+failed because the page was rendered bare in a `MemoryRouter` — `navigate('/')` changed the
+location and unmounted nothing. Fixed by rendering through real `<Routes>`, which is also how the
+app mounts it. The tempting alternative, mocking `useNavigate` and asserting it was _called_, would
+have tested that a function ran rather than that the user ended up somewhere.
+
+### Left for the deploy
+
+- **`database.types.ts` is ahead of production**, exactly as in bolt 064. `fn_create_dinner` exists
+  only locally until this migration ships; a routine `--linked` regen during the deploy window
+  would revert it and break the build.
+- **No end-to-end check.** That a saved dinner appears in the catalog, is pickable and cooks
+  correctly is proven at the row level, not through the UI. Post-deploy smoke.
+- **The responsive layout is still unverified** — carried from bolt 059, unchanged here.

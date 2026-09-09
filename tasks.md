@@ -56,13 +56,19 @@ Nothing currently. Add new ideas here as bullets; they become intents via
   at 500px: the moved row travelled 599px up the document and stayed on the same viewport pixel
   (0px drift); checked items preserved. At desktop width the check is not applicable — the
   two-column layout fits the whole list, so the page does not scroll.
-- **`014-recipe-entry`** — **IN PROGRESS.** Bolt 059 ✅ (2026-09-08): `/dinners/new`, the recipe
-  draft, and the four editors that fill it — dinner fields, ingredient lines, cooking steps, tags.
-  An "Add dinner" control on the catalog. 427/427 vitest. **Nothing is written yet** — bolt 060
-  owns the save, the household-scoped `dinners.name` migration and duplicate handling; bolts
-  061–062 are unit 002 (import). It is the catalog's first application write path.
+- **`014-recipe-entry`** — **UNIT 001 BUILT 2026-09-08** (bolts 059, 060). **The catalog is
+  writable for the first time in the project's life.** `/dinners/new` with the recipe draft and
+  four editors, an "Add dinner" control on the catalog, and a save that writes `dinners` +
+  `dinner_ingredients` + `dinner_steps` + `dinner_tags` in **one transaction** via
+  `fn_create_dinner` (ADR-13). 450/450 vitest, 394/394 pgTAP. **Not yet deployed** — carries a
+  migration. Bolts 061–062 (unit 002, Claude import) are still planned and remain cuttable: unit
+  001 is a complete, useful page on its own.
 
-  Two things carried forward from 059: `dinners.instructions` is required by the schema but
-  rendered nowhere in the app (the form captures it, honestly labelled, and does not claim it
-  appears on the catalog card); and the ingredient row's phone layout is unverified, because jsdom
-  has no layout engine — worth an eyeball on a real device before 060 builds on it.
+  Carried forward, unresolved: `dinners.instructions` is required by the schema but rendered
+  nowhere in the app (the form captures it, honestly labelled, and does not claim it appears on the
+  catalog card — whether the card _should_ show it is an open question for intent 001); and the
+  ingredient row's phone layout is unverified, because jsdom has no layout engine — worth an
+  eyeball on a real device.
+
+  Note for the deploy: **`database.types.ts` is ahead of production**, as in bolt 064. A routine
+  `supabase gen types --linked` before the migration ships would revert it and break the build.

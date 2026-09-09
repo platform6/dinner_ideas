@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Alert,
   Box,
@@ -31,6 +31,8 @@ import {
   type RecipeDraft,
 } from '@/features/recipe-entry/draft';
 import { useAllTags, useDinners } from '@/features/dinners/hooks';
+import { useSaveDinner } from '@/features/recipe-entry/hooks';
+import { mapSaveError, type SaveRejection } from '@/features/recipe-entry/api';
 import { uiIcons } from '@/shared/components/icons';
 
 /** A titled block, so the four editors read as one form rather than four widgets. */
@@ -52,17 +54,20 @@ function Section({ title, children }: { title: string; children: React.ReactNode
  * until unit 002 lands, and it is here now so that landing it adds behaviour rather than
  * restructuring the page.
  *
- * This bolt builds everything up to the save. Bolt 060 owns the write.
+ * Saving goes through `fn_create_dinner` — one RPC, one transaction, four tables (ADR-13). The
+ * draft survives a rejection, so a duplicate name costs one edit rather than a re-entry.
  */
 export function RecipeEntryPage() {
+  const navigate = useNavigate();
   const [draft, setDraft] = useState<RecipeDraft>(createEmptyDraft);
   // Nothing is red before a save is attempted. Validating on every keystroke would mark a form
   // invalid while the user is still filling in its first field.
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
-  const [isReadyToSave, setIsReadyToSave] = useState(false);
+  const [rejection, setRejection] = useState<SaveRejection | null>(null);
 
   const dinners = useDinners();
   const tags = useAllTags();
+  const saveDinner = useSaveDinner();
 
   // The same derivation the catalog already uses for its cuisine filter — read from the data, so
   // the list stays true as dinners are added, rather than hardcoded.
@@ -76,13 +81,23 @@ export function RecipeEntryPage() {
   const problems = useMemo(() => validateDraft(draft), [draft]);
 
   function patchDraft(patch: Partial<RecipeDraft>) {
-    setIsReadyToSave(false);
+    // Any edit clears the last rejection: a message about a name that has since been changed is
+    // worse than no message.
+    setRejection(null);
     setDraft((current) => ({ ...current, ...patch }));
   }
 
   function handleSubmit() {
     setHasAttemptedSave(true);
-    setIsReadyToSave(problems.length === 0);
+    setRejection(null);
+    if (problems.length > 0) return;
+
+    saveDinner.mutate(draft, {
+      // The draft is deliberately NOT cleared on failure — a duplicate name costs one edit, not a
+      // re-entry of every ingredient and step (story 006).
+      onError: (error) => setRejection(mapSaveError(error, draft.name)),
+      onSuccess: () => navigate('/'),
+    });
   }
 
   return (
@@ -170,19 +185,22 @@ export function RecipeEntryPage() {
                 </Alert>
               )}
 
-              {isReadyToSave && (
-                // Honest placeholder rather than a button that silently does nothing. Bolt 060
-                // replaces this with the actual write.
-                <Alert layerStyle="notice" role="status">
-                  <uiIcons.check size={16} strokeWidth={2} style={{ flexShrink: 0, marginRight: '8px' }} />
-                  <Text>
-                    This dinner is complete and ready to save. Saving arrives in the next step of the build.
-                  </Text>
+              {rejection && (
+                <Alert layerStyle="notice" role="alert">
+                  <uiIcons.info size={16} strokeWidth={2} style={{ flexShrink: 0, marginRight: '8px' }} />
+                  <Text>{rejection.message}</Text>
                 </Alert>
               )}
 
               <HStack>
-                <Button onClick={handleSubmit}>Save dinner</Button>
+                {/*
+                  Disabled while in flight so a second press cannot make a second dinner. A
+                  courtesy only: `unique (household_id, name)` is the actual guarantee, and a UI
+                  guard alone would not survive two devices.
+                */}
+                <Button onClick={handleSubmit} isLoading={saveDinner.isPending} loadingText="Saving">
+                  Save dinner
+                </Button>
                 <Button as={RouterLink} to="/" variant="ghost">
                   Cancel
                 </Button>

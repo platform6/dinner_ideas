@@ -1,14 +1,20 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RecipeEntryPage } from '@/features/recipe-entry/components/RecipeEntryPage';
 import { fetchActiveDinners, fetchAllTags } from '@/features/dinners/api';
+import { createDinner } from '@/features/recipe-entry/api';
 import type { CatalogDinner, Tag } from '@/features/dinners/types';
 
 vi.mock('@/features/dinners/api');
+// `mapSaveError` is NOT mocked — it is the code under test for story 006's messages.
+vi.mock('@/features/recipe-entry/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/features/recipe-entry/api')>()),
+  createDinner: vi.fn(),
+}));
 
 function dinner(name: string, cuisine: string): CatalogDinner {
   return {
@@ -32,19 +38,40 @@ function tag(name: string): Tag {
 describe('RecipeEntryPage', () => {
   const mockedDinners = vi.mocked(fetchActiveDinners);
   const mockedTags = vi.mocked(fetchAllTags);
+  const mockedCreate = vi.mocked(createDinner);
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockedDinners.mockResolvedValue([dinner('Tacos', 'Mexican'), dinner('Ramen', 'Japanese')]);
     mockedTags.mockResolvedValue([tag('quick'), tag('weeknight')]);
+    mockedCreate.mockResolvedValue('new-dinner-id');
   });
 
+  /** Fills every required field with a valid recipe. */
+  async function fillValidDraft(user: ReturnType<typeof userEvent.setup>) {
+    await user.type(await screen.findByLabelText(/^Name/), 'Fajitas');
+    await user.type(screen.getByLabelText(/^Kind of food/), 'Mexican');
+    await user.type(screen.getByLabelText(/^Cook time/), '30');
+    await user.type(screen.getByLabelText(/^One-line summary/), 'Chicken and peppers.');
+    await user.type(screen.getByLabelText('Quantity'), '1.5');
+    await user.type(screen.getByLabelText('Ingredient'), 'Chicken thighs');
+    await user.type(screen.getByLabelText('Step 1'), 'Roast for 30 minutes.');
+  }
+
+  /**
+   * Rendered through real routes, not bare. The page navigates to the catalog on a successful
+   * save, and a bare render would leave it mounted at any location — so "it left the page" would
+   * be unassertable, and the navigation untested.
+   */
   function renderPage() {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          <RecipeEntryPage />
+        <MemoryRouter initialEntries={['/dinners/new']}>
+          <Routes>
+            <Route path="/dinners/new" element={<RecipeEntryPage />} />
+            <Route path="/" element={<h1>Dinner catalog</h1>} />
+          </Routes>
         </MemoryRouter>
       </QueryClientProvider>,
     );
@@ -235,40 +262,159 @@ describe('RecipeEntryPage', () => {
       expect(await screen.findByText('Cook time must be more than zero minutes.')).toBeInTheDocument();
     });
 
-    it('reports a complete draft as ready to save', async () => {
+    it('saves a complete draft', async () => {
       const user = userEvent.setup();
       renderPage();
-
-      await user.type(await screen.findByLabelText(/^Name/), 'Fajitas');
-      await user.type(screen.getByLabelText(/^Kind of food/), 'Mexican');
-      await user.type(screen.getByLabelText(/^Cook time/), '30');
-      await user.type(screen.getByLabelText(/^One-line summary/), 'Chicken and peppers.');
-      await user.type(screen.getByLabelText('Quantity'), '1.5');
-      await user.type(screen.getByLabelText('Ingredient'), 'Chicken thighs');
-      await user.type(screen.getByLabelText('Step 1'), 'Roast for 30 minutes.');
+      await fillValidDraft(user);
 
       await user.click(screen.getByRole('button', { name: 'Save dinner' }));
 
-      expect(await screen.findByRole('status')).toHaveTextContent(/ready to save/i);
+      await waitFor(() => expect(mockedCreate).toHaveBeenCalledTimes(1));
     });
 
-    it('clears the ready state when the draft is edited again', async () => {
+    it('does NOT call the save when the draft is incomplete', async () => {
       const user = userEvent.setup();
       renderPage();
 
-      await user.type(await screen.findByLabelText(/^Name/), 'Fajitas');
-      await user.type(screen.getByLabelText(/^Kind of food/), 'Mexican');
-      await user.type(screen.getByLabelText(/^Cook time/), '30');
-      await user.type(screen.getByLabelText(/^One-line summary/), 'Chicken and peppers.');
-      await user.type(screen.getByLabelText('Quantity'), '1.5');
-      await user.type(screen.getByLabelText('Ingredient'), 'Chicken thighs');
-      await user.type(screen.getByLabelText('Step 1'), 'Roast for 30 minutes.');
+      await user.click(await screen.findByRole('button', { name: 'Save dinner' }));
+      await screen.findByText('Give the dinner a name.');
+
+      expect(mockedCreate).not.toHaveBeenCalled();
+    });
+
+    it('clears a rejection when the draft is edited again', async () => {
+      // A message about a name the user has since changed is worse than no message.
+      mockedCreate.mockRejectedValue({ code: '23505' });
+      const user = userEvent.setup();
+      renderPage();
+      await fillValidDraft(user);
+
       await user.click(screen.getByRole('button', { name: 'Save dinner' }));
-      await screen.findByRole('status');
+      await screen.findByText(/already have a dinner called/i);
 
       await user.type(screen.getByLabelText(/^Name/), ' Deluxe');
 
-      await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument());
+      await waitFor(() =>
+        expect(screen.queryByText(/already have a dinner called/i)).not.toBeInTheDocument(),
+      );
+    });
+  });
+
+  describe('saving', () => {
+    it('sends the draft the user actually typed', async () => {
+      const user = userEvent.setup();
+      renderPage();
+      await fillValidDraft(user);
+
+      await user.click(screen.getByRole('button', { name: 'Save dinner' }));
+
+      await waitFor(() => expect(mockedCreate).toHaveBeenCalledTimes(1));
+      expect(mockedCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Fajitas',
+          cuisineType: 'Mexican',
+          cookTimeMinutes: '30',
+          summary: 'Chicken and peppers.',
+          steps: [expect.objectContaining({ instruction: 'Roast for 30 minutes.' })],
+          ingredients: [expect.objectContaining({ name: 'Chicken thighs', quantity: '1.5' })],
+        }),
+      );
+    });
+
+    it('goes to the catalog once it saves', async () => {
+      const user = userEvent.setup();
+      renderPage();
+      await fillValidDraft(user);
+
+      await user.click(screen.getByRole('button', { name: 'Save dinner' }));
+
+      expect(await screen.findByRole('heading', { name: 'Dinner catalog' })).toBeInTheDocument();
+      expect(screen.queryByLabelText(/^Name/)).not.toBeInTheDocument();
+    });
+
+    describe('a duplicate name', () => {
+      beforeEach(() => {
+        mockedCreate.mockRejectedValue({
+          code: '23505',
+          message: 'duplicate key value violates unique constraint "dinners_household_id_name_key"',
+        });
+      });
+
+      it('says so in plain language', async () => {
+        const user = userEvent.setup();
+        renderPage();
+        await fillValidDraft(user);
+
+        await user.click(screen.getByRole('button', { name: 'Save dinner' }));
+
+        expect(await screen.findByRole('alert')).toHaveTextContent(
+          /You already have a dinner called .Fajitas./i,
+        );
+      });
+
+      it('shows no raw Postgres text', async () => {
+        const user = userEvent.setup();
+        renderPage();
+        await fillValidDraft(user);
+
+        await user.click(screen.getByRole('button', { name: 'Save dinner' }));
+        await screen.findByRole('alert');
+
+        expect(screen.queryByText(/duplicate key|unique constraint|household_id/i)).not.toBeInTheDocument();
+      });
+
+      it('KEEPS the whole draft, so only the name needs changing', async () => {
+        // The point of story 006: a clash costs one edit, not a re-entry of every ingredient
+        // and step.
+        const user = userEvent.setup();
+        renderPage();
+        await fillValidDraft(user);
+
+        await user.click(screen.getByRole('button', { name: 'Save dinner' }));
+        await screen.findByRole('alert');
+
+        expect(screen.getByLabelText(/^Name/)).toHaveValue('Fajitas');
+        expect(screen.getByLabelText(/^Kind of food/)).toHaveValue('Mexican');
+        expect(screen.getByLabelText(/^One-line summary/)).toHaveValue('Chicken and peppers.');
+        expect(screen.getByLabelText('Ingredient')).toHaveValue('Chicken thighs');
+        expect(screen.getByLabelText('Quantity')).toHaveValue(1.5);
+        expect(screen.getByLabelText('Step 1')).toHaveValue('Roast for 30 minutes.');
+      });
+
+      it('stays on the page', async () => {
+        const user = userEvent.setup();
+        renderPage();
+        await fillValidDraft(user);
+
+        await user.click(screen.getByRole('button', { name: 'Save dinner' }));
+        await screen.findByRole('alert');
+
+        expect(screen.getByRole('heading', { name: 'Add a dinner' })).toBeInTheDocument();
+      });
+    });
+
+    it('reports a permission failure as permission, not as a retry', async () => {
+      mockedCreate.mockRejectedValue({ code: '42501' });
+      const user = userEvent.setup();
+      renderPage();
+      await fillValidDraft(user);
+
+      await user.click(screen.getByRole('button', { name: 'Save dinner' }));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(/permission/i);
+    });
+
+    it('reports an unknown failure without leaking the error', async () => {
+      mockedCreate.mockRejectedValue(new Error('TypeError: fetch failed at line 3'));
+      const user = userEvent.setup();
+      renderPage();
+      await fillValidDraft(user);
+
+      await user.click(screen.getByRole('button', { name: 'Save dinner' }));
+
+      const alert = await screen.findByRole('alert');
+      expect(alert).toHaveTextContent(/connection/i);
+      expect(alert).not.toHaveTextContent(/TypeError|fetch failed/);
     });
   });
 

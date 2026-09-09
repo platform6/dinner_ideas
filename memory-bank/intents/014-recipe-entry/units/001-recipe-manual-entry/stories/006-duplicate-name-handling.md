@@ -2,11 +2,11 @@
 id: 006-duplicate-name-handling
 unit: 001-recipe-manual-entry
 intent: 014-recipe-entry
-status: planned
+status: complete
 priority: must
 created: '2026-09-07T03:00:00Z'
 assigned_bolt: 060-recipe-save
-implemented: false
+implemented: true
 ---
 
 # Story: 006-duplicate-name-handling

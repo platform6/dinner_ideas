@@ -3,16 +3,25 @@ id: 060-recipe-save
 unit: 001-recipe-manual-entry
 intent: 014-recipe-entry
 type: ddd-construction-bolt
-status: planned
+status: complete
 stories:
   - 005-atomic-save
   - 006-duplicate-name-handling
   - 007-manual-entry-tests
 created: '2026-09-07T03:05:00Z'
-started: null
-completed: null
+started: '2026-09-08T22:44:00Z'
+completed: '2026-09-09T01:01:22Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: model
+    completed: '2026-09-08T22:44:00Z'
+    artifact: ddd-01-domain-model.md
+  - name: design
+    completed: '2026-09-08T22:55:00Z'
+    artifact: ddd-02-technical-design.md
+  - name: adr-analysis
+    completed: '2026-09-08T23:10:00Z'
+    artifact: adr-013-aggregate-write-in-one-transaction.md
 requires_bolts:
   - 059-recipe-draft-form
 enables_bolts:

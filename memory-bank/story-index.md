@@ -3,8 +3,8 @@
 ## Overview
 
 - **Total stories**: 162
-- **Completed**: 152
-- **Planned**: 10
+- **Completed**: 155
+- **Planned**: 7
 - **In Progress**: 0
 - **Deferred**: 0
 - **Last updated**: 2026-09-08
@@ -249,17 +249,17 @@
 
 ---
 
-### 014-recipe-entry — ⏳ IN PROGRESS (bolt 059 ✅; 060–062 planned)
+### 014-recipe-entry — ⏳ IN PROGRESS (unit 001 ✅ complete, bolts 059–060; unit 002 planned, bolts 061–062)
 
-**Unit: 001-recipe-manual-entry** — bolt `059` ✅ COMPLETE, `060` planned — not cuttable; it is the intent
+**Unit: 001-recipe-manual-entry** — bolts `059`, `060` ✅ COMPLETE — the catalog is writable
 
 - [x] **001-recipe-entry-route** (recipe-manual-entry): Route + an entry point on the catalog - Must - ✅ COMPLETE
 - [x] **002-dinner-fields-form** (recipe-manual-entry): Name, cuisine, cook time, summary line - Must - ✅ COMPLETE
 - [x] **003-ingredient-lines-editor** (recipe-manual-entry): Quantity / unit / name / category - Must - ✅ COMPLETE
 - [x] **004-cooking-steps-editor** (recipe-manual-entry): Ordered steps; numbering DERIVED from order, so no gap is possible - Must - ✅ COMPLETE
-- [ ] **005-atomic-save** (recipe-manual-entry): Three-table write; owns the ADR - Must - [ ] PLANNED
-- [ ] **006-duplicate-name-handling** (recipe-manual-entry): `dinners.name` is globally unique - Must - [ ] PLANNED
-- [ ] **007-manual-entry-tests** (recipe-manual-entry): Validation, save, duplicate name - Must - [ ] PLANNED
+- [x] **005-atomic-save** (recipe-manual-entry): Four-table write in ONE transaction; owns ADR-13 - Must - ✅ COMPLETE
+- [x] **006-duplicate-name-handling** (recipe-manual-entry): Plain-language 23505; the constraint was ALREADY per-household (intent 004) - Must - ✅ COMPLETE
+- [x] **007-manual-entry-tests** (recipe-manual-entry): Validation, save, duplicate name; +22 pgTAP incl. the atomicity proof - Must - ✅ COMPLETE
 - [x] **008-tag-editor** (recipe-manual-entry): Attach / create over the shared vocabulary - Must - ✅ COMPLETE
 
 **Unit: 002-recipe-import** — bolts `061`, `062` — cuttable; unit 001 ships a complete page

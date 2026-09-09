@@ -2,7 +2,7 @@
 unit: 001-recipe-manual-entry
 intent: 014-recipe-entry
 phase: inception
-status: ready
+status: complete
 created: '2026-09-07T02:55:00Z'
 updated: '2026-09-07T03:20:00Z'
 ---
