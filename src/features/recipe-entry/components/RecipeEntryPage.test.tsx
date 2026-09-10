@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RecipeEntryPage } from '@/features/recipe-entry/components/RecipeEntryPage';
 import { fetchActiveDinners, fetchAllTags } from '@/features/dinners/api';
 import { createDinner } from '@/features/recipe-entry/api';
+import { callClaude, ClaudeError } from '@/features/ai/api';
 import type { CatalogDinner, Tag } from '@/features/dinners/types';
 
 vi.mock('@/features/dinners/api');
@@ -14,6 +15,10 @@ vi.mock('@/features/dinners/api');
 vi.mock('@/features/recipe-entry/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/features/recipe-entry/api')>()),
   createDinner: vi.fn(),
+}));
+vi.mock('@/features/ai/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/features/ai/api')>()),
+  callClaude: vi.fn(),
 }));
 
 function dinner(name: string, cuisine: string): CatalogDinner {
@@ -39,6 +44,7 @@ describe('RecipeEntryPage', () => {
   const mockedDinners = vi.mocked(fetchActiveDinners);
   const mockedTags = vi.mocked(fetchAllTags);
   const mockedCreate = vi.mocked(createDinner);
+  const mockedCallClaude = vi.mocked(callClaude);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -96,13 +102,22 @@ describe('RecipeEntryPage', () => {
     expect(screen.getByRole('tab', { name: 'Paste a recipe' })).toBeInTheDocument();
   });
 
-  it('says the paste path is not built yet rather than looking broken', async () => {
+  it('offers a paste box on the paste tab', async () => {
     const user = userEvent.setup();
     renderPage();
 
     await user.click(await screen.findByRole('tab', { name: 'Paste a recipe' }));
 
-    expect(await screen.findByText(/Not built yet/)).toBeInTheDocument();
+    expect(await screen.findByLabelText('Pasted recipe page')).toBeInTheDocument();
+  });
+
+  it('will not send an empty paste — an empty call still spends a metered call', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('tab', { name: 'Paste a recipe' }));
+
+    expect(await screen.findByRole('button', { name: 'Get the recipe' })).toBeDisabled();
   });
 
   it('states the 3-serving convention where the quantities are typed', async () => {
@@ -499,6 +514,95 @@ describe('RecipeEntryPage', () => {
       await user.click(screen.getByRole('button', { name: 'Add tag' }));
 
       expect(await screen.findByRole('button', { name: 'first' })).toBeInTheDocument();
+    });
+  });
+  describe('the paste path', () => {
+    const GOOD_REPLY = JSON.stringify({
+      name: 'Shrimp Noodle Bowls',
+      cuisine: 'Thai',
+      cookTimeMinutes: 25,
+      summary: 'Fry the shrimp, boil the noodles, toss together.',
+      servingsStated: true,
+      ingredients: [{ quantity: 0.75, unit: 'lb', name: 'shrimp', category: 'Protein' }],
+      steps: ['Fry the shrimp until pink.', 'Boil the noodles.', 'Toss and serve.'],
+      tags: [],
+    });
+
+    function replyWith(text: string) {
+      mockedCallClaude.mockResolvedValue({
+        text,
+        model: 'claude-sonnet-5',
+        usage: { inputTokens: 100, outputTokens: 200 },
+        latencyMs: 1200,
+      });
+    }
+
+    /** Opens the paste tab and pastes a page, without pressing the button. */
+    async function pasteAPage(user: ReturnType<typeof userEvent.setup>) {
+      await user.click(await screen.findByRole('tab', { name: 'Paste a recipe' }));
+      const box = await screen.findByLabelText('Pasted recipe page');
+      await user.type(box, 'A recipe page.');
+      return box;
+    }
+
+    it('reports what it read back', async () => {
+      replyWith(GOOD_REPLY);
+      const user = userEvent.setup();
+      renderPage();
+
+      await pasteAPage(user);
+      await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+      expect(await screen.findByText(/Shrimp Noodle Bowls/)).toBeInTheDocument();
+    });
+
+    it('says the quantities were not rescaled when the source gave no serving count', async () => {
+      replyWith(GOOD_REPLY.replace('"servingsStated":true', '"servingsStated":false'));
+      const user = userEvent.setup();
+      renderPage();
+
+      await pasteAPage(user);
+      await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+      expect(await screen.findByText(/no serving count/)).toBeInTheDocument();
+    });
+
+    it('KEEPS the pasted text when the extraction fails, so a retry is the user’s choice', async () => {
+      // A retry spends another metered call against the household's daily cap. Clearing the box
+      // would make the user re-paste the page to make a choice they may not want to make.
+      replyWith('I cannot help with that.');
+      const user = userEvent.setup();
+      renderPage();
+
+      const box = await pasteAPage(user);
+      await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+      expect(await screen.findByRole('alert')).toBeInTheDocument();
+      expect(box).toHaveValue('A recipe page.');
+    });
+
+    it('KEEPS the pasted text when the service itself fails', async () => {
+      mockedCallClaude.mockRejectedValue(new ClaudeError('rate_limited', 'too many'));
+      const user = userEvent.setup();
+      renderPage();
+
+      const box = await pasteAPage(user);
+      await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+      expect(await screen.findByRole('alert')).toBeInTheDocument();
+      expect(box).toHaveValue('A recipe page.');
+    });
+
+    it('does not leave the page stuck on "reading" after a failure', async () => {
+      mockedCallClaude.mockRejectedValue(new ClaudeError('timeout', 'slow'));
+      const user = userEvent.setup();
+      renderPage();
+
+      await pasteAPage(user);
+      await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+      await screen.findByRole('alert');
+      expect(screen.getByRole('button', { name: 'Get the recipe' })).toBeEnabled();
     });
   });
 });

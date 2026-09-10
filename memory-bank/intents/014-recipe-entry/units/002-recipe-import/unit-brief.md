@@ -2,9 +2,9 @@
 unit: 002-recipe-import
 intent: 014-recipe-entry
 phase: inception
-status: ready
+status: in-progress
 created: '2026-09-07T02:55:00Z'
-updated: '2026-09-07T03:20:00Z'
+updated: '2026-09-10T19:12:03Z'
 ---
 
 # Unit Brief: Recipe Import

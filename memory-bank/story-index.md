@@ -249,7 +249,7 @@
 
 ---
 
-### 014-recipe-entry — ⏳ IN PROGRESS (unit 001 ✅ complete, bolts 059–060; unit 002 planned, bolts 061–062)
+### 014-recipe-entry — ⏳ IN PROGRESS (unit 001 ✅ complete, bolts 059–060; unit 002 in progress, bolt 061 ✅, 062 planned)
 
 **Unit: 001-recipe-manual-entry** — bolts `059`, `060` ✅ COMPLETE — the catalog is writable
 
@@ -262,11 +262,11 @@
 - [x] **007-manual-entry-tests** (recipe-manual-entry): Validation, save, duplicate name; +22 pgTAP incl. the atomicity proof - Must - ✅ COMPLETE
 - [x] **008-tag-editor** (recipe-manual-entry): Attach / create over the shared vocabulary - Must - ✅ COMPLETE
 
-**Unit: 002-recipe-import** — bolts `061`, `062` — cuttable; unit 001 ships a complete page
+**Unit: 002-recipe-import** — bolt `061` ✅ COMPLETE (extraction), `062` planned — cuttable; unit 001 ships a complete page
 
-- [ ] **001-paste-box-and-sizing** (recipe-import): Paste box; trim from the end at the 50 KB cap - Must - [ ] PLANNED
-- [ ] **002-extraction-prompt** (recipe-import): Both layers; no step dropped; tags from the existing vocabulary - Must - [ ] PLANNED
-- [ ] **003-response-parsing** (recipe-import): Strict parse; step-less or malformed is a failure - Must - [ ] PLANNED
+- [x] **001-paste-box-and-sizing** (recipe-import): Paste box; trim from the end at the 50 KB cap - Must - ✅ COMPLETE
+- [x] **002-extraction-prompt** (recipe-import): Both layers; no step dropped; tags from the existing vocabulary - Must - ✅ COMPLETE
+- [x] **003-response-parsing** (recipe-import): Strict parse; step-less or malformed is a failure - Must - ✅ COMPLETE
 - [ ] **004-proxy-error-messages** (recipe-import): Five reachable codes, five distinct messages - Must - [ ] PLANNED
 - [ ] **005-draft-review-handoff** (recipe-import): Draft lands in unit 001's form; no save here - Must - [ ] PLANNED
 - [ ] **006-import-tests** (recipe-import): Unit 001's page tests must pass unmodified - Must - [ ] PLANNED

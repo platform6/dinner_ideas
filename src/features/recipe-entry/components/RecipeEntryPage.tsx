@@ -20,6 +20,8 @@ import { CookingStepsEditor } from '@/features/recipe-entry/components/CookingSt
 import { DinnerFieldsForm } from '@/features/recipe-entry/components/DinnerFieldsForm';
 import { IngredientLinesEditor } from '@/features/recipe-entry/components/IngredientLinesEditor';
 import { TagEditor } from '@/features/recipe-entry/components/TagEditor';
+import { PasteImportPanel } from '@/features/recipe-entry/components/PasteImportPanel';
+import { extractRecipe } from '@/features/recipe-entry/import/extract';
 import {
   createEmptyDraft,
   createIngredientLine,
@@ -64,6 +66,8 @@ export function RecipeEntryPage() {
   // invalid while the user is still filling in its first field.
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
   const [rejection, setRejection] = useState<SaveRejection | null>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [importNotice, setImportNotice] = useState<{ tone: 'info' | 'error'; message: string } | null>(null);
 
   const dinners = useDinners();
   const tags = useAllTags();
@@ -85,6 +89,40 @@ export function RecipeEntryPage() {
     // worse than no message.
     setRejection(null);
     setDraft((current) => ({ ...current, ...patch }));
+  }
+
+  /**
+   * Runs an extraction (bolt 061). The draft does NOT land in the form yet — that is story 005,
+   * bolt 062 — and neither does per-reason error copy, which is story 004. The wording below is a
+   * deliberate placeholder: honest about what happened, and clearly not the finished messages.
+   */
+  async function handleExtract(paste: string) {
+    setIsExtracting(true);
+    setImportNotice(null);
+    try {
+      const outcome = await extractRecipe(paste, existingTagNames);
+      if (outcome.ok) {
+        setImportNotice({
+          tone: 'info',
+          message: `Read “${outcome.draft.name}” — ${outcome.draft.steps.length} steps, ${outcome.draft.ingredients.length} ingredients.${outcome.trimmed ? ' The page was long, so the end was trimmed.' : ''}${outcome.servingsStated ? '' : ' The page gave no serving count, so quantities are as written — check them.'} Review in the form arrives in the next step of the build.`,
+        });
+      } else {
+        setImportNotice({
+          tone: 'error',
+          message:
+            'Couldn’t read a recipe from that page. Your text is still here — try again, or type it in.',
+        });
+      }
+    } catch {
+      // A ClaudeError (rate_limited, no_api_key, …) lands here. Mapping its code to English is
+      // story 004, bolt 062.
+      setImportNotice({
+        tone: 'error',
+        message: 'The AI service couldn’t be reached. Your text is still here.',
+      });
+    } finally {
+      setIsExtracting(false);
+    }
   }
 
   function handleSubmit() {
@@ -209,13 +247,11 @@ export function RecipeEntryPage() {
           </TabPanel>
 
           <TabPanel px={0} pt={5}>
-            <Stack gap={3}>
-              <Text>
-                Paste a whole recipe page and it will be turned into the form on the other tab — the
-                ingredients, the steps and a summary, without the blog post around it.
-              </Text>
-              <Text textStyle="faint">Not built yet. Type it in for now.</Text>
-            </Stack>
+            <PasteImportPanel
+              isExtracting={isExtracting}
+              notice={importNotice}
+              onExtract={(paste) => void handleExtract(paste)}
+            />
           </TabPanel>
         </TabPanels>
       </Tabs>

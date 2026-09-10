@@ -157,3 +157,16 @@
 **Note**: intent 013 `requirements.md` left at `status: complete` — matches project convention where intent status tracks inception completion (all 13 intents read `complete`).
 
 ---
+
+## 2026-09-10T19:12:03Z - Status Sync
+
+**Triggered by**: analyze-context integrity check (master agent)
+
+| Artifact                                                                   | Old Status               | New Status                       | Reason                                                                 |
+| -------------------------------------------------------------------------- | ------------------------ | -------------------------------- | ---------------------------------------------------------------------- |
+| memory-bank/bolts/061-recipe-extraction/bolt.md                            | stages_completed: [plan] | + implement; current_stage: test | `implementation-walkthrough.md` exists and reports all work items done |
+| memory-bank/intents/014-recipe-entry/units/002-recipe-import/unit-brief.md | ready                    | in-progress                      | Bolt 061 in-progress (implement done, test pending); 062 planned       |
+
+**Note**: intent 014 `requirements.md` left at `status: complete` — matches project convention where intent status tracks inception completion (all 17 intents read `complete`).
+
+---
