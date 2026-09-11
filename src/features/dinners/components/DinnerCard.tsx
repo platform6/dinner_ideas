@@ -28,6 +28,7 @@ import {
 import { useAddTag, useDinnerFullDetails, useRemoveTag } from '@/features/dinners/hooks';
 import { isRosieApproved } from '@/features/dinners/tags';
 import type { CatalogDinner } from '@/features/dinners/types';
+import { RemoveDinnerDialog } from '@/features/dinners/components/RemoveDinnerDialog';
 import { categoryIcon, cuisineIcon, metaIcons, stepIcon, uiIcons } from '@/shared/components/icons';
 
 interface SelectionProps {
@@ -231,6 +232,7 @@ function PickPill({ dinner, selection }: { dinner: CatalogDinner; selection: Sel
 
 export function DinnerCard({ dinner, onSuppress, isMutating, selection, lastChosenText }: DinnerCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
   const CuisineIcon = cuisineIcon(dinner.cuisine_type);
   const isLocked = selection.selectionDisabled && !selection.isSelected;
   const visibleTags = dinner.tags.filter((tag) => tag !== 'rosie-approved');
@@ -281,8 +283,21 @@ export function DinnerCard({ dinner, onSuppress, isMutating, selection, lastChos
             </MenuButton>
             <MenuList>
               <MenuItem onClick={() => onSuppress(dinner.id)}>Not interested</MenuItem>
+              {/* Intent 018, bolt 072: permanent, so it asks first (the ellipsis) and reads as
+                  destructive (red) — never to be mistaken for "Not interested", which hides and can
+                  be undone from the Suppressed page. */}
+              <MenuItem color="heart.500" onClick={() => setIsRemoving(true)}>
+                Remove…
+              </MenuItem>
             </MenuList>
           </Menu>
+          <RemoveDinnerDialog
+            dinnerId={dinner.id}
+            dinnerName={dinner.name}
+            isOpen={isRemoving}
+            onClose={() => setIsRemoving(false)}
+            onHideInstead={() => onSuppress(dinner.id)}
+          />
         </HStack>
       </HStack>
 

@@ -2,7 +2,7 @@
 -- Run locally via: supabase test db
 
 begin;
-select plan(11);
+select plan(16);
 
 -- ── search_path pinned on the six pre-004 functions ───────────────────────
 -- proconfig element looks like `search_path=""`; match on the key, not the value.
@@ -58,6 +58,32 @@ select is(
   (select prosecdef from pg_proc
    where oid = 'public.fn_create_dinner(text, text, integer, text, jsonb, text[], text[])'::regprocedure),
   false, 'fn_create_dinner is SECURITY INVOKER, so RLS applies to its inserts');
+
+-- ── fn_remove_dinner: pinned, and DEFINER on purpose (intent 018, ADR-15) ──
+-- The opposite of fn_create_dinner, and deliberately so. It must delete trigger-owned meal_history
+-- rows that clients have no DELETE policy for; invoker would need a client DELETE policy, which would
+-- let anyone delete history directly through PostgREST. ADR-10: name the exception in a function.
+select ok(
+  coalesce(array_to_string(
+    (select proconfig from pg_proc where oid = 'public.fn_remove_dinner(uuid)'::regprocedure), ','
+  ), '') like '%search_path=%',
+  'fn_remove_dinner search_path is pinned (ADR-12: a definer function without it is hijackable)');
+select is(
+  (select prosecdef from pg_proc where oid = 'public.fn_remove_dinner(uuid)'::regprocedure),
+  true, 'fn_remove_dinner is SECURITY DEFINER, with the household check written inside it (ADR-15)');
+select ok(
+  not has_function_privilege('anon', 'public.fn_remove_dinner(uuid)', 'execute'),
+  'anon cannot execute fn_remove_dinner');
+
+-- fn_dinner_removal_impact only reads, so it stays INVOKER and the SELECT policies scope it.
+select ok(
+  coalesce(array_to_string(
+    (select proconfig from pg_proc where oid = 'public.fn_dinner_removal_impact(uuid)'::regprocedure), ','
+  ), '') like '%search_path=%',
+  'fn_dinner_removal_impact search_path is pinned');
+select is(
+  (select prosecdef from pg_proc where oid = 'public.fn_dinner_removal_impact(uuid)'::regprocedure),
+  false, 'fn_dinner_removal_impact is SECURITY INVOKER — it only reads, and RLS scopes its counts');
 
 -- ── current_user_household_id() grants left intact on purpose ─────────────
 select ok(

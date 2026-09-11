@@ -5,7 +5,13 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DinnerCard } from '@/features/dinners/components/DinnerCard';
-import { addTagToDinner, fetchDinnerFullDetails, removeTagFromDinner } from '@/features/dinners/api';
+import {
+  addTagToDinner,
+  fetchDinnerFullDetails,
+  fetchRemovalImpact,
+  removeDinner,
+  removeTagFromDinner,
+} from '@/features/dinners/api';
 import type { CatalogDinner, DinnerFullDetails } from '@/features/dinners/types';
 
 vi.mock('@/features/dinners/api');
@@ -163,5 +169,51 @@ describe('DinnerCard overflow menu', () => {
     await user.click(await screen.findByRole('menuitem', { name: /not interested/i }));
 
     expect(onSuppress).toHaveBeenCalledWith('d1');
+  });
+});
+
+describe('DinnerCard removal (intent 018, bolt 072)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(fetchRemovalImpact).mockResolvedValue({
+      historyCount: 0,
+      pastPlanCount: 0,
+      inCurrentDraft: false,
+      inCurrentLockedPlan: false,
+    });
+  });
+
+  it('offers Remove… BELOW Not interested, as a separate, visibly different action', async () => {
+    const user = userEvent.setup();
+    renderCard();
+
+    await user.click(screen.getByRole('button', { name: 'More actions for Tacos' }));
+    const items = await screen.findAllByRole('menuitem');
+
+    expect(items.map((item) => item.textContent)).toEqual(['Not interested', 'Remove…']);
+  });
+
+  it('opens the confirmation instead of removing — nothing is deleted from the menu itself', async () => {
+    const user = userEvent.setup();
+    renderCard();
+
+    await user.click(screen.getByRole('button', { name: 'More actions for Tacos' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove…' }));
+
+    expect(await screen.findByText('Remove “Tacos”?')).toBeInTheDocument();
+    expect(vi.mocked(removeDinner)).not.toHaveBeenCalled();
+  });
+
+  it('routes "Not interested instead" in the dialog to the same reversible hide', async () => {
+    const onSuppress = vi.fn();
+    const user = userEvent.setup();
+    renderCard(onSuppress);
+
+    await user.click(screen.getByRole('button', { name: 'More actions for Tacos' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove…' }));
+    await user.click(await screen.findByRole('button', { name: 'Not interested instead' }));
+
+    expect(onSuppress).toHaveBeenCalledWith('d1');
+    expect(vi.mocked(removeDinner)).not.toHaveBeenCalled();
   });
 });

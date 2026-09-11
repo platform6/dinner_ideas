@@ -6,7 +6,9 @@ import {
   fetchAllTags,
   fetchDinnerFullDetails,
   fetchLastChosenDates,
+  fetchRemovalImpact,
   fetchSuppressedDinners,
+  removeDinner,
   removeTagFromDinner,
   setDinnerActive,
 } from '@/features/dinners/api';
@@ -82,6 +84,38 @@ export function useRemoveTag() {
       void queryClient.invalidateQueries({ queryKey: dinnerDetailsKey(dinnerId) });
       void queryClient.invalidateQueries({ queryKey: activeDinnersKey });
       void queryClient.invalidateQueries({ queryKey: suppressedDinnersKey });
+    },
+  });
+}
+
+const removalImpactKey = (dinnerId: string) => ['dinners', 'removal-impact', dinnerId] as const;
+
+/**
+ * What removing this dinner would take (bolt 072). Fetched only while the removal dialog is open,
+ * and never cached stale: the answer must be current at the moment the user decides.
+ */
+export function useRemovalImpact(dinnerId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: removalImpactKey(dinnerId),
+    queryFn: () => fetchRemovalImpact(dinnerId),
+    enabled,
+    staleTime: 0,
+    gcTime: 0,
+  });
+}
+
+/**
+ * Removes a dinner (ADR-15). Invalidates every dinner query (catalog, suppressed list, last-chosen,
+ * details) and every weekly-plan query, because removal may have taken the dinner off this week's
+ * draft plan — and the shopping list and cooking view derive from that plan.
+ */
+export function useRemoveDinner() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (dinnerId: string) => removeDinner(dinnerId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['dinners'] });
+      void queryClient.invalidateQueries({ queryKey: ['weekly-plan'] });
     },
   });
 }

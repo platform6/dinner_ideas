@@ -3,16 +3,31 @@ id: 072-remove-a-dinner
 unit: 003-remove-a-dinner
 intent: 018-serving-scale-and-removal
 type: ddd-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-remove-a-dinner
   - 002-confirm-before-removing
   - 003-removal-tests
 created: '2026-09-11T16:24:16Z'
-started: null
-completed: null
+started: '2026-09-11T18:06:25Z'
+completed: '2026-09-11T18:25:24Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: model
+    completed: '2026-09-11T18:09:05Z'
+    artifact: ddd-01-domain-model.md
+  - name: design
+    completed: '2026-09-11T18:10:32Z'
+    artifact: ddd-02-technical-design.md
+  - name: adr-analysis
+    completed: '2026-09-11T18:11:35Z'
+    artifact: adr-015-removing-a-dinner-removes-its-history.md
+  - name: implement
+    completed: '2026-09-11T18:17:03Z'
+    artifact: supabase/migrations/20260911181346_remove_dinner.sql
+  - name: test
+    completed: '2026-09-11T18:25:23Z'
+    artifact: ddd-03-test-report.md
 requires_bolts: []
 enables_bolts: []
 requires_units: []

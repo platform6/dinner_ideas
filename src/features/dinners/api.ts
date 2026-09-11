@@ -177,3 +177,64 @@ export async function fetchDistinctIngredientCategories(): Promise<string[]> {
   }
   return [...categories].sort();
 }
+
+/**
+ * What removing a dinner would take with it (intent 018, bolt 072). Built from
+ * `fn_dinner_removal_impact`, so the warning states facts rather than guesses.
+ */
+export interface RemovalImpact {
+  /** Meal-history entries naming this dinner — times it was planned-and-locked, i.e. cooked. */
+  historyCount: number;
+  /** Previous weeks' plans that included it. */
+  pastPlanCount: number;
+  /** Picked in this week's UNLOCKED plan: removal takes it off, and the shopping list changes. */
+  inCurrentDraft: boolean;
+  /** In this week's LOCKED plan: removal is refused until the week is over (ADR-15). */
+  inCurrentLockedPlan: boolean;
+}
+
+export async function fetchRemovalImpact(dinnerId: string): Promise<RemovalImpact> {
+  const { data, error } = await supabase.rpc('fn_dinner_removal_impact', { p_dinner_id: dinnerId });
+  if (error) throw error;
+  const impact = data as {
+    history_count: number;
+    past_plan_count: number;
+    in_current_draft: boolean;
+    in_current_locked_plan: boolean;
+  };
+  return {
+    historyCount: impact.history_count,
+    pastPlanCount: impact.past_plan_count,
+    inCurrentDraft: impact.in_current_draft,
+    inCurrentLockedPlan: impact.in_current_locked_plan,
+  };
+}
+
+/**
+ * Removes a dinner permanently, through the one function that owns that reach (ADR-15): the dinner,
+ * its ingredients, steps and tag links, its history and its plan selections — all of it, or none.
+ * Never `delete from dinners` directly; the foreign keys deliberately refuse that.
+ */
+export async function removeDinner(dinnerId: string): Promise<void> {
+  const { error } = await supabase.rpc('fn_remove_dinner', { p_dinner_id: dinnerId });
+  if (error) throw error;
+}
+
+/**
+ * A removal failure in plain words. Every case can say "nothing was changed" truthfully, because
+ * `fn_remove_dinner` is one transaction: it refuses or fails before, or instead of, deleting anything.
+ */
+export function mapRemovalError(error: unknown): string {
+  const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
+
+  // P0001 — the one refusal: this week's locked plan (ADR-15). Normally the dialog prevents getting
+  // here; this covers the plan being locked between opening the dialog and pressing Remove.
+  if (code === 'P0001') {
+    return 'It’s in this week’s locked plan, so it can’t be removed until the week is over. Nothing was changed.';
+  }
+  // P0002 — not found: gone already, or never this household's (the two are deliberately the same).
+  if (code === 'P0002') {
+    return 'That dinner is already gone — someone in your household may have removed it.';
+  }
+  return 'Couldn’t remove that dinner. Nothing was changed — try again.';
+}

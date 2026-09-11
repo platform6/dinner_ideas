@@ -2,11 +2,11 @@
 id: 001-remove-a-dinner
 unit: 003-remove-a-dinner
 intent: 018-serving-scale-and-removal
-status: planned
+status: complete
 priority: must
 created: '2026-09-11T16:24:16Z'
 assigned_bolt: null
-implemented: false
+implemented: true
 ---
 
 # Story: 001-remove-a-dinner

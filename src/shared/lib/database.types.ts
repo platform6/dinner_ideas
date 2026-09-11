@@ -965,6 +965,8 @@ export type Database = {
         };
         Returns: string;
       };
+      fn_dinner_removal_impact: { Args: { p_dinner_id: string }; Returns: Json };
+      fn_remove_dinner: { Args: { p_dinner_id: string }; Returns: undefined };
       lock_weekly_plan: {
         Args: { p_plan_id: string };
         Returns: {
