@@ -28,3 +28,7 @@ last_updated: '2026-09-11T17:46:32Z'
 - **2026-09-11T17:47:27Z**: 070-extraction-reports-servings stage-complete - plan → implement (checkpoint waived)
 - **2026-09-11T17:50:41Z**: 070-extraction-reports-servings stage-complete - implement → test (checkpoint waived)
 - **2026-09-11T17:56:44Z**: 070-extraction-reports-servings completed - All 3 stages done (closed via bolt-complete.cjs). Live model check OUTSTANDING (browser extension not connected).
+- **2026-09-11T17:57:39Z**: 071-scale-control started - Stage 1: plan (checkpoints waived)
+- **2026-09-11T17:58:06Z**: 071-scale-control stage-complete - plan → implement (checkpoint waived)
+- **2026-09-11T18:00:29Z**: 071-scale-control stage-complete - implement → test (checkpoint waived)
+- **2026-09-11T18:05:45Z**: 071-scale-control completed - All 3 stages done (closed via bolt-complete.cjs). Unit 002 complete.

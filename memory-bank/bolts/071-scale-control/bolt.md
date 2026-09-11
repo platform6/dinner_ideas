@@ -3,14 +3,23 @@ id: 071-scale-control
 unit: 002-scale-on-review
 intent: 018-serving-scale-and-removal
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 003-scale-control-on-review
 created: '2026-09-11T16:24:16Z'
-started: null
-completed: null
+started: '2026-09-11T17:57:39Z'
+completed: '2026-09-11T18:05:45Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-11T17:58:06Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-11T18:00:29Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-11T18:05:45Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 070-extraction-reports-servings
 enables_bolts: []

@@ -1,5 +1,4 @@
 import {
-  Alert,
   Box,
   Button,
   FormControl,
@@ -13,7 +12,7 @@ import {
 } from '@chakra-ui/react';
 
 import { problemFor, type DraftIngredient, type DraftProblem } from '@/features/recipe-entry/draft';
-import { importQuantityNote } from '@/features/recipe-entry/components/import-quantity-note';
+import { ScaleControl, type ScaledState } from '@/features/recipe-entry/components/ScaleControl';
 import { INGREDIENT_CATEGORIES, type IngredientCategory } from '@/features/store-config/types';
 import { uiIcons } from '@/shared/components/icons';
 
@@ -42,6 +41,12 @@ interface IngredientLinesEditorProps {
    * for a dinner typed in by hand.
    */
   importSource?: { sourceYield: string | null } | null;
+  /** Set once the user has chosen to scale an imported draft (bolt 071); null until then. */
+  scaled?: ScaledState | null;
+  /** Scale every quantity from `fromServings` to the household's size. Only ever user-initiated. */
+  onScale?: (fromServings: number) => void;
+  /** Put the page's own quantities back. */
+  onUndoScale?: () => void;
 }
 
 /**
@@ -61,6 +66,9 @@ export function IngredientLinesEditor({
   onAddLine,
   servingsPerDinner,
   importSource,
+  scaled = null,
+  onScale = () => {},
+  onUndoScale = () => {},
 }: IngredientLinesEditorProps) {
   const problem = (field: string) => (showProblems ? problemFor(problems, field) : undefined);
 
@@ -85,10 +93,13 @@ export function IngredientLinesEditor({
       </Text>
 
       {importSource && (
-        <Alert layerStyle="notice" role="status">
-          <uiIcons.info size={16} strokeWidth={2} style={{ flexShrink: 0, marginRight: '8px' }} />
-          <Text>{importQuantityNote(importSource.sourceYield, servingsPerDinner)}</Text>
-        </Alert>
+        <ScaleControl
+          sourceYield={importSource.sourceYield}
+          servingsPerDinner={servingsPerDinner}
+          scaled={scaled}
+          onScale={onScale}
+          onUndo={onUndoScale}
+        />
       )}
 
       {problem('ingredients') && (

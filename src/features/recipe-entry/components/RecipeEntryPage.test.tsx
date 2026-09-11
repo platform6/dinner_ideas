@@ -756,6 +756,129 @@ describe('RecipeEntryPage', () => {
       });
     });
 
+    describe('scaling on review (intent 018, story 003)', () => {
+      /** Imports a page whose yield is `statedYield` (household cooks for 5, 0.75 lb of shrimp). */
+      async function importWithYield(user: ReturnType<typeof userEvent.setup>, statedYield: string | null) {
+        replyWith(GOOD_REPLY.replace('"yield":"4"', `"yield":${JSON.stringify(statedYield)}`));
+        renderPage();
+        await screen.findByText(/Enter quantities for 5/);
+        await pasteAPage(user);
+        await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+        await screen.findByDisplayValue('Shrimp Noodle Bowls');
+      }
+
+      it('offers to scale, naming BOTH numbers — and scales nothing until asked (FR-4)', async () => {
+        // The regression bolt 071's brief warns about: auto-scaling "because the household size is
+        // right there". The page's 0.75 must be on the form until the user presses the button.
+        const user = userEvent.setup();
+        await importWithYield(user, '4');
+
+        expect(screen.getByRole('button', { name: 'Scale from 4 to 5' })).toBeInTheDocument();
+        expect(screen.getByDisplayValue('0.75')).toBeInTheDocument();
+      });
+
+      it('scales every quantity when pressed, and says what it did', async () => {
+        const user = userEvent.setup();
+        await importWithYield(user, '4');
+
+        await user.click(screen.getByRole('button', { name: 'Scale from 4 to 5' }));
+
+        // 0.75 × 5/4 = 0.9375 → nearest ⅛ → 1 (bolt 070's rounding rule).
+        expect(screen.getByDisplayValue('1')).toBeInTheDocument();
+        expect(screen.queryByDisplayValue('0.75')).not.toBeInTheDocument();
+        expect(screen.getByText(/Scaled from 4 to 5/)).toBeInTheDocument();
+      });
+
+      it('undoes back to the page’s own quantities, without re-importing (FR-3)', async () => {
+        const user = userEvent.setup();
+        await importWithYield(user, '4');
+        await user.click(screen.getByRole('button', { name: 'Scale from 4 to 5' }));
+
+        await user.click(screen.getByRole('button', { name: /Undo/ }));
+
+        expect(screen.getByDisplayValue('0.75')).toBeInTheDocument();
+        expect(mockedCallClaude).toHaveBeenCalledTimes(1);
+        // And the offer is back, starting again from the page's numbers.
+        expect(screen.getByRole('button', { name: 'Scale from 4 to 5' })).toBeInTheDocument();
+      });
+
+      it('ends undo once the user edits a quantity — those numbers are theirs now', async () => {
+        // Restoring the snapshot after an edit would silently throw the edit away.
+        const user = userEvent.setup();
+        await importWithYield(user, '4');
+        await user.click(screen.getByRole('button', { name: 'Scale from 4 to 5' }));
+
+        const quantity = screen.getByDisplayValue('1');
+        await user.clear(quantity);
+        await user.type(quantity, '1.25');
+
+        expect(screen.queryByRole('button', { name: /Undo/ })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Scale from/ })).not.toBeInTheDocument();
+        expect(screen.getByText(/they’re yours now/)).toBeInTheDocument();
+      });
+
+      it('saves the PAGE’S quantities when the user never scales', async () => {
+        const user = userEvent.setup();
+        await importWithYield(user, '4');
+
+        await user.click(screen.getByRole('button', { name: 'Save dinner' }));
+
+        await waitFor(() => expect(mockedCreate).toHaveBeenCalledTimes(1));
+        expect(mockedCreate.mock.calls[0][0].ingredients[0].quantity).toBe('0.75');
+      });
+
+      it('saves the SCALED quantities when the user scaled', async () => {
+        const user = userEvent.setup();
+        await importWithYield(user, '4');
+        await user.click(screen.getByRole('button', { name: 'Scale from 4 to 5' }));
+
+        await user.click(screen.getByRole('button', { name: 'Save dinner' }));
+
+        await waitFor(() => expect(mockedCreate).toHaveBeenCalledTimes(1));
+        expect(mockedCreate.mock.calls[0][0].ingredients[0].quantity).toBe('1');
+      });
+
+      it('asks for the base when the page gave a RANGE — and does not pick one (Checkpoint 2)', async () => {
+        const user = userEvent.setup();
+        await importWithYield(user, '8–10');
+
+        const base = screen.getByLabelText('Scale from how many servings');
+        expect(base).toHaveValue('');
+        expect(screen.getByRole('button', { name: 'Scale to 5' })).toBeDisabled();
+        expect(screen.queryByRole('button', { name: /Scale from \d/ })).not.toBeInTheDocument();
+
+        await user.type(base, '8');
+        await user.click(screen.getByRole('button', { name: 'Scale to 5' }));
+
+        // 0.75 × 5/8 = 0.46875 → nearest ⅛ → 0.5.
+        expect(screen.getByDisplayValue('0.5')).toBeInTheDocument();
+        expect(screen.getByText(/Scaled from 8 to 5/)).toBeInTheDocument();
+      });
+
+      it('offers nothing to scale from a count of pieces, and says why', async () => {
+        const user = userEvent.setup();
+        await importWithYield(user, 'Makes 24 cookies');
+
+        expect(screen.queryByRole('button', { name: /^Scale/ })).not.toBeInTheDocument();
+        expect(screen.getByText(/isn’t a number of people/)).toBeInTheDocument();
+      });
+
+      it('offers nothing when the page stated no yield', async () => {
+        const user = userEvent.setup();
+        await importWithYield(user, null);
+
+        expect(screen.queryByRole('button', { name: /^Scale/ })).not.toBeInTheDocument();
+        expect(screen.getByText(/didn’t say how many it serves/)).toBeInTheDocument();
+      });
+
+      it('offers nothing when the page already serves the household size', async () => {
+        const user = userEvent.setup();
+        await importWithYield(user, '5');
+
+        expect(screen.queryByRole('button', { name: /^Scale/ })).not.toBeInTheDocument();
+      });
+    });
+
     describe('failure messages (story 004)', () => {
       it.each([
         ['no_api_key', /set up yet/],
