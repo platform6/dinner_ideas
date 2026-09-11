@@ -48,6 +48,7 @@ export type ExtractionOutcome = ExtractionSuccess | ExtractionRejection;
 export async function extractRecipe(
   paste: string,
   vocabulary: readonly string[],
+  servingsPerDinner: number,
 ): Promise<ExtractionOutcome> {
   // Refused client-side with no call at all. An empty request would still spend a metered call
   // against the household's daily cap — the cheapest possible bug to avoid.
@@ -55,7 +56,7 @@ export async function extractRecipe(
     return { ok: false, reason: 'empty', trimmed: false };
   }
 
-  const system = buildSystemPrompt(vocabulary);
+  const system = buildSystemPrompt(vocabulary, servingsPerDinner);
   const { text: content, trimmed } = trimToBytes(paste, pasteBudgetBytes(system));
 
   const result = await callClaude({
@@ -76,8 +77,12 @@ export async function extractRecipe(
  * (`system + messages.map(m => m.content).join('')`, in UTF-8 bytes). Exported so a test can
  * assert the cap is respected rather than trusting that it is.
  */
-export function requestBytes(paste: string, vocabulary: readonly string[]): number {
-  const system = buildSystemPrompt(vocabulary);
+export function requestBytes(
+  paste: string,
+  vocabulary: readonly string[],
+  servingsPerDinner: number,
+): number {
+  const system = buildSystemPrompt(vocabulary, servingsPerDinner);
   const { text } = trimToBytes(paste, pasteBudgetBytes(system));
   return byteLength(system) + byteLength(text);
 }

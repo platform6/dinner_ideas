@@ -500,6 +500,7 @@ export type Database = {
           dinners_per_week: number;
           id: string;
           name: string;
+          servings_per_dinner: number;
           week_start_day: number;
         };
         Insert: {
@@ -507,6 +508,7 @@ export type Database = {
           dinners_per_week?: number;
           id?: string;
           name: string;
+          servings_per_dinner?: number;
           week_start_day?: number;
         };
         Update: {
@@ -514,6 +516,7 @@ export type Database = {
           dinners_per_week?: number;
           id?: string;
           name?: string;
+          servings_per_dinner?: number;
           week_start_day?: number;
         };
         Relationships: [];

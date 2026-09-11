@@ -3,16 +3,31 @@ id: 069-servings-setting
 unit: 001-serving-size-setting
 intent: 018-serving-scale-and-removal
 type: ddd-construction-bolt
-status: in-progress
+status: complete
 stories:
   - 001-servings-column
   - 002-servings-setting-control
   - 003-no-more-hardcoded-three
 created: '2026-09-11T16:24:16Z'
 started: '2026-09-11T16:25:09Z'
-completed: null
-current_stage: model
-stages_completed: []
+completed: '2026-09-11T17:44:42Z'
+current_stage: null
+stages_completed:
+  - name: model
+    completed: '2026-09-11T16:45:44Z'
+    artifact: ddd-01-domain-model.md
+  - name: design
+    completed: '2026-09-11T16:50:47Z'
+    artifact: ddd-02-technical-design.md
+  - name: adr-analysis
+    completed: '2026-09-11T17:31:46Z'
+    artifact: adr-014-stored-quantities-mean-what-is-cooked.md
+  - name: implement
+    completed: '2026-09-11T17:38:21Z'
+    artifact: supabase/migrations/20260911173308_servings_per_dinner.sql
+  - name: test
+    completed: '2026-09-11T17:44:41Z'
+    artifact: ddd-03-test-report.md
 requires_bolts: []
 enables_bolts:
   - 070-extraction-reports-servings

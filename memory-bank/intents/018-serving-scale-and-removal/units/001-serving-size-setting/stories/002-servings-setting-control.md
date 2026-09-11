@@ -2,11 +2,11 @@
 id: 002-servings-setting-control
 unit: 001-serving-size-setting
 intent: 018-serving-scale-and-removal
-status: planned
+status: complete
 priority: must
 created: '2026-09-11T16:24:16Z'
 assigned_bolt: null
-implemented: false
+implemented: true
 ---
 
 # Story: 002-servings-setting-control

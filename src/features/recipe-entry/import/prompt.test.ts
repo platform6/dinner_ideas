@@ -12,6 +12,9 @@ import {
 /** The production vocabulary, as verified during planning. */
 const VOCABULARY = ['bean sprouts', 'chicken', 'kim', 'noodles', 'shrimp'];
 
+/** The household's serving size for tests that are not about serving size. */
+const SERVINGS = 3;
+
 /** The proxy's own cap, `MAX_INPUT_BYTES` in `supabase/functions/claude-proxy/rates.ts`. */
 const PROXY_CAP_BYTES = 50_000;
 
@@ -78,14 +81,14 @@ describe('trimToBytes', () => {
 
 describe('pasteBudgetBytes', () => {
   it('leaves room for the system prompt inside the proxy cap', () => {
-    const system = buildSystemPrompt(VOCABULARY);
+    const system = buildSystemPrompt(VOCABULARY, SERVINGS);
 
     expect(byteLength(system) + pasteBudgetBytes(system)).toBeLessThan(PROXY_CAP_BYTES);
   });
 
   it('shrinks when the prompt grows, so it can never be a stale constant', () => {
-    const small = buildSystemPrompt([]);
-    const large = buildSystemPrompt(VOCABULARY);
+    const small = buildSystemPrompt([], SERVINGS);
+    const large = buildSystemPrompt(VOCABULARY, SERVINGS);
 
     expect(pasteBudgetBytes(large)).toBeLessThan(pasteBudgetBytes(small));
   });
@@ -93,7 +96,7 @@ describe('pasteBudgetBytes', () => {
   it('still leaves room for a whole recipe page, so trimming stays the exception', () => {
     // A long blog recipe post runs ~20-30 KB. If the prompt ever grew enough to push the budget
     // near that, trimming would become the normal path and this test should fail loudly.
-    expect(pasteBudgetBytes(buildSystemPrompt(VOCABULARY))).toBeGreaterThan(40_000);
+    expect(pasteBudgetBytes(buildSystemPrompt(VOCABULARY, SERVINGS))).toBeGreaterThan(40_000);
   });
 });
 
@@ -108,7 +111,7 @@ describe('proposableTags', () => {
 });
 
 describe('buildSystemPrompt', () => {
-  const prompt = buildSystemPrompt(VOCABULARY);
+  const prompt = buildSystemPrompt(VOCABULARY, SERVINGS);
 
   it('states the no-omission rule explicitly', () => {
     expect(prompt).toMatch(/never drop a cooking step/i);
@@ -155,9 +158,20 @@ describe('buildSystemPrompt', () => {
     expect(prompt).toMatch(/nearest 5 minutes/i);
   });
 
-  it('names the 3-serving convention and what to do when the source states none', () => {
-    expect(prompt).toMatch(/3 servings/);
-    expect(prompt).toMatch(/servingsStated/);
+  it('rescales to the HOUSEHOLD serving size, not a hard-coded 3 (intent 018, FR-6)', () => {
+    // Asserted at 5, not 3: at 3 a surviving literal would pass this test by coincidence.
+    const forFive = buildSystemPrompt(VOCABULARY, 5);
+
+    expect(forFive).toMatch(/5 servings/);
+    expect(forFive).not.toMatch(/3 servings/);
+    expect(forFive).toMatch(/servingsStated/);
+  });
+
+  it('no longer describes a particular family — that was only ever true of one 3', () => {
+    const forFive = buildSystemPrompt(VOCABULARY, 5);
+
+    expect(forFive).not.toMatch(/small child/i);
+    expect(forFive).not.toMatch(/2 adults|two adults/i);
   });
 
   it('lists every ingredient category, so nothing can be left uncategorised', () => {
@@ -174,11 +188,11 @@ describe('buildSystemPrompt', () => {
   });
 
   it('never sends rosie-approved to the model', () => {
-    expect(buildSystemPrompt(['chicken', 'rosie-approved'])).not.toContain('rosie-approved');
+    expect(buildSystemPrompt(['chicken', 'rosie-approved'], SERVINGS)).not.toContain('rosie-approved');
   });
 
   it('asks for an empty list rather than invention when the household has no tags', () => {
-    expect(buildSystemPrompt([])).toMatch(/no tags yet/i);
+    expect(buildSystemPrompt([], SERVINGS)).toMatch(/no tags yet/i);
   });
 
   it('gives the model an honest way out of a page with no recipe on it', () => {

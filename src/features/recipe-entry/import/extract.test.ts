@@ -13,6 +13,9 @@ const mockedCallClaude = vi.mocked(callClaude);
 
 const VOCABULARY = ['bean sprouts', 'chicken', 'kim', 'noodles', 'shrimp'];
 
+/** The household's serving size for tests that are not about serving size. */
+const SERVINGS = 3;
+
 /** The proxy's own cap, `MAX_INPUT_BYTES` in `supabase/functions/claude-proxy/rates.ts`. */
 const PROXY_CAP_BYTES = 50_000;
 
@@ -48,7 +51,7 @@ describe('extractRecipe', () => {
       ['spaces', '   '],
       ['newlines and tabs', '\n\t \n'],
     ])('refuses %s without calling the API at all', async (_label, paste) => {
-      const outcome = await extractRecipe(paste, VOCABULARY);
+      const outcome = await extractRecipe(paste, VOCABULARY, SERVINGS);
 
       // A call with nothing in it still spends one against the household's daily cap. This is the
       // cheapest possible bug to avoid, so it is asserted rather than assumed.
@@ -59,7 +62,7 @@ describe('extractRecipe', () => {
 
   describe('the request the proxy receives', () => {
     it('sends the pasted text as the user message', async () => {
-      await extractRecipe('Grandma’s shrimp noodles: fry, boil, toss.', VOCABULARY);
+      await extractRecipe('Grandma’s shrimp noodles: fry, boil, toss.', VOCABULARY, SERVINGS);
 
       expect(mockedCallClaude).toHaveBeenCalledTimes(1);
       expect(mockedCallClaude.mock.calls[0][0].messages).toEqual([
@@ -68,13 +71,13 @@ describe('extractRecipe', () => {
     });
 
     it('tags its usage so the log can tell this caller from the connection test', async () => {
-      await extractRecipe('a recipe', VOCABULARY);
+      await extractRecipe('a recipe', VOCABULARY, SERVINGS);
 
       expect(mockedCallClaude.mock.calls[0][0].feature).toBe('recipe_import');
     });
 
     it('stays inside the proxy max_tokens ceiling of 4096', async () => {
-      await extractRecipe('a recipe', VOCABULARY);
+      await extractRecipe('a recipe', VOCABULARY, SERVINGS);
 
       const { maxTokens } = mockedCallClaude.mock.calls[0][0];
       expect(maxTokens).toBeGreaterThan(0);
@@ -82,7 +85,7 @@ describe('extractRecipe', () => {
     });
 
     it('carries the household vocabulary in the system prompt', async () => {
-      await extractRecipe('a recipe', VOCABULARY);
+      await extractRecipe('a recipe', VOCABULARY, SERVINGS);
 
       expect(mockedCallClaude.mock.calls[0][0].system).toContain('shrimp');
     });
@@ -92,7 +95,7 @@ describe('extractRecipe', () => {
     it('sends a normal recipe page whole', async () => {
       const page = 'Ingredients and method. '.repeat(500); // ~12 KB, a long blog post
 
-      const outcome = await extractRecipe(page, VOCABULARY);
+      const outcome = await extractRecipe(page, VOCABULARY, SERVINGS);
 
       expect(outcome.trimmed).toBe(false);
       expect(mockedCallClaude.mock.calls[0][0].messages[0].content).toBe(page);
@@ -101,7 +104,7 @@ describe('extractRecipe', () => {
     it('never exceeds 50,000 bytes, even for a paste far over it', async () => {
       const huge = 'x'.repeat(200_000);
 
-      await extractRecipe(huge, VOCABULARY);
+      await extractRecipe(huge, VOCABULARY, SERVINGS);
 
       const call = mockedCallClaude.mock.calls[0][0];
       const weighed = byteLength(call.system ?? '') + byteLength(call.messages[0].content);
@@ -113,7 +116,7 @@ describe('extractRecipe', () => {
       // These are the pages the feature exists for — ½, °, —, curly quotes everywhere.
       const huge = '—'.repeat(60_000);
 
-      await extractRecipe(huge, VOCABULARY);
+      await extractRecipe(huge, VOCABULARY, SERVINGS);
 
       const call = mockedCallClaude.mock.calls[0][0];
       const weighed = byteLength(call.system ?? '') + byteLength(call.messages[0].content);
@@ -125,7 +128,7 @@ describe('extractRecipe', () => {
       const recipe = 'RECIPE START. ' + 'ingredients and steps. '.repeat(3_000);
       const comments = ' COMMENTS-TAIL-MARKER '.repeat(2_000);
 
-      await extractRecipe(recipe + comments, VOCABULARY);
+      await extractRecipe(recipe + comments, VOCABULARY, SERVINGS);
 
       const sent = mockedCallClaude.mock.calls[0][0].messages[0].content;
       expect(sent).toContain('RECIPE START.');
@@ -133,7 +136,7 @@ describe('extractRecipe', () => {
     });
 
     it('reports the trim, so the user is told the input was shortened', async () => {
-      const outcome = await extractRecipe('x'.repeat(200_000), VOCABULARY);
+      const outcome = await extractRecipe('x'.repeat(200_000), VOCABULARY, SERVINGS);
 
       expect(outcome.trimmed).toBe(true);
     });
@@ -141,7 +144,7 @@ describe('extractRecipe', () => {
     it('reports the trim on a FAILURE too, so a trim is never lost behind an error', async () => {
       replyWith('I cannot help with that.');
 
-      const outcome = await extractRecipe('x'.repeat(200_000), VOCABULARY);
+      const outcome = await extractRecipe('x'.repeat(200_000), VOCABULARY, SERVINGS);
 
       expect(outcome).toEqual({ ok: false, reason: 'not-json', trimmed: true });
     });
@@ -156,13 +159,13 @@ describe('extractRecipe', () => {
     ])('stays under the proxy cap for %s', (_label, paste) => {
       // Exported precisely so the cap is asserted rather than trusted. Story 001 is absolute: the
       // proxy must never answer this caller with `bad_request` for size.
-      expect(requestBytes(paste, VOCABULARY)).toBeLessThan(PROXY_CAP_BYTES);
+      expect(requestBytes(paste, VOCABULARY, SERVINGS)).toBeLessThan(PROXY_CAP_BYTES);
     });
   });
 
   describe('the outcome', () => {
     it('returns a draft when the model plays along', async () => {
-      const outcome = await extractRecipe('a recipe page', VOCABULARY);
+      const outcome = await extractRecipe('a recipe page', VOCABULARY, SERVINGS);
 
       expect(outcome.ok).toBe(true);
       expect(outcome.ok && outcome.draft.name).toBe('Shrimp Noodle Bowls');
@@ -172,7 +175,7 @@ describe('extractRecipe', () => {
     it('passes servingsStated through, so the user can be told to check quantities', async () => {
       replyWith(GOOD_REPLY.replace('"servingsStated":true', '"servingsStated":false'));
 
-      const outcome = await extractRecipe('a recipe page', VOCABULARY);
+      const outcome = await extractRecipe('a recipe page', VOCABULARY, SERVINGS);
 
       expect(outcome.ok && outcome.servingsStated).toBe(false);
     });
@@ -184,7 +187,7 @@ describe('extractRecipe', () => {
     ])('turns %s into a typed failure', async (_label, text, reason) => {
       replyWith(text);
 
-      const outcome = await extractRecipe('a recipe page', VOCABULARY);
+      const outcome = await extractRecipe('a recipe page', VOCABULARY, SERVINGS);
 
       expect(outcome).toEqual({ ok: false, reason, trimmed: false });
     });
@@ -199,7 +202,7 @@ describe('extractRecipe', () => {
         // flatten "you are out of calls today" into "that page could not be read".
         mockedCallClaude.mockRejectedValue(new ClaudeError(code, 'nope'));
 
-        await expect(extractRecipe('a recipe page', VOCABULARY)).rejects.toThrow(ClaudeError);
+        await expect(extractRecipe('a recipe page', VOCABULARY, SERVINGS)).rejects.toThrow(ClaudeError);
       },
     );
   });

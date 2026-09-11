@@ -2,11 +2,11 @@
 id: 001-servings-column
 unit: 001-serving-size-setting
 intent: 018-serving-scale-and-removal
-status: planned
+status: complete
 priority: must
 created: '2026-09-11T16:24:16Z'
 assigned_bolt: null
-implemented: false
+implemented: true
 ---
 
 # Story: 001-servings-column

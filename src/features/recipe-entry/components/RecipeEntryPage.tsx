@@ -38,6 +38,7 @@ import {
   type RecipeDraft,
 } from '@/features/recipe-entry/draft';
 import { useAllTags, useDinners } from '@/features/dinners/hooks';
+import { useServingsPerDinner } from '@/features/settings/hooks';
 import { useSaveDinner } from '@/features/recipe-entry/hooks';
 import { mapSaveError, type SaveRejection } from '@/features/recipe-entry/api';
 import { uiIcons } from '@/shared/components/icons';
@@ -84,6 +85,9 @@ export function RecipeEntryPage() {
 
   const dinners = useDinners();
   const tags = useAllTags();
+  // How many people the household cooks for (intent 018). The fallback mirrors the column's
+  // default so the form is usable before the query lands; it is not a second source of truth.
+  const servingsPerDinner = useServingsPerDinner().data ?? 3;
   const saveDinner = useSaveDinner();
 
   // The same derivation the catalog already uses for its cuisine filter — read from the data, so
@@ -119,7 +123,7 @@ export function RecipeEntryPage() {
     setImportFailure(null);
     setImportedSummary(null);
     try {
-      const outcome = await extractRecipe(paste, existingTagNames);
+      const outcome = await extractRecipe(paste, existingTagNames, servingsPerDinner);
       if (!outcome.ok) {
         setImportFailure(messageForExtractionFailure(outcome.reason));
         return;
@@ -213,6 +217,7 @@ export function RecipeEntryPage() {
                   onAddLine={() =>
                     patchDraft({ ingredients: [...draft.ingredients, createIngredientLine()] })
                   }
+                  servingsPerDinner={servingsPerDinner}
                   quantitiesUnscaled={quantitiesUnscaled}
                 />
               </Section>

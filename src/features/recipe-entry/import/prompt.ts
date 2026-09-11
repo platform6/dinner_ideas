@@ -86,8 +86,12 @@ export function proposableTags(vocabulary: readonly string[]): string[] {
  * The no-omission rule is stated explicitly and merging is offered as the legal way to shorten.
  * A model under length pressure will compress somehow; the prompt's job is to make merging the
  * reachable move so deleting a step is not.
+ *
+ * `servingsPerDinner` is the household's setting (intent 018, bolt 069), replacing a hard-coded 3
+ * so a household that cooks for 5 is not rescaled to 3. The rescaling rule that uses it is
+ * deliberately short-lived: bolt 070 removes it, and extraction stops doing arithmetic altogether.
  */
-export function buildSystemPrompt(vocabulary: readonly string[]): string {
+export function buildSystemPrompt(vocabulary: readonly string[], servingsPerDinner: number): string {
   const tags = proposableTags(vocabulary);
 
   return `You extract recipes from pasted web pages for a family's dinner catalog.
@@ -133,10 +137,9 @@ number, so a 50-minute dinner filed as 25 minutes is worse than no number at all
 states no time anywhere, estimate the total from the cooking steps themselves — the times they name
 plus the work they describe — and round to the nearest 5 minutes.
 
-**Quantities are for 3 servings** (2 adults and 1 small child). If the source states a serving
-count, rescale every quantity to 3 — "serves 6" halves everything. If the source states NO serving
-count, take the quantities as they are and set "servingsStated" to false, so the family knows to
-check them.
+**Quantities are for ${servingsPerDinner} servings.** If the source states a serving count, rescale every
+quantity to ${servingsPerDinner}. If the source states NO serving count, take the quantities as they are
+and set "servingsStated" to false, so the family knows to check them.
 
 **Every ingredient needs a category**, exactly one of: ${INGREDIENT_CATEGORIES.join(', ')}.
 Nothing may be left uncategorised.

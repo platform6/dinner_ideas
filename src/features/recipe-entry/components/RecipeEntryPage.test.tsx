@@ -8,6 +8,7 @@ import { RecipeEntryPage } from '@/features/recipe-entry/components/RecipeEntryP
 import { fetchActiveDinners, fetchAllTags } from '@/features/dinners/api';
 import { createDinner } from '@/features/recipe-entry/api';
 import { callClaude, ClaudeError } from '@/features/ai/api';
+import { fetchServingsPerDinner } from '@/features/settings/api';
 import type { CatalogDinner, Tag } from '@/features/dinners/types';
 
 vi.mock('@/features/dinners/api');
@@ -20,6 +21,17 @@ vi.mock('@/features/ai/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/features/ai/api')>()),
   callClaude: vi.fn(),
 }));
+vi.mock('@/features/settings/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/features/settings/api')>()),
+  fetchServingsPerDinner: vi.fn(),
+}));
+
+/**
+ * The household in these tests cooks for FIVE, deliberately not the old hard-coded 3. With 3, a
+ * surviving literal would render the same text and every test would pass by coincidence (intent
+ * 018, story 003).
+ */
+const HOUSEHOLD_SERVINGS = 5;
 
 function dinner(name: string, cuisine: string): CatalogDinner {
   return {
@@ -45,9 +57,11 @@ describe('RecipeEntryPage', () => {
   const mockedTags = vi.mocked(fetchAllTags);
   const mockedCreate = vi.mocked(createDinner);
   const mockedCallClaude = vi.mocked(callClaude);
+  const mockedServings = vi.mocked(fetchServingsPerDinner);
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedServings.mockResolvedValue(HOUSEHOLD_SERVINGS);
     mockedDinners.mockResolvedValue([dinner('Tacos', 'Mexican'), dinner('Ramen', 'Japanese')]);
     mockedTags.mockResolvedValue([tag('quick'), tag('weeknight')]);
     mockedCreate.mockResolvedValue('new-dinner-id');
@@ -120,9 +134,20 @@ describe('RecipeEntryPage', () => {
     expect(await screen.findByRole('button', { name: 'Get the recipe' })).toBeDisabled();
   });
 
-  it('states the 3-serving convention where the quantities are typed', async () => {
+  it('guides quantities by the household serving size where they are typed', async () => {
     renderPage();
-    expect(await screen.findByText(/Quantities are for 3 servings/)).toBeInTheDocument();
+    expect(await screen.findByText(/Enter quantities for 5/)).toBeInTheDocument();
+  });
+
+  it('no longer says 3 servings or describes a particular family (FR-6)', async () => {
+    // The ABSENCE is the assertion that catches a surviving literal. "two adults and one small
+    // child" described one particular 3; at any other number it is false, so it is gone.
+    renderPage();
+    await screen.findByText(/Enter quantities for 5/);
+
+    expect(screen.queryByText(/3 servings/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/small child/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/two adults/)).not.toBeInTheDocument();
   });
 
   it('says the summary is not the cooking steps', async () => {
@@ -566,7 +591,22 @@ describe('RecipeEntryPage', () => {
       await pasteAPage(user);
       await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
 
-      expect(await screen.findByText(/have NOT been adjusted to 3 servings/)).toBeInTheDocument();
+      expect(await screen.findByText(/have NOT been adjusted to 5/)).toBeInTheDocument();
+    });
+
+    it('sends the household serving size to the model, not a hard-coded 3', async () => {
+      replyWith(GOOD_REPLY);
+      const user = userEvent.setup();
+      renderPage();
+      await screen.findByText(/Enter quantities for 5/);
+
+      await pasteAPage(user);
+      await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+      await waitFor(() => expect(mockedCallClaude).toHaveBeenCalledTimes(1));
+      const { system } = mockedCallClaude.mock.calls[0][0];
+      expect(system).toContain('5 servings');
+      expect(system).not.toContain('3 servings');
     });
 
     it('does NOT warn about servings when the source stated a count', async () => {
