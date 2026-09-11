@@ -170,3 +170,28 @@
 **Note**: intent 014 `requirements.md` left at `status: complete` — matches project convention where intent status tracks inception completion (all 17 intents read `complete`).
 
 ---
+
+## 2026-09-11T19:10:00Z - Status Sync
+
+**Triggered by**: `status-integrity.cjs` (read-only run) after bolts 061 and 062 were found closed by hand
+
+| Artifact                                                                                         | Old Status                   | New Status                  | Reason            |
+| ------------------------------------------------------------------------------------------------ | ---------------------------- | --------------------------- | ----------------- |
+| memory-bank/intents/014-recipe-entry/units/002-recipe-import/stories/001-paste-box-and-sizing.md | complete, implemented: false | complete, implemented: true | Bolt 061 complete |
+| memory-bank/intents/014-recipe-entry/units/002-recipe-import/stories/002-extraction-prompt.md    | complete, implemented: false | complete, implemented: true | Bolt 061 complete |
+| memory-bank/intents/014-recipe-entry/units/002-recipe-import/stories/003-response-parsing.md     | complete, implemented: false | complete, implemented: true | Bolt 061 complete |
+
+**Cause**: bolts 061 and 062 were closed by hand-editing statuses instead of running
+`bolt-complete.cjs`, which `bolt-start.md` Step 10 makes a hard gate. The hand edit for 061 set
+`status` but not `implemented`; the script sets both. 062's hand edit happened to set both.
+
+**How it was fixed**: `bolt-complete.cjs 061` was run first and refused ("Bolt is already
+complete" — `validateBoltStatus` rejects closed bolts), so the script has no path for a bolt closed
+out of band. `status-integrity.cjs --fix` was NOT used, because it would also rewrite the six
+convention items below. The one missing field was set to exactly the value the script writes.
+
+**Left deliberately**: 6 items flagged by the script remain — unit-briefs at `ready` (script wants
+`stories-defined`) and `requirements.md` at `complete` (script wants `units-defined`) for intents
+017 and 018. This is the project convention recorded in the 2026-09-07 entry above, not drift.
+
+---

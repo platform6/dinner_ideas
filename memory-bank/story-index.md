@@ -225,7 +225,7 @@
 
 ---
 
-### 013-placement-edit-control — ✅ COMPLETE (bolts 055, 056, 057 shipped v0.11.0; 058 ✅ built, awaiting release)
+### 013-placement-edit-control — 🚀 SHIPPED (bolts 055, 056, 057 in v0.11.0; 058 in v0.11.2, verified on prod 2026-09-08)
 
 **Unit: 001-placement-review-state** — bolt `055` ✅ COMPLETE
 
@@ -249,7 +249,7 @@
 
 ---
 
-### 014-recipe-entry — ✅ BUILT (bolts 059–062 complete; not yet deployed)
+### 014-recipe-entry — 🚀 SHIPPED v0.14.0 (bolts 059–062 complete; live on prod 2026-09-11, PR #22)
 
 **Unit: 001-recipe-manual-entry** — bolts `059`, `060` ✅ COMPLETE — the catalog is writable
 
@@ -273,7 +273,7 @@
 
 ---
 
-### 015-dinners-per-week — ✅ BUILT (bolts 063–065 complete; not yet deployed)
+### 015-dinners-per-week — 🚀 SHIPPED v0.12.0 (bolts 063–065 complete; live + verified on prod 2026-09-08)
 
 **Unit: 001-dinners-per-week-model** — bolts `063`, `064` ✅ COMPLETE — the rule lives in Postgres
 
@@ -290,7 +290,7 @@
 
 ---
 
-### 016-feeling-lucky — ✅ BUILT (bolt 066 complete; not yet deployed)
+### 016-feeling-lucky — 🚀 SHIPPED v0.13.0 (bolt 066 complete; live on prod 2026-09-08)
 
 **Unit: 001-lucky-pick** — bolt `066` ✅ COMPLETE
 

@@ -77,9 +77,9 @@ Create `deployment/verification-{version}.md`:
 
 ```markdown
 ---
-version: {version}
-environment: {env}
-verified: {timestamp}
+version: { version }
+environment: { env }
+verified: { timestamp }
 status: passed|failed
 ---
 
@@ -108,10 +108,39 @@ status: passed|failed
 - **Error Rate**: 0.01% → 0.02% (+0.01%)
 
 ### Conclusion
+
 {passed|failed}: {summary}
 ```
 
 ---
+
+### 7. Record the Release Where It Will Be Read (production only)
+
+> Local addition — not in upstream specsmd.
+
+When a **production** verification passes, two records must change, in this order:
+
+1. **The intent's deployment plan** — set its frontmatter `status` to `production-live` (or
+   `production-live-verified` once the smoke test is complete), and record what was verified.
+   This is the authoritative record.
+2. **The intent's header in `memory-bank/story-index.md`** — replace any "not yet deployed" /
+   "awaiting release" wording with what shipped, e.g.
+   `### 014-recipe-entry — 🚀 SHIPPED v0.14.0 (bolts 059–062; live on prod 2026-09-11, PR #22)`.
+
+Then confirm nothing contradicts it:
+
+```bash
+node .specsmd/aidlc/scripts/status-integrity.cjs
+```
+
+Its `[4/4]` pass compares every story-index header with its intent's deployment plan. It should
+report no deployment findings. (The unit-brief `ready` and requirements `complete` findings are
+this project's deliberate convention — see `maintenance-log.md`, 2026-09-07 — and are expected.)
+
+**Why both, and why here:** Inception writes the header when an intent is planned, and no other
+upstream step revisits it. Operations is the only agent that knows a release happened, so it is the
+only one that can keep the header true. Skipping this left four intent headers claiming "not yet
+deployed" after they were live.
 
 ## Output (Verification Passed)
 
@@ -137,6 +166,7 @@ status: passed|failed
 - ✅ **{env}**: `{version}` - Verified
 
 ### Documentation Created
+
 - `{unit-path}/deployment/verification-{version}.md`
 
 ### Actions
@@ -146,6 +176,7 @@ status: passed|failed
 3 - **menu**: Return to operations menu
 
 ### Suggested Next Step
+
 → **monitor** - Setup monitoring for `{unit-name}`
 
 **Type a number or press Enter for suggested action.**
@@ -166,6 +197,7 @@ status: passed|failed
 - ❌ **{check2}**: Expected {expected}, got {actual}
 
 ### Error Details
+
 {error messages or logs}
 
 ### Impact Assessment
@@ -174,6 +206,7 @@ status: passed|failed
 - **Affected**: {what's broken}
 
 ### Recommended Action
+
 ⚠️ **ROLLBACK RECOMMENDED**
 
 Previous stable version: `{prev-version}`
@@ -188,6 +221,7 @@ deploy --unit="{unit}" --env="{env}" --version="{prev-version}"
 3 - **menu**: Return to operations menu
 
 ### Suggested Next Step
+
 → **rollback** - Restore `{prev-version}` immediately
 
 **Type a number or press Enter for suggested action.**
@@ -198,9 +232,11 @@ deploy --unit="{unit}" --env="{env}" --version="{prev-version}"
 ## Human Validation Point
 
 On success:
+
 > "Verification passed for `{unit}` v`{version}` in {env}. All {n} checks passed. Ready to proceed to {next-action}?"
 
 On failure:
+
 > "⚠️ Verification FAILED for `{unit}` v`{version}`. {n} checks failed. Recommend rollback to `{prev-version}`. Proceed with rollback?"
 
 ---

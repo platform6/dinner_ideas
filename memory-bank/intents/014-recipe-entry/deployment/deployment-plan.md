@@ -4,9 +4,9 @@ release: v0.14.0-fd66c42
 commit: fd66c42
 units: [001-recipe-manual-entry, 002-recipe-import]
 created: '2026-09-11T16:00:00Z'
-updated: '2026-09-11T16:20:00Z'
-status: db-applied
-current_checkpoint: 2
+updated: '2026-09-11T19:20:00Z'
+status: production-live-verified
+current_checkpoint: 4
 follows: v0.13.0-6b10daf
 environments:
   dev:
@@ -15,10 +15,10 @@ environments:
   staging:
     status: 'n/a — product owner decision 2026-09-11 (Checkpoint 1). The migration is additive and idempotent: one `create or replace function` plus a grant, no table, constraint, row or policy touched, covered by 22 pgTAP tests including the atomicity proof. Its blast radius on production was a function that nothing called.'
   production:
-    status: not-started
+    status: 'live 2026-09-11'
     target: 'Supabase (one migration) THEN Netlify main'
     db: 'APPLIED 2026-09-11 — 20260908230000_create_dinner_rpc.sql. VERIFIED three ways: `supabase migration list` now shows remote 20260908230000; an RPC probe from a client authenticated against prod reached the function with the app''s exact signature and was refused by the function''s OWN invariant (23514, "A dinner needs at least one ingredient") rather than by PostgREST''s PGRST202 — so the function exists, the grant works, and the aggregate rules are live; and the probe wrote nothing (`dinners ilike %probe%` returns zero rows).'
-    fe: 'NOT STARTED — 6 commits unreleased, and `dev` is not pushed.'
+    fe: 'MERGED + LIVE 2026-09-11 — PR #22, origin/main 8bbc804. Verified ON THE ARTIFACT: the first check found Netlify still serving the v0.13.0 bundle; the rebuilt bundle (index-DvC4bs5S.js) carries Paste a recipe, Get the recipe, fn_create_dinner, the new failure copy, the servings caveat and the cook-time rule. `git log origin/main..dev` empty.'
     edge_function: 'n/a — claude-proxy unchanged and frozen since intent 008.'
 ---
 
@@ -205,3 +205,42 @@ is now impossible to enter.
   before release rather than left where a test session put it.
 - **Bolt 068** (`intent 017`, `blocks: true`) remains planned and unstarted. It is unrelated to
   this release and is not a blocker for it, but it is the oldest open item in the project.
+
+## Checkpoints 3–4 — frontend live, smoke run (2026-09-11)
+
+`dev` pushed (`origin/dev..dev` empty), PR #22 opened and merged, `origin/main` at `8bbc804`.
+`origin/main..dev` empty — nothing left unreleased.
+
+**Verified on the artifact, not the PR page.** The first bundle check found Netlify still serving
+the v0.13.0 build (`index-rWM_Svya.js`, none of the feature strings present). The rebuilt bundle
+(`index-DvC4bs5S.js`) carries every marker checked. A green PR is not a shipped feature, and this
+is the second time the check has caught the gap between them.
+
+### Smoke results
+
+| #   | Step                                | Result                                                                                                       |
+| --- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 1   | "Add dinner" entry point            | ✅ present, route opens                                                                                      |
+| 2   | Save a dinner                       | ✅ **by the product owner**, with a real import — see below                                                  |
+| 3   | Duplicate-name handling             | not run on prod — covered by unit tests and the 23505 mapping                                                |
+| 4   | Paste a real recipe page            | ✅ draft landed in the form; proxy reachable from the Netlify origin                                         |
+| 5   | Cook time on a split prep/cook page | ✅ 50, the bolt 061 prompt fix live                                                                          |
+| 6   | Leave without saving                | ✅ nothing written                                                                                           |
+| 7   | Rate-limit copy                     | not run on prod — would spend the household's remaining calls; seen live on localhost against the same proxy |
+| 8   | Existing screens                    | ✅ catalog, `/plan`, `/shopping-list` unaffected                                                             |
+
+**The save path, end to end.** The product owner imported Mel's Kitchen Cafe's salted chocolate
+toffee pretzel bark and saved it. It landed across all four tables: the `dinners` row, 5
+ingredient lines, 4 ordered steps, and a `christmas` tag. That tag was not in the household
+vocabulary — the parser drops model-proposed tags outside it — so it was added by hand in review.
+One save therefore exercised extraction, handoff, the tag editor, and `fn_create_dinner`'s
+find-or-create inside the transaction.
+
+### Finding from production use
+
+The bark's quantities were rescaled to 3 servings from a source yield of 8–10 (1 cup butter →
+0.33 cup). Correct per the prompt, wrong for a tray bake. **Intent 018** takes that up: scaling
+moves out of the model and becomes the user's choice on review, and a dinner becomes removable.
+The bark's saved quantities are left as they are (018 NFR-1) until that ships.
+
+**Status: production-live-verified.**
