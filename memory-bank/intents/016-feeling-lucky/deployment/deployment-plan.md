@@ -4,21 +4,21 @@ release: v0.13.0-6b10daf
 commit: 6b10daf
 units: [001-lucky-pick]
 created: '2026-09-08T23:25:00Z'
-updated: '2026-09-08T23:25:00Z'
-status: awaiting-approval
-current_checkpoint: 2
+updated: '2026-09-08T23:55:00Z'
+status: production-live-verified
+current_checkpoint: 4
 follows: v0.12.0-1223ed7
 environments:
   dev:
     status: verified
     target: 'local — vitest 353/353, tsc -b, eslint, vite build; no SQL in this release'
   staging:
-    status: pending
+    status: 'n/a — product owner decision 2026-09-08. No schema change to rehearse, no new query, no RLS surface; the writes go through the same createPlan/addSelection path every hand-pick has used since v0.1. The only new logic is a pure function that cannot reach the database.'
   production:
-    status: pending
+    status: 'live 2026-09-08'
     target: 'Netlify main (Supabase untouched)'
     db: 'n/a — no migration. All 25 local migrations confirmed applied on prod.'
-    fe: 'pending — dev @ 6b10daf needs pushing, then dev → main'
+    fe: 'MERGED + LIVE 2026-09-08 — PR #21, origin/main be7af39. Verified ON THE ARTIFACT, not the PR page: lucky-draw.ts present, LuckyPickControl.tsx carries "Surprise me" x2, CatalogPage.tsx carries 7 lucky references. `git log origin/main..dev` empty — nothing remains unreleased.'
     edge_function: 'n/a'
 ---
 
@@ -117,3 +117,43 @@ promises a test can only approximate.
 - **Checkpoint 2 — staging**: recommend `n/a`, awaiting the product owner's call
 - **Checkpoint 3 — production**: awaiting approval
 - **Checkpoint 4 — post-deploy**: open until the smoke above is performed
+
+---
+
+## Checkpoint 4 — closed 2026-09-08
+
+**Live on production.** `origin/main` @ `be7af39` (PR #21). Netlify built and deployed `main`.
+
+### Verified on the artifact
+
+Against `origin/main` rather than the PR page — the distinction that cost this project a shipped
+release earlier today:
+
+| Check                                         | Result                         |
+| --------------------------------------------- | ------------------------------ |
+| `git show origin/main:…/lucky-draw.ts`        | present                        |
+| `git show origin/main:…/LuckyPickControl.tsx` | "Surprise me" x2               |
+| `git show origin/main:…/CatalogPage.tsx`      | 7 lucky references             |
+| `git log --oneline origin/main..dev`          | **empty — nothing unreleased** |
+
+### Smoke — performed by the product owner
+
+Reported good. The two steps that mattered — that the draw picks dinners not eaten recently
+without simply returning the oldest three, and that pressing it twice gives different sets — both
+held against the founding household's 50 real dinners and their real history.
+
+That closes the one gap the automated suite could not reach. The bias was measured in tests across
+2000 seeded draws; whether it _feels_ right against real history is a judgement only a person
+using it can make, and it was made.
+
+### Still open, unchanged and accepted
+
+- **The partial-failure path remains untested.** Recorded in the build record as reasoned, not
+  proven. Production use has not exercised it, which is not evidence either way.
+- **Intent 004's dashboard advisor re-run** still needs the product owner's Supabase account. Not
+  affected by this release: no SQL, no RLS, no new function.
+
+### Release
+
+**v0.13.0** — `follows` v0.12.0 (`520134c`). No database change, so no rollback ordering to
+preserve. Reverting the merge is sufficient and remains cheap.

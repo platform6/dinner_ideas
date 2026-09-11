@@ -3,16 +3,25 @@ id: 061-recipe-extraction
 unit: 002-recipe-import
 intent: 014-recipe-entry
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-paste-box-and-sizing
   - 002-extraction-prompt
   - 003-response-parsing
 created: '2026-09-07T03:05:00Z'
-started: null
-completed: null
+started: '2026-09-09T01:12:00Z'
+completed: '2026-09-10T19:28:55Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-09T01:12:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-09T01:35:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-10T19:28:55Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 060-recipe-save
 enables_bolts:

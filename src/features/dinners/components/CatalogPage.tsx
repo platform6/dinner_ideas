@@ -164,6 +164,30 @@ export function CatalogPage() {
             isClearing={clearSelections.isPending}
             onClear={() => void handleClear()}
           />
+          {/*
+            Reads as "add", not "import" — importing is one of two ways in, not the headline
+            (intent 014, story 001). Icon-only on a phone: the header already carries the count
+            badge and three controls, and a sixth label does not fit at that width.
+          */}
+          <IconButton
+            as={RouterLink}
+            to="/dinners/new"
+            aria-label="Add a dinner"
+            icon={<uiIcons.add size={18} strokeWidth={1.8} />}
+            variant="ghost"
+            size="sm"
+            display={{ base: 'inline-flex', md: 'none' }}
+          />
+          <Button
+            as={RouterLink}
+            to="/dinners/new"
+            leftIcon={<uiIcons.add size={14} strokeWidth={2} />}
+            variant="outline"
+            size="sm"
+            display={{ base: 'none', md: 'inline-flex' }}
+          >
+            Add dinner
+          </Button>
           <IconButton
             as={RouterLink}
             to="/suppressed"

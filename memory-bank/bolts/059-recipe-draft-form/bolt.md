@@ -3,7 +3,7 @@ id: 059-recipe-draft-form
 unit: 001-recipe-manual-entry
 intent: 014-recipe-entry
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-recipe-entry-route
   - 002-dinner-fields-form
@@ -11,10 +11,13 @@ stories:
   - 004-cooking-steps-editor
   - 008-tag-editor
 created: '2026-09-07T03:05:00Z'
-started: null
-completed: null
+started: '2026-09-08T21:30:00Z'
+completed: '2026-09-08T22:38:13Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-08T21:30:00Z'
+    artifact: implementation-plan.md
 requires_bolts: []
 enables_bolts:
   - 060-recipe-save

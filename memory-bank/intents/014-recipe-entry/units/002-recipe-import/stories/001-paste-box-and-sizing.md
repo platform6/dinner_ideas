@@ -2,7 +2,7 @@
 id: 001-paste-box-and-sizing
 unit: 002-recipe-import
 intent: 014-recipe-entry
-status: planned
+status: complete
 priority: must
 created: '2026-09-07T03:00:00Z'
 assigned_bolt: 061-recipe-extraction

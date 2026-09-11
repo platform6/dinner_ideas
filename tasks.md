@@ -23,10 +23,11 @@ the inbox; the intents are the source of truth.
 
 - **Add an "I'm feeling lucky" UI element to the dinner catalog which auto picks the number of
   dinners set in the settings page, selecting randomly from the catalog.**
-  → **`016-feeling-lucky` — BUILT 2026-09-08** (bolt 066). A "Surprise me" control fills the
+  → **`016-feeling-lucky` — DELIVERED 2026-09-08 (v0.13.0)** (bolt 066). A "Surprise me" control fills the
   week's empty slots, weighted away from recently-eaten dinners via the existing
-  `dinner_last_chosen` view. Non-destructive, so no confirm. vitest 353/353. **Not yet deployed** —
-  frontend only, no migration.
+  `dinner_last_chosen` view. Non-destructive, so no confirm. vitest 353/353. Live on prod, smoke
+  passed: the draw picks dinners not eaten recently without simply returning the oldest three, and
+  pressing it twice gives different sets.
 
   Scoped during inception: it fills empty slots rather than replacing picks (non-destructive, and
   intent 009's Clear Picks already covers a full re-roll), excludes suppressed dinners, and weights
@@ -55,5 +56,19 @@ Nothing currently. Add new ideas here as bullets; they become intents via
   at 500px: the moved row travelled 599px up the document and stayed on the same viewport pixel
   (0px drift); checked items preserved. At desktop width the check is not applicable — the
   two-column layout fits the whole list, so the page does not scroll.
-- **`014-recipe-entry`** — inception complete (10 FRs, 2 units, 14 stories, bolts 059–062), not
-  started. It is the catalog's first application write path.
+- **`014-recipe-entry`** — **UNIT 001 BUILT 2026-09-08** (bolts 059, 060). **The catalog is
+  writable for the first time in the project's life.** `/dinners/new` with the recipe draft and
+  four editors, an "Add dinner" control on the catalog, and a save that writes `dinners` +
+  `dinner_ingredients` + `dinner_steps` + `dinner_tags` in **one transaction** via
+  `fn_create_dinner` (ADR-13). 450/450 vitest, 394/394 pgTAP. **Not yet deployed** — carries a
+  migration. Bolts 061–062 (unit 002, Claude import) are still planned and remain cuttable: unit
+  001 is a complete, useful page on its own.
+
+  Carried forward, unresolved: `dinners.instructions` is required by the schema but rendered
+  nowhere in the app (the form captures it, honestly labelled, and does not claim it appears on the
+  catalog card — whether the card _should_ show it is an open question for intent 001); and the
+  ingredient row's phone layout is unverified, because jsdom has no layout engine — worth an
+  eyeball on a real device.
+
+  Note for the deploy: **`database.types.ts` is ahead of production**, as in bolt 064. A routine
+  `supabase gen types --linked` before the migration ships would revert it and break the build.

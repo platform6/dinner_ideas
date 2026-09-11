@@ -9,6 +9,7 @@ import { CookingViewPage } from '@/features/cooking-view/components/CookingViewP
 import { StoreConfigPage } from '@/features/store-config/components/StoreConfigPage';
 import { SuppressedPage } from '@/features/dinners/components/SuppressedPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
+import { RecipeEntryPage } from '@/features/recipe-entry/components/RecipeEntryPage';
 
 /**
  * Route shell for the app. Catalog, plan, shopping list, cooking, store-config, and suppressed
@@ -20,6 +21,12 @@ export function App() {
       <Layout>
         <Routes>
           <Route path="/" element={<CatalogPage />} />
+          {/*
+            The app's only two-segment route. Every other path is a flat segment, but a create
+            page conventionally nests under its collection, and `AuthGate` wraps `<Routes>` as a
+            whole — so this inherits protection with no new routing mechanism (intent 014).
+          */}
+          <Route path="/dinners/new" element={<RecipeEntryPage />} />
           <Route path="/plan" element={<PlanPage />} />
           <Route path="/shopping-list" element={<ShoppingListPage />} />
           <Route path="/cooking" element={<CookingViewPage />} />

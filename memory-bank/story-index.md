@@ -3,11 +3,11 @@
 ## Overview
 
 - **Total stories**: 162
-- **Completed**: 147
-- **Planned**: 15
+- **Completed**: 155
+- **Planned**: 7
 - **In Progress**: 0
 - **Deferred**: 0
-- **Last updated**: 2026-09-07
+- **Last updated**: 2026-09-08
 
 ---
 
@@ -249,27 +249,27 @@
 
 ---
 
-### 014-recipe-entry — 📋 PLANNED (bolts 059–062; inception complete 2026-09-07)
+### 014-recipe-entry — ✅ BUILT (bolts 059–062 complete; not yet deployed)
 
-**Unit: 001-recipe-manual-entry** — bolts `059`, `060` — not cuttable; it is the intent
+**Unit: 001-recipe-manual-entry** — bolts `059`, `060` ✅ COMPLETE — the catalog is writable
 
-- [ ] **001-recipe-entry-route** (recipe-manual-entry): Route + an entry point on the catalog - Must - [ ] PLANNED
-- [ ] **002-dinner-fields-form** (recipe-manual-entry): Name, cuisine, cook time, summary line - Must - [ ] PLANNED
-- [ ] **003-ingredient-lines-editor** (recipe-manual-entry): Quantity / unit / name / category - Must - [ ] PLANNED
-- [ ] **004-cooking-steps-editor** (recipe-manual-entry): Ordered steps, contiguous renumbering - Must - [ ] PLANNED
-- [ ] **005-atomic-save** (recipe-manual-entry): Three-table write; owns the ADR - Must - [ ] PLANNED
-- [ ] **006-duplicate-name-handling** (recipe-manual-entry): `dinners.name` is globally unique - Must - [ ] PLANNED
-- [ ] **007-manual-entry-tests** (recipe-manual-entry): Validation, save, duplicate name - Must - [ ] PLANNED
-- [ ] **008-tag-editor** (recipe-manual-entry): Attach / create over the shared vocabulary - Must - [ ] PLANNED
+- [x] **001-recipe-entry-route** (recipe-manual-entry): Route + an entry point on the catalog - Must - ✅ COMPLETE
+- [x] **002-dinner-fields-form** (recipe-manual-entry): Name, cuisine, cook time, summary line - Must - ✅ COMPLETE
+- [x] **003-ingredient-lines-editor** (recipe-manual-entry): Quantity / unit / name / category - Must - ✅ COMPLETE
+- [x] **004-cooking-steps-editor** (recipe-manual-entry): Ordered steps; numbering DERIVED from order, so no gap is possible - Must - ✅ COMPLETE
+- [x] **005-atomic-save** (recipe-manual-entry): Four-table write in ONE transaction; owns ADR-13 - Must - ✅ COMPLETE
+- [x] **006-duplicate-name-handling** (recipe-manual-entry): Plain-language 23505; the constraint was ALREADY per-household (intent 004) - Must - ✅ COMPLETE
+- [x] **007-manual-entry-tests** (recipe-manual-entry): Validation, save, duplicate name; +22 pgTAP incl. the atomicity proof - Must - ✅ COMPLETE
+- [x] **008-tag-editor** (recipe-manual-entry): Attach / create over the shared vocabulary - Must - ✅ COMPLETE
 
-**Unit: 002-recipe-import** — bolts `061`, `062` — cuttable; unit 001 ships a complete page
+**Unit: 002-recipe-import** — bolts `061`, `062` ✅ COMPLETE — paste a page, review it, save it
 
-- [ ] **001-paste-box-and-sizing** (recipe-import): Paste box; trim from the end at the 50 KB cap - Must - [ ] PLANNED
-- [ ] **002-extraction-prompt** (recipe-import): Both layers; no step dropped; tags from the existing vocabulary - Must - [ ] PLANNED
-- [ ] **003-response-parsing** (recipe-import): Strict parse; step-less or malformed is a failure - Must - [ ] PLANNED
-- [ ] **004-proxy-error-messages** (recipe-import): Five reachable codes, five distinct messages - Must - [ ] PLANNED
-- [ ] **005-draft-review-handoff** (recipe-import): Draft lands in unit 001's form; no save here - Must - [ ] PLANNED
-- [ ] **006-import-tests** (recipe-import): Unit 001's page tests must pass unmodified - Must - [ ] PLANNED
+- [x] **001-paste-box-and-sizing** (recipe-import): Paste box; trim from the end at the 50 KB cap - Must - ✅ COMPLETE
+- [x] **002-extraction-prompt** (recipe-import): Both layers; no step dropped; tags from the existing vocabulary - Must - ✅ COMPLETE
+- [x] **003-response-parsing** (recipe-import): Strict parse; step-less or malformed is a failure - Must - ✅ COMPLETE
+- [x] **004-proxy-error-messages** (recipe-import): Five reachable codes, five distinct messages - Must - ✅ COMPLETE
+- [x] **005-draft-review-handoff** (recipe-import): Draft lands in unit 001's form; no save here - Must - ✅ COMPLETE
+- [x] **006-import-tests** (recipe-import): Unit 001's page tests must pass unmodified - Must - ✅ COMPLETE
 
 ---
 

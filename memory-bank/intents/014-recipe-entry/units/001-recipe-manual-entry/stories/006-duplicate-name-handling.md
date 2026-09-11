@@ -2,11 +2,11 @@
 id: 006-duplicate-name-handling
 unit: 001-recipe-manual-entry
 intent: 014-recipe-entry
-status: planned
+status: complete
 priority: must
 created: '2026-09-07T03:00:00Z'
 assigned_bolt: 060-recipe-save
-implemented: false
+implemented: true
 ---
 
 # Story: 006-duplicate-name-handling
@@ -31,11 +31,12 @@ implemented: false
 
 ## Technical Notes
 
-- `dinners.name` is `unique` **globally**, not per household — an artifact of the pre-account-model
-  schema (intent 001 predates intent 004). With one founding household this cannot bite in
-  practice, but the code must not assume that stays true.
-- Open question 3 asks whether to scope the constraint to household in this intent. If the answer
-  is yes, it belongs with 005's migration, not here. If no, this story is the whole mitigation.
+- **Corrected 2026-09-08 (bolt 060):** `dinners.name` is `unique` **per household**, not globally.
+  Intent 004 rescoped it on 2026-08-28 to `dinners_household_id_name_key unique nulls not distinct
+(household_id, name)`, verified against production. Open question 3 was therefore already
+  answered before this intent was written.
+- The constraint is per household, so a clash means _this household_ already has that name — which
+  is exactly what the message says. Nothing about the mitigation changes.
 - Per the coding standards, Supabase errors are caught and mapped to short user-facing messages;
   raw error objects are never shown.
 

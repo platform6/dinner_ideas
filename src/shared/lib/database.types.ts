@@ -950,6 +950,18 @@ export type Database = {
     Functions: {
       clear_household_ai_key: { Args: never; Returns: undefined };
       current_user_household_id: { Args: never; Returns: string };
+      fn_create_dinner: {
+        Args: {
+          p_cook_time_minutes: number;
+          p_cuisine_type: string;
+          p_ingredients: Json;
+          p_instructions: string;
+          p_name: string;
+          p_steps: string[];
+          p_tag_names: string[];
+        };
+        Returns: string;
+      };
       lock_weekly_plan: {
         Args: { p_plan_id: string };
         Returns: {

@@ -2,9 +2,9 @@
 unit: 002-recipe-import
 intent: 014-recipe-entry
 phase: inception
-status: ready
+status: complete
 created: '2026-09-07T02:55:00Z'
-updated: '2026-09-07T03:20:00Z'
+updated: '2026-09-11T15:30:00Z'
 ---
 
 # Unit Brief: Recipe Import
@@ -90,11 +90,29 @@ is the signal.
 
 ## Interfaces Consumed
 
-| Interface                         | From       | Notes                                          |
-| --------------------------------- | ---------- | ---------------------------------------------- |
-| `POST /functions/v1/claude-proxy` | intent 007 | `feature: 'recipe_import'`; contract unchanged |
-| The recipe draft shape            | unit 001   | What extraction must produce                   |
-| The editable form                 | unit 001   | Where the draft lands for review               |
+Unit 001 shipped on 2026-09-08 (bolts 059, 060), so these are no longer forward references — the
+concrete artifacts exist and are named here.
+
+| Interface                                                | From                                                       | Notes                                                                                          |
+| -------------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `POST /functions/v1/claude-proxy`                        | intent 007                                                 | `feature: 'recipe_import'`; contract unchanged                                                 |
+| `RecipeDraft`                                            | `src/features/recipe-entry/draft.ts`                       | **What extraction must produce.** Serializable by design, for exactly this                     |
+| `createEmptyDraft`, `createIngredientLine`, `createStep` | same file                                                  | Line ids come from a counter; extraction must build lines through these, not hand-roll ids     |
+| `validateDraft`                                          | same file                                                  | The draft must pass this before it can be saved; a parse that cannot is a failure, not a draft |
+| `RecipeEntryPage`                                        | `src/features/recipe-entry/components/RecipeEntryPage.tsx` | Where the draft lands for review — the "Paste a recipe" tab is already there and inert         |
+| `useSaveDinner` → `fn_create_dinner`                     | `src/features/recipe-entry/hooks.ts`                       | Unit 001 owns the save. This unit writes **nothing** (ADR-13)                                  |
+
+### Two things unit 001 settled that constrain extraction
+
+- **Numeric fields are strings in the draft** (`quantity`, `cookTimeMinutes`), because a draft is
+  what the form holds mid-edit. Extraction produces numbers from Claude and must stringify them at
+  its boundary — one line, and it keeps the round trip lossless.
+- **Tags are NAMES, not ids, and nothing is written until save.** Inferred tags (FR-10) land in
+  `draft.tagNames` as normalized strings and appear in the tag editor as ordinary attached tags.
+  A tag row created during an abandoned import would permanently pollute a shared household
+  vocabulary that has no delete UI.
+- **Step numbers do not exist on the draft.** Order is position; `numberedSteps` derives the
+  number. Extraction produces an ordered array and nothing else.
 
 ## Dependencies
 

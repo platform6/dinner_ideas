@@ -2,7 +2,7 @@
 unit: 001-recipe-manual-entry
 intent: 014-recipe-entry
 phase: inception
-status: ready
+status: complete
 created: '2026-09-07T02:55:00Z'
 updated: '2026-09-07T03:20:00Z'
 ---
@@ -28,7 +28,7 @@ getting one.
 - The manual form: the dinner fields, an ingredient-line editor, a cooking-step editor, and a
   tag editor over the existing shared vocabulary
 - The save: `dinners` + `dinner_ingredients` + `dinner_steps` + `dinner_tags`, atomically
-- An additive migration scoping `dinners.name` uniqueness to the household
+- ~~An additive migration scoping `dinners.name` uniqueness to the household~~ — **already done by intent 004** (corrected 2026-09-08); the unit's migration is `fn_create_dinner` instead
 - Duplicate-name handling in plain language
 
 ### Out of Scope
@@ -51,7 +51,7 @@ getting one.
 | FR-8 | Saving writes the existing shape | Must     |
 | FR-9 | Editing out of scope (boundary)  | Must     |
 
-Plus the tag editor from FR-2 and the `dinners.name` migration from FR-8.
+Plus the tag editor from FR-2. (FR-8's `dinners.name` migration turned out to be unnecessary — see above.)
 
 ## Key Constraints
 
@@ -61,8 +61,9 @@ Plus the tag editor from FR-2 and the `dinners.name` migration from FR-8.
 - **Ingredients are scaled to 3 servings.** Recorded only as a column comment on
   `dinner_ingredients`, so it is easy to lose. The form should make it visible, not assume it.
 - **Category is a CHECK on five values** and drives shopping-list placement. Not free text.
-- **`dinners.name` becomes unique per household** (resolved decision 3) — an additive migration
-  this unit owns. A clash within the household still reads as English, never as a Postgres error.
+- **`dinners.name` is unique per household** — `dinners_household_id_name_key`, already in place
+  since intent 004 (corrected 2026-09-08; this unit owns no such migration). A clash within the
+  household still reads as English, never as a Postgres error.
 - **`tags.name` is lowercase-enforced** by a DB CHECK; reuse `normalizeTagName`, do not
   re-implement it.
 - **Do not touch the items trigger.** Inserting ingredients registers groceries as a side effect
@@ -70,19 +71,35 @@ Plus the tag editor from FR-2 and the `dinners.name` migration from FR-8.
 
 ## The decision this unit owns
 
-**How does a three-table save stay atomic from a browser?**
+**How does a four-table save stay atomic from a browser?**
 
 PostgREST inserts are separate HTTP calls; there is no client transaction. Either a Postgres
-function does all three inserts in one transaction (one additive migration, correct by
+function does all the inserts in one transaction (one additive migration, correct by
 construction, and what ADR-1's principle points at), or the client compensates on failure by
 deleting the dinner (no migration, both children cascade, but the compensating delete can itself
 fail — producing exactly the orphan FR-8 forbids).
 
-Record the choice as an ADR.
+**Resolved (ADR-13): the Postgres function.** And the decisive argument was neither of the two
+above — it is that the compensation window is a _visibility_ window, not only a failure window: the
+dinner row is committed and queryable before its children exist, so another member's catalog can
+list and pick a dinner with no ingredients **on the path where nothing goes wrong at all**.
 
-Note that this unit ships a migration **either way** — resolved decision 3 scopes `dinners.name`
-uniqueness to the household, which no client-side approach avoids. So choose the atomicity
-mechanism on its merits, not on whether it "adds" a migration that is already there.
+Note also: it is **four** tables, not three — `dinner_tags` and find-or-create on `tags` join
+`dinners`, `dinner_ingredients` and `dinner_steps`.
+
+Recorded as **ADR-13**.
+
+> **Corrected 2026-09-08 (bolt 060).** This paragraph read: _"this unit ships a migration either
+> way — resolved decision 3 scopes `dinners.name` uniqueness to the household, which no client-side
+> approach avoids. So choose the atomicity mechanism on its merits, not on whether it adds a
+> migration that is already there."_
+>
+> **Intent 004 had already scoped it**, on 2026-08-28. There was no certain migration, so the
+> chosen function _does_ add one that compensation would have avoided.
+>
+> The instruction was still right and was followed — the mechanism was chosen on whether the
+> invariant holds (ADR-13) — but it no longer rests on this premise, and the real cost is recorded
+> in the ADR.
 
 ## Interfaces Consumed
 

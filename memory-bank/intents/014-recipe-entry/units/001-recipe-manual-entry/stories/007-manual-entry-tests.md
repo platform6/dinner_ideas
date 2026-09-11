@@ -2,11 +2,11 @@
 id: 007-manual-entry-tests
 unit: 001-recipe-manual-entry
 intent: 014-recipe-entry
-status: planned
+status: complete
 priority: must
 created: '2026-09-07T03:00:00Z'
 assigned_bolt: 060-recipe-save
-implemented: false
+implemented: true
 ---
 
 # Story: 007-manual-entry-tests
@@ -24,7 +24,7 @@ implemented: false
       any network call.
 - [ ] **Given** step renumbering, **When** a middle step is removed, **Then** a case asserts the
       remaining steps are contiguous from 1.
-- [ ] **Given** a successful save, **When** tested, **Then** cases assert all three tables are
+- [ ] **Given** a successful save, **When** tested, **Then** cases assert all four tables are
       written with the draft's contents, and that `step_number` matches the displayed order.
 - [ ] **Given** a failing save, **When** tested, **Then** a case asserts no partial dinner survives
       — whichever mechanism 005's ADR chose.

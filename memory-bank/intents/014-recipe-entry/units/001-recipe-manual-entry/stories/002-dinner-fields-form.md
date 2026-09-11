@@ -2,11 +2,11 @@
 id: 002-dinner-fields-form
 unit: 001-recipe-manual-entry
 intent: 014-recipe-entry
-status: planned
+status: complete
 priority: must
 created: '2026-09-07T03:00:00Z'
 assigned_bolt: 059-recipe-draft-form
-implemented: false
+implemented: true
 ---
 
 # Story: 002-dinner-fields-form
@@ -26,8 +26,12 @@ implemented: false
 - [ ] **Given** the cuisine field, **When** the user types, **Then** the cuisines already in the
       catalog are offered as suggestions, **and** a new one can still be entered freely. The
       column is deliberately not an enum; suggestions converge the vocabulary without a migration.
-- [ ] **Given** the summary field, **When** it renders, **Then** the form says what it is for —
-      the single line shown on the catalog card — so the user does not mistake it for the method.
+- [ ] **Given** the summary field, **When** it renders, **Then** the form says what it is for, so
+      the user does not mistake it for the method. **Corrected 2026-09-08 (bolt 059):** the
+      original wording said "the single line shown on the catalog card". `dinners.instructions` is
+      **rendered nowhere in the app** — the card shows ingredients, steps and tags. The column is
+      `not null` so it must be captured, but the hint must not claim a place it does not appear.
+      Whether the card _should_ show it is an open question for intent 001, not this story.
 - [ ] **Given** a missing required field, **When** save is attempted, **Then** the specific field
       is identified, not a generic "form invalid".
 
