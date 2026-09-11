@@ -87,11 +87,13 @@ export function proposableTags(vocabulary: readonly string[]): string[] {
  * A model under length pressure will compress somehow; the prompt's job is to make merging the
  * reachable move so deleting a step is not.
  *
- * `servingsPerDinner` is the household's setting (intent 018, bolt 069), replacing a hard-coded 3
- * so a household that cooks for 5 is not rescaled to 3. The rescaling rule that uses it is
- * deliberately short-lived: bolt 070 removes it, and extraction stops doing arithmetic altogether.
+ * **The model does no arithmetic on quantities** (intent 018, bolt 070). It copies them exactly and
+ * reports the page's yield verbatim; `scale.ts` does any scaling, in code, and only when the user
+ * asks on review. That is why this function no longer takes the household's serving size — the
+ * model has no use for it. Bolt 069 parameterised the old rescaling rule only so it would be correct
+ * if shipped alone; this bolt removed the rule.
  */
-export function buildSystemPrompt(vocabulary: readonly string[], servingsPerDinner: number): string {
+export function buildSystemPrompt(vocabulary: readonly string[]): string {
   const tags = proposableTags(vocabulary);
 
   return `You extract recipes from pasted web pages for a family's dinner catalog.
@@ -108,7 +110,7 @@ Return ONE JSON object and nothing else. No prose, no explanation, no markdown f
   "cuisine": string,
   "cookTimeMinutes": integer greater than 0,
   "summary": string,
-  "servingsStated": boolean,
+  "yield": string or null,
   "ingredients": [{ "quantity": number greater than 0, "unit": string, "name": string, "category": string }],
   "steps": [string],
   "tags": [string]
@@ -137,9 +139,14 @@ number, so a 50-minute dinner filed as 25 minutes is worse than no number at all
 states no time anywhere, estimate the total from the cooking steps themselves — the times they name
 plus the work they describe — and round to the nearest 5 minutes.
 
-**Quantities are for ${servingsPerDinner} servings.** If the source states a serving count, rescale every
-quantity to ${servingsPerDinner}. If the source states NO serving count, take the quantities as they are
-and set "servingsStated" to false, so the family knows to check them.
+**Copy every quantity exactly as the page gives it. Never rescale, convert or round.** The family
+decides whether to scale a recipe, and they need to see the page's own numbers first — a quantity
+you have changed cannot be checked against the page. "1 cup (227 g) butter" is 1 cup; "1 1/2 cups"
+is 1.5; a range like "2-3 cloves" takes the lower number.
+
+**"yield" is what the page says the recipe serves or makes, copied word for word** — "4", "8-10",
+"Serves 6", "Makes 24 cookies". Never turn a range into one number and never work one out from the
+quantities. If the page states no yield anywhere, use null.
 
 **Every ingredient needs a category**, exactly one of: ${INGREDIENT_CATEGORIES.join(', ')}.
 Nothing may be left uncategorised.
@@ -159,7 +166,7 @@ Nothing may be left uncategorised.
   "cuisine": "Mexican",
   "cookTimeMinutes": 30,
   "summary": "Saute chicken, peppers, and onion with seasoning; serve over rice with cheese.",
-  "servingsStated": true,
+  "yield": "3",
   "ingredients": [
     { "quantity": 1, "unit": "lb", "name": "chicken breast, sliced", "category": "Protein" },
     { "quantity": 2, "unit": "each", "name": "bell peppers", "category": "Produce" },

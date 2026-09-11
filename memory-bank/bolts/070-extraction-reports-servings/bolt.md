@@ -3,15 +3,24 @@ id: 070-extraction-reports-servings
 unit: 002-scale-on-review
 intent: 018-serving-scale-and-removal
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-extraction-reports-servings
   - 002-scaling-is-pure-code
 created: '2026-09-11T16:24:16Z'
-started: null
-completed: null
+started: '2026-09-11T17:46:32Z'
+completed: '2026-09-11T17:56:44Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-11T17:47:27Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-11T17:50:41Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-11T17:56:44Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 069-servings-setting
 enables_bolts:

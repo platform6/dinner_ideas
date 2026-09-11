@@ -2,11 +2,11 @@
 id: 001-extraction-reports-servings
 unit: 002-scale-on-review
 intent: 018-serving-scale-and-removal
-status: planned
+status: complete
 priority: must
 created: '2026-09-11T16:24:16Z'
 assigned_bolt: null
-implemented: false
+implemented: true
 ---
 
 # Story: 001-extraction-reports-servings

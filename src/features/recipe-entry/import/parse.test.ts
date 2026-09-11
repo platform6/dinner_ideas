@@ -12,7 +12,7 @@ function reply(overrides: Record<string, unknown> = {}): string {
     cuisine: 'Thai',
     cookTimeMinutes: 25,
     summary: 'Fry the shrimp, boil the noodles, toss with sauce and sprouts.',
-    servingsStated: true,
+    yield: '4',
     ingredients: [
       { quantity: 0.75, unit: 'lb', name: 'shrimp', category: 'Protein' },
       { quantity: 6, unit: 'oz', name: 'rice noodles', category: 'Grains' },
@@ -64,19 +64,41 @@ describe('parseExtraction — a good response', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('reports servingsStated so the user can be told the quantities were not rescaled', () => {
-    const stated = parseExtraction(reply(), VOCABULARY);
-    const unstated = parseExtraction(reply({ servingsStated: false }), VOCABULARY);
+  describe('the yield — carried verbatim, and leniently (intent 018, bolt 070)', () => {
+    it.each([
+      ['a plain count', '4', '4'],
+      ['a range, which must stay a range', '8–10', '8–10'],
+      ['words around it', 'Serves 6', 'Serves 6'],
+      ['a count of pieces, not people', 'Makes 24 cookies', 'Makes 24 cookies'],
+      ['surrounding space, trimmed', '  4  ', '4'],
+    ])('keeps %s exactly as the page said it', (_label, statedYield, expected) => {
+      const result = parseExtraction(reply({ yield: statedYield }), VOCABULARY);
 
-    expect(stated.ok && stated.servingsStated).toBe(true);
-    expect(unstated.ok && unstated.servingsStated).toBe(false);
-  });
+      expect(result.ok && result.sourceYield).toBe(expected);
+    });
 
-  it('assumes the quantities WERE rescaled when the model omits the flag', () => {
-    // Only an explicit `false` means "the source stated no serving count".
-    const result = parseExtraction(reply({ servingsStated: undefined }), VOCABULARY);
+    it('turns a bare number into its string, without interpreting it', () => {
+      const result = parseExtraction(reply({ yield: 6 }), VOCABULARY);
 
-    expect(result.ok && result.servingsStated).toBe(true);
+      expect(result.ok && result.sourceYield).toBe('6');
+    });
+
+    it.each([
+      ['missing', undefined],
+      ['null', null],
+      ['an empty string', '   '],
+      ['an object', { serves: 4 }],
+      ['zero', 0],
+      ['a negative number', -2],
+    ])('treats a yield that is %s as none — and still returns the recipe', (_label, statedYield) => {
+      // Lenient on purpose, like tags and unlike ingredients: a bad yield costs the scale control
+      // a base and nothing else, and is never saved (ADR-14). Failing a good recipe over it would
+      // be all cost.
+      const result = parseExtraction(reply({ yield: statedYield }), VOCABULARY);
+
+      expect(result.ok).toBe(true);
+      expect(result.ok && result.sourceYield).toBeNull();
+    });
   });
 
   it('recovers JSON from inside a markdown fence, because models add them', () => {

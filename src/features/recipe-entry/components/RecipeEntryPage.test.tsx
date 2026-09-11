@@ -547,7 +547,7 @@ describe('RecipeEntryPage', () => {
       cuisine: 'Thai',
       cookTimeMinutes: 25,
       summary: 'Fry the shrimp, boil the noodles, toss together.',
-      servingsStated: true,
+      yield: '4',
       ingredients: [{ quantity: 0.75, unit: 'lb', name: 'shrimp', category: 'Protein' }],
       steps: ['Fry the shrimp until pink.', 'Boil the noodles.', 'Toss and serve.'],
       tags: [],
@@ -584,7 +584,7 @@ describe('RecipeEntryPage', () => {
     it('says the quantities were not rescaled when the source gave no serving count', async () => {
       // The caveat now sits WITH the quantities rather than in the paste-tab notice, because that
       // is where the user is reading when the warning matters.
-      replyWith(GOOD_REPLY.replace('"servingsStated":true', '"servingsStated":false'));
+      replyWith(GOOD_REPLY.replace('"yield":"4"', '"yield":null'));
       const user = userEvent.setup();
       renderPage();
 
@@ -594,7 +594,9 @@ describe('RecipeEntryPage', () => {
       expect(await screen.findByText(/have NOT been adjusted to 5/)).toBeInTheDocument();
     });
 
-    it('sends the household serving size to the model, not a hard-coded 3', async () => {
+    it('sends NO household serving size to the model — extraction does no arithmetic (bolt 070)', async () => {
+      // The inverse of bolt 069's version of this test, and the point of bolt 070. The household
+      // cooks for 5; the model must not be told, because it is no longer asked to rescale anything.
       replyWith(GOOD_REPLY);
       const user = userEvent.setup();
       renderPage();
@@ -605,12 +607,12 @@ describe('RecipeEntryPage', () => {
 
       await waitFor(() => expect(mockedCallClaude).toHaveBeenCalledTimes(1));
       const { system } = mockedCallClaude.mock.calls[0][0];
-      expect(system).toContain('5 servings');
-      expect(system).not.toContain('3 servings');
+      expect(system).not.toMatch(/5 servings|rescale every quantity/);
     });
 
-    it('does NOT warn about servings when the source stated a count', async () => {
-      // A warning that shows every time is a warning nobody reads.
+    it('lands the page quantities UNCHANGED, and says what they are for', async () => {
+      // The reply's yield is 4 and the household cooks for 5. Nothing may be scaled on the way in
+      // (FR-4); the review says so instead.
       replyWith(GOOD_REPLY);
       const user = userEvent.setup();
       renderPage();
@@ -619,7 +621,30 @@ describe('RecipeEntryPage', () => {
       await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
 
       await screen.findByDisplayValue('Shrimp Noodle Bowls');
-      expect(screen.queryByText(/have NOT been adjusted/)).not.toBeInTheDocument();
+      expect(screen.getByDisplayValue('0.75')).toBeInTheDocument();
+      expect(
+        screen.getByText(/as the page wrote them — for 4\. They have NOT been adjusted to 5/),
+      ).toBeInTheDocument();
+    });
+
+    it('says the quantities match when the page already serves the household size', async () => {
+      // "NOT adjusted to 5" about quantities already for 5 would be true and misleading.
+      replyWith(GOOD_REPLY.replace('"yield":"4"', '"yield":"5"'));
+      const user = userEvent.setup();
+      renderPage();
+
+      await pasteAPage(user);
+      await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+      expect(await screen.findByText(/for 5, which matches your household/)).toBeInTheDocument();
+      expect(screen.queryByText(/NOT been adjusted/)).not.toBeInTheDocument();
+    });
+
+    it('shows no import note on a dinner typed in by hand', async () => {
+      renderPage();
+      await screen.findByText(/Enter quantities for 5/);
+
+      expect(screen.queryByText(/as the page wrote them|didn’t say how many/)).not.toBeInTheDocument();
     });
 
     describe('the draft lands in the form (story 005)', () => {

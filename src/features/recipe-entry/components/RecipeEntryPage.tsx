@@ -78,9 +78,11 @@ export function RecipeEntryPage() {
   // Success feedback belongs on the FORM tab, because that is where a successful import sends the
   // user — a notice left on the paste panel would be announcing itself to an empty room.
   const [importedSummary, setImportedSummary] = useState<string | null>(null);
-  // True when the source stated no serving count, so quantities were taken as written. Lives here
-  // rather than in the editor because it describes the DRAFT, and dies when the draft is replaced.
-  const [quantitiesUnscaled, setQuantitiesUnscaled] = useState(false);
+  // Set when the draft came from an import: what the page said it serves or makes, verbatim, or null
+  // if it said nothing. Since bolt 070 an import's quantities are ALWAYS the page's own, so this is
+  // what they are for. Null here means "typed in by hand". Lives on the page, not the draft, because
+  // the draft is what gets saved and a yield never is (ADR-14).
+  const [importSource, setImportSource] = useState<{ sourceYield: string | null } | null>(null);
   const [tabIndex, setTabIndex] = useState(0);
 
   const dinners = useDinners();
@@ -123,14 +125,14 @@ export function RecipeEntryPage() {
     setImportFailure(null);
     setImportedSummary(null);
     try {
-      const outcome = await extractRecipe(paste, existingTagNames, servingsPerDinner);
+      const outcome = await extractRecipe(paste, existingTagNames);
       if (!outcome.ok) {
         setImportFailure(messageForExtractionFailure(outcome.reason));
         return;
       }
 
       setDraft(outcome.draft);
-      setQuantitiesUnscaled(!outcome.servingsStated);
+      setImportSource({ sourceYield: outcome.sourceYield });
       // A freshly imported draft is not the user's mistake, so nothing is painted red before they
       // have touched anything. And a rejection about a previous draft's name would now be a lie.
       setHasAttemptedSave(false);
@@ -218,7 +220,7 @@ export function RecipeEntryPage() {
                     patchDraft({ ingredients: [...draft.ingredients, createIngredientLine()] })
                   }
                   servingsPerDinner={servingsPerDinner}
-                  quantitiesUnscaled={quantitiesUnscaled}
+                  importSource={importSource}
                 />
               </Section>
 

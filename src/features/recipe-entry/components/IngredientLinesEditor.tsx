@@ -13,6 +13,7 @@ import {
 } from '@chakra-ui/react';
 
 import { problemFor, type DraftIngredient, type DraftProblem } from '@/features/recipe-entry/draft';
+import { importQuantityNote } from '@/features/recipe-entry/components/import-quantity-note';
 import { INGREDIENT_CATEGORIES, type IngredientCategory } from '@/features/store-config/types';
 import { uiIcons } from '@/shared/components/icons';
 
@@ -35,11 +36,12 @@ interface IngredientLinesEditorProps {
    */
   servingsPerDinner: number;
   /**
-   * True when an imported draft's source stated no serving count, so its quantities were taken as
-   * written rather than rescaled to the household's size. Shown beside the guidance it contradicts —
-   * the one place the user is already reading when they look at a quantity.
+   * Present when the draft came from an import, carrying what the page said it serves or makes
+   * (verbatim, or null). An import's quantities are always the page's own (bolt 070), so the editor
+   * says what they are for — beside the guidance, where the user is already reading. Absent or null
+   * for a dinner typed in by hand.
    */
-  quantitiesUnscaled?: boolean;
+  importSource?: { sourceYield: string | null } | null;
 }
 
 /**
@@ -58,7 +60,7 @@ export function IngredientLinesEditor({
   onChange,
   onAddLine,
   servingsPerDinner,
-  quantitiesUnscaled,
+  importSource,
 }: IngredientLinesEditorProps) {
   const problem = (field: string) => (showProblems ? problemFor(problems, field) : undefined);
 
@@ -82,13 +84,10 @@ export function IngredientLinesEditor({
         Enter quantities for {servingsPerDinner} — the number your household cooks for.
       </Text>
 
-      {quantitiesUnscaled && (
+      {importSource && (
         <Alert layerStyle="notice" role="status">
           <uiIcons.info size={16} strokeWidth={2} style={{ flexShrink: 0, marginRight: '8px' }} />
-          <Text>
-            That page didn’t say how many it serves, so these quantities are exactly as written — they have
-            NOT been adjusted to {servingsPerDinner}. Check them before saving.
-          </Text>
+          <Text>{importQuantityNote(importSource.sourceYield, servingsPerDinner)}</Text>
         </Alert>
       )}
 
