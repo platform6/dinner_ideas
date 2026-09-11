@@ -2,11 +2,11 @@
 id: 005-draft-review-handoff
 unit: 002-recipe-import
 intent: 014-recipe-entry
-status: planned
+status: complete
 priority: must
 created: '2026-09-07T03:00:00Z'
 assigned_bolt: 062-import-review-and-tests
-implemented: false
+implemented: true
 ---
 
 # Story: 005-draft-review-handoff

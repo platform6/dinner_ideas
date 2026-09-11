@@ -557,6 +557,8 @@ describe('RecipeEntryPage', () => {
     });
 
     it('says the quantities were not rescaled when the source gave no serving count', async () => {
+      // The caveat now sits WITH the quantities rather than in the paste-tab notice, because that
+      // is where the user is reading when the warning matters.
       replyWith(GOOD_REPLY.replace('"servingsStated":true', '"servingsStated":false'));
       const user = userEvent.setup();
       renderPage();
@@ -564,7 +566,212 @@ describe('RecipeEntryPage', () => {
       await pasteAPage(user);
       await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
 
-      expect(await screen.findByText(/no serving count/)).toBeInTheDocument();
+      expect(await screen.findByText(/have NOT been adjusted to 3 servings/)).toBeInTheDocument();
+    });
+
+    it('does NOT warn about servings when the source stated a count', async () => {
+      // A warning that shows every time is a warning nobody reads.
+      replyWith(GOOD_REPLY);
+      const user = userEvent.setup();
+      renderPage();
+
+      await pasteAPage(user);
+      await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+      await screen.findByDisplayValue('Shrimp Noodle Bowls');
+      expect(screen.queryByText(/have NOT been adjusted/)).not.toBeInTheDocument();
+    });
+
+    describe('the draft lands in the form (story 005)', () => {
+      it('fills the form the user types into, not a separate preview', async () => {
+        replyWith(GOOD_REPLY);
+        const user = userEvent.setup();
+        renderPage();
+
+        await pasteAPage(user);
+        await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+        expect(await screen.findByDisplayValue('Shrimp Noodle Bowls')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('Thai')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('25')).toBeInTheDocument();
+        expect(
+          screen.getByDisplayValue('Fry the shrimp, boil the noodles, toss together.'),
+        ).toBeInTheDocument();
+      });
+
+      it('puts the user on the form tab, so the filled-in draft is what they see', async () => {
+        replyWith(GOOD_REPLY);
+        const user = userEvent.setup();
+        renderPage();
+
+        await pasteAPage(user);
+        await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+        await screen.findByDisplayValue('Shrimp Noodle Bowls');
+        expect(screen.getByRole('tab', { name: 'Type it in' })).toHaveAttribute('aria-selected', 'true');
+      });
+
+      it('keeps the cooking steps IN ORDER', async () => {
+        // Order is the whole meaning of a method. A draft that arrives shuffled is worse than one
+        // that fails, because it looks right.
+        replyWith(GOOD_REPLY);
+        const user = userEvent.setup();
+        renderPage();
+
+        await pasteAPage(user);
+        await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+        await screen.findByDisplayValue('Shrimp Noodle Bowls');
+        expect(screen.getByLabelText('Step 1')).toHaveValue('Fry the shrimp until pink.');
+        expect(screen.getByLabelText('Step 2')).toHaveValue('Boil the noodles.');
+        expect(screen.getByLabelText('Step 3')).toHaveValue('Toss and serve.');
+      });
+
+      it('leaves every imported line editable', async () => {
+        replyWith(GOOD_REPLY);
+        const user = userEvent.setup();
+        renderPage();
+
+        await pasteAPage(user);
+        await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+        const step = await screen.findByLabelText('Step 2');
+        await user.clear(step);
+        await user.type(step, 'Boil the noodles for 4 minutes.');
+
+        expect(step).toHaveValue('Boil the noodles for 4 minutes.');
+      });
+
+      it('WRITES NOTHING until the user explicitly saves', async () => {
+        // FR-7's guarantee. This unit has no save of its own to call, and this is the assertion
+        // that would notice if one ever appeared.
+        replyWith(GOOD_REPLY);
+        const user = userEvent.setup();
+        renderPage();
+
+        await pasteAPage(user);
+        await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+        await screen.findByDisplayValue('Shrimp Noodle Bowls');
+        expect(mockedCreate).not.toHaveBeenCalled();
+      });
+
+      it('does not paint the fresh draft red before the user has touched anything', async () => {
+        // An imported draft is not the user's mistake. Validation belongs after they act.
+        replyWith(GOOD_REPLY);
+        const user = userEvent.setup();
+        renderPage();
+
+        await pasteAPage(user);
+        await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+        await screen.findByDisplayValue('Shrimp Noodle Bowls');
+        expect(screen.queryByText(/Give the dinner a name/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/Add at least one cooking step/)).not.toBeInTheDocument();
+      });
+
+      it('saves an imported draft through unit 001 save path, unchanged', async () => {
+        replyWith(GOOD_REPLY);
+        const user = userEvent.setup();
+        renderPage();
+
+        await pasteAPage(user);
+        await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+        await screen.findByDisplayValue('Shrimp Noodle Bowls');
+        await user.click(screen.getByRole('button', { name: 'Save dinner' }));
+
+        await waitFor(() => expect(mockedCreate).toHaveBeenCalledTimes(1));
+        const saved = mockedCreate.mock.calls[0][0];
+        expect(saved.name).toBe('Shrimp Noodle Bowls');
+        expect(saved.steps.map((step) => step.instruction)).toEqual([
+          'Fry the shrimp until pink.',
+          'Boil the noodles.',
+          'Toss and serve.',
+        ]);
+      });
+    });
+
+    describe('failure messages (story 004)', () => {
+      it.each([
+        ['no_api_key', /set up yet/],
+        ['rate_limited', /daily limit is used up/],
+        ['upstream_error', /reached just now/],
+        ['timeout', /took too long/],
+        ['bad_request', /bug here/],
+      ] as const)('gives %s its own message', async (code, expected) => {
+        mockedCallClaude.mockRejectedValue(new ClaudeError(code, 'boom'));
+        const user = userEvent.setup();
+        renderPage();
+
+        const box = await pasteAPage(user);
+        await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+        expect(await screen.findByText(expected)).toBeInTheDocument();
+        // Every failure keeps the text, every time — the AC that applies to all of them.
+        expect(box).toHaveValue('A recipe page.');
+      });
+
+      it('points a household with no key at Settings, rather than describing where to go', async () => {
+        mockedCallClaude.mockRejectedValue(new ClaudeError('no_api_key', 'none'));
+        const user = userEvent.setup();
+        renderPage();
+
+        await pasteAPage(user);
+        await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+        const link = await screen.findByRole('link', { name: /Settings/ });
+        expect(link).toHaveAttribute('href', '/settings');
+      });
+
+      it('says a page with no recipe has no recipe, rather than blaming the answer', async () => {
+        // The distinction the live pass surfaced: "there is nothing here" and "the reply was
+        // unreadable" are different events needing different actions from the user.
+        replyWith('{"error": "no recipe found"}');
+        const user = userEvent.setup();
+        renderPage();
+
+        await pasteAPage(user);
+        await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+        expect(await screen.findByText(/no recipe on that page/)).toBeInTheDocument();
+      });
+
+      it('says so when a recipe came back with no cooking steps', async () => {
+        replyWith(GOOD_REPLY.replace(/"steps":\[[^\]]*\]/, '"steps":[]'));
+        const user = userEvent.setup();
+        renderPage();
+
+        await pasteAPage(user);
+        await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+        expect(await screen.findByText(/any cooking steps/)).toBeInTheDocument();
+      });
+
+      it('never shows a raw error code', async () => {
+        mockedCallClaude.mockRejectedValue(new ClaudeError('rate_limited', 'HTTP 429 quota'));
+        const user = userEvent.setup();
+        renderPage();
+
+        await pasteAPage(user);
+        await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+        await screen.findByRole('alert');
+        expect(screen.queryByText(/rate_limited/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/429/)).not.toBeInTheDocument();
+      });
+
+      it('leaves manual entry available after a failure', async () => {
+        mockedCallClaude.mockRejectedValue(new ClaudeError('rate_limited', 'nope'));
+        const user = userEvent.setup();
+        renderPage();
+
+        await pasteAPage(user);
+        await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+        await screen.findByRole('alert');
+
+        await user.click(screen.getByRole('tab', { name: 'Type it in' }));
+        expect(await screen.findByLabelText(/^Name/)).toBeEnabled();
+      });
     });
 
     it('KEEPS the pasted text when the extraction fails, so a retry is the user’s choice', async () => {

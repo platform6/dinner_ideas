@@ -3,16 +3,25 @@ id: 062-import-review-and-tests
 unit: 002-recipe-import
 intent: 014-recipe-entry
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 004-proxy-error-messages
   - 005-draft-review-handoff
   - 006-import-tests
 created: '2026-09-07T03:05:00Z'
-started: null
-completed: null
+started: '2026-09-11T14:05:00Z'
+completed: '2026-09-11T15:30:00Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-11T14:05:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-11T14:45:00Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-11T15:30:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 061-recipe-extraction
 enables_bolts: []

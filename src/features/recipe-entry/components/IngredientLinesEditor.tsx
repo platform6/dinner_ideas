@@ -1,4 +1,5 @@
 import {
+  Alert,
   Box,
   Button,
   FormControl,
@@ -27,6 +28,12 @@ interface IngredientLinesEditorProps {
   showProblems: boolean;
   onChange: (lines: DraftIngredient[]) => void;
   onAddLine: () => void;
+  /**
+   * True when an imported draft's source stated no serving count, so its quantities were taken as
+   * written rather than rescaled to 3. Shown beside the convention it contradicts — the one place
+   * the user is already reading when they look at a quantity.
+   */
+  quantitiesUnscaled?: boolean;
 }
 
 /**
@@ -44,6 +51,7 @@ export function IngredientLinesEditor({
   showProblems,
   onChange,
   onAddLine,
+  quantitiesUnscaled,
 }: IngredientLinesEditorProps) {
   const problem = (field: string) => (showProblems ? problemFor(problems, field) : undefined);
 
@@ -62,6 +70,16 @@ export function IngredientLinesEditor({
         convention gets lost. It is stated here, in front of the person typing the quantities.
       */}
       <Text textStyle="faint">Quantities are for 3 servings — two adults and one small child.</Text>
+
+      {quantitiesUnscaled && (
+        <Alert layerStyle="notice" role="status">
+          <uiIcons.info size={16} strokeWidth={2} style={{ flexShrink: 0, marginRight: '8px' }} />
+          <Text>
+            That page didn’t say how many it serves, so these quantities are exactly as written — they have
+            NOT been adjusted to 3 servings. Check them before saving.
+          </Text>
+        </Alert>
+      )}
 
       {problem('ingredients') && (
         <Text color="red.500" fontSize="sm">

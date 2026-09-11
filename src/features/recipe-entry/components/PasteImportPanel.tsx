@@ -1,12 +1,18 @@
 import { useState } from 'react';
-import { Alert, Box, Button, Stack, Text, Textarea } from '@chakra-ui/react';
+import { Link as RouterLink } from 'react-router-dom';
+import { Alert, Box, Button, Link, Stack, Text, Textarea } from '@chakra-ui/react';
 
 import { uiIcons } from '@/shared/components/icons';
+import type { ImportMessage } from '@/features/recipe-entry/import/messages';
 
 interface PasteImportPanelProps {
   isExtracting: boolean;
-  /** Shown after an attempt. Bolt 062 supplies the wording; this panel only renders it. */
-  notice: { tone: 'info' | 'error'; message: string } | null;
+  /**
+   * Why the last attempt failed, already in English (story 004). Only failures land here: a
+   * success moves the user to the form tab, so a success notice on this panel would be talking to
+   * nobody.
+   */
+  failure: ImportMessage | null;
   onExtract: (paste: string) => void;
 }
 
@@ -20,7 +26,7 @@ interface PasteImportPanelProps {
  * retry spends another metered call against the household's daily cap, so it is the user's call to
  * make rather than something that happens automatically.
  */
-export function PasteImportPanel({ isExtracting, notice, onExtract }: PasteImportPanelProps) {
+export function PasteImportPanel({ isExtracting, failure, onExtract }: PasteImportPanelProps) {
   const [paste, setPaste] = useState('');
   const isEmpty = paste.trim().length === 0;
 
@@ -39,10 +45,25 @@ export function PasteImportPanel({ isExtracting, notice, onExtract }: PasteImpor
         onChange={(event) => setPaste(event.target.value)}
       />
 
-      {notice && (
-        <Alert layerStyle="notice" role={notice.tone === 'error' ? 'alert' : 'status'}>
+      {failure && (
+        <Alert layerStyle="notice" role="alert">
           <uiIcons.info size={16} strokeWidth={2} style={{ flexShrink: 0, marginRight: '8px' }} />
-          <Text>{notice.message}</Text>
+          <Text>
+            {failure.text}
+            {/*
+              A link, not prose telling them where to go. `no_api_key` is the only case that has
+              one, because it is the only case whose answer is "go and set something up" — and a
+              household without a key is a normal starting state rather than a fault.
+            */}
+            {failure.link && (
+              <>
+                {' '}
+                <Link as={RouterLink} to={failure.link.to} textDecoration="underline">
+                  {failure.link.label}
+                </Link>
+              </>
+            )}
+          </Text>
         </Alert>
       )}
 

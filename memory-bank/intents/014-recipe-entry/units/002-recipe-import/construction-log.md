@@ -108,10 +108,58 @@ the manual pass's own findings, which is the cheapest kind of lesson to have.
 Worth carrying into bolt 062's error copy and any later prompt work: **a number stated as a
 preference is advisory; a number stated as a rule with a named cost is followed.**
 
-### Outstanding for this unit
+## Bolt 062 — import review and messages (2026-09-11)
 
-- **Bolt 062**: proxy error messages (story 004), the draft's handoff into unit 001's form
-  (story 005), and the import tests (story 006)
-- **For story 004 specifically**: `no-recipe` currently renders as "Couldn't read a recipe from that
-  page", which conflates "there is no recipe here" (do not retry) with "the reply was malformed"
-  (retry may work). Two different actions for the user, one message today
+Stories 004, 005, 006. The draft now lands in the same form manual entry uses, every failure says
+which thing went wrong and what to do about it, and the boundary is covered. **Unit 002 complete.**
+
+**617 / 617 vitest** (+60), `tsc -b`, `eslint`, `prettier` clean. No SQL. The unit still writes
+nothing of its own.
+
+### Findings
+
+**8. "Every code has a message" is not the test the story was asking for.** Story 004 wants five
+codes and five distinct messages, and the obvious per-code assertion passes just as happily when
+three of them are the same sentence. The suite compares set size against count instead. Same shape
+as the running "an assertion is only a test if a plausible defect would break it" thread — the
+plausible defect here is not a missing message, it is a duplicated one, and only the set-size form
+can see it.
+
+**9. Three tests assert an ABSENCE, and those are the ones that will earn their keep.**
+`no_api_key` must not contain "error/failed/sorry/wrong"; `rate_limited` must not say "try again";
+no message may contain a code or a bare HTTP status. Copy gets tidied later by someone who wants
+the five messages to sound consistent, and consistency is exactly the bug: `rate_limited` is the
+one failure where retrying is useless, and a household without a key has not failed at all. The
+absence assertions are what make that tidy-up fail loudly instead of quietly.
+
+**10. The structural guarantee is now held by a test as well as by the shape.** `createDinner` is
+unreachable from the import path, and a test asserts it is not called after an import. FR-7's
+"review cannot be skipped" was always an argument about code shape; it is now also something that
+breaks a build if the shape changes.
+
+### Verified live, not just green
+
+The handoff was run against the real proxy: a real page imported, landed on the form tab with
+cook time 50, 18 ingredients and 6 steps in order, no red validation on a fresh draft — and
+navigating away left the catalog unchanged. FR-7 observed rather than argued.
+
+`rate_limited` was reached honestly mid-testing and rendered its own message. Yesterday the same
+event said "The AI service couldn't be reached", which was false and pointed at a retry that could
+not succeed. That single comparison is the whole value of story 004.
+
+### Operational note, not a defect
+
+The household `Daily call limit` was **3**, which blocked live testing on two consecutive days. It
+is a `/settings` field, raised to 10 by the product owner to finish this pass. Worth a deliberate
+choice before release rather than leaving it where it happens to sit: 3 is a fair guard on a
+metered API for family use and tight during a build.
+
+### Unit 002: complete
+
+Both bolts done. Paste a page, get a draft in the founding format or an honest failure, review it
+in the same form you would have typed into, save it through unit 001's path. The unit writes
+nothing itself, by construction.
+
+**Intent 014 is now built** — bolts 059, 060, 061, 062 — and not yet deployed. The `create_dinner`
+RPC migration (`20260908230000`) is still pending on production, which makes this release Operations'
+concern rather than an FE-only push.
