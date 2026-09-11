@@ -327,3 +327,25 @@
 > 058 closed the last open story. Some intent 010 entries below still read "GENERATED" rather than
 > "COMPLETE" — that is stale labelling in this index's prose only; those story files all carry
 > `status: complete`.
+
+### 018-serving-scale-and-removal — 📋 PLANNED (bolts 069–072)
+
+**Unit: 001-serving-size-setting** — bolt `069` — the household owns its serving size
+
+- [ ] **001-servings-column** (serving-size-setting): `households.servings_per_dinner`, default 3, constrained - Must - [ ] PLANNED
+- [ ] **002-servings-setting-control** (serving-size-setting): Owner-editable control on `/settings`, explains what it drives - Must - [ ] PLANNED
+- [ ] **003-no-more-hardcoded-three** (serving-size-setting): The literal 3 stops appearing; asserted on RENDERED text - Must - [ ] PLANNED
+
+**Unit: 002-scale-on-review** — bolts `070`, `071` — arithmetic moves out of the model
+
+- [ ] **001-extraction-reports-servings** (scale-on-review): The prompt stops rescaling; the source count is carried AS STATED - Must - [ ] PLANNED
+- [ ] **002-scaling-is-pure-code** (scale-on-review): Pure, tested, non-destructive; the rounding rule is written down - Must - [ ] PLANNED
+- [ ] **003-scale-control-on-review** (scale-on-review): Offered, never applied uninvited; names both numbers - Must - [ ] PLANNED
+
+**Unit: 003-remove-a-dinner** — bolt `072` — **cuttable, and independent of the other two**
+
+- [ ] **001-remove-a-dinner** (remove-a-dinner): Dinner + children deleted atomically; shared tags survive - Must - [ ] PLANNED
+- [ ] **002-confirm-before-removing** (remove-a-dinner): Confirmed; warns what it affects; "Not interested" stays distinct - Must - [ ] PLANNED
+- [ ] **003-removal-tests** (remove-a-dinner): pgTAP mirror of the aggregate write test - Must - [ ] PLANNED
+
+---
