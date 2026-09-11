@@ -2,7 +2,7 @@
 intent: 018-serving-scale-and-removal
 phase: inception
 status: units-defined
-updated: '2026-09-11T18:20:00Z'
+updated: '2026-09-11T16:24:16Z'
 ---
 
 # Units: Scaling and Removal

@@ -2,8 +2,8 @@
 intent: 018-serving-scale-and-removal
 phase: inception
 status: complete
-created: '2026-09-11T18:00:00Z'
-updated: '2026-09-11T18:00:00Z'
+created: '2026-09-11T16:24:16Z'
+updated: '2026-09-11T16:24:16Z'
 ---
 
 # Requirements: Scaling is the family's choice, and a dinner can be removed

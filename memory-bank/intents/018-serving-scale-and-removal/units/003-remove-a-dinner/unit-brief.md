@@ -3,8 +3,8 @@ unit: 003-remove-a-dinner
 intent: 018-serving-scale-and-removal
 phase: inception
 status: ready
-created: '2026-09-11T18:25:00Z'
-updated: '2026-09-11T18:25:00Z'
+created: '2026-09-11T16:24:16Z'
+updated: '2026-09-11T16:24:16Z'
 ---
 
 # Unit Brief: Remove A Dinner

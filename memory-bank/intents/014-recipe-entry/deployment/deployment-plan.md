@@ -3,8 +3,8 @@ intent: 014-recipe-entry
 release: v0.14.0-fd66c42
 commit: fd66c42
 units: [001-recipe-manual-entry, 002-recipe-import]
-created: '2026-09-11T16:00:00Z'
-updated: '2026-09-11T19:20:00Z'
+created: '2026-09-11T14:11:31Z'
+updated: '2026-09-11T15:24:53Z'
 status: production-live-verified
 current_checkpoint: 4
 follows: v0.13.0-6b10daf

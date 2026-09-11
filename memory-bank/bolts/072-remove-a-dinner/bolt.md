@@ -8,7 +8,7 @@ stories:
   - 001-remove-a-dinner
   - 002-confirm-before-removing
   - 003-removal-tests
-created: '2026-09-11T18:30:00Z'
+created: '2026-09-11T16:24:16Z'
 started: null
 completed: null
 current_stage: null

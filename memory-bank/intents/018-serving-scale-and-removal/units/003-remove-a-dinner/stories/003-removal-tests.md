@@ -4,7 +4,7 @@ unit: 003-remove-a-dinner
 intent: 018-serving-scale-and-removal
 status: planned
 priority: must
-created: '2026-09-11T18:25:00Z'
+created: '2026-09-11T16:24:16Z'
 assigned_bolt: null
 implemented: false
 ---

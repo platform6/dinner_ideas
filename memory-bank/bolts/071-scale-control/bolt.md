@@ -6,7 +6,7 @@ type: simple-construction-bolt
 status: planned
 stories:
   - 003-scale-control-on-review
-created: '2026-09-11T18:30:00Z'
+created: '2026-09-11T16:24:16Z'
 started: null
 completed: null
 current_stage: null

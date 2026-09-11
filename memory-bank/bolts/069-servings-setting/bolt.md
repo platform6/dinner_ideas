@@ -3,15 +3,15 @@ id: 069-servings-setting
 unit: 001-serving-size-setting
 intent: 018-serving-scale-and-removal
 type: ddd-construction-bolt
-status: planned
+status: in-progress
 stories:
   - 001-servings-column
   - 002-servings-setting-control
   - 003-no-more-hardcoded-three
-created: '2026-09-11T18:30:00Z'
-started: null
+created: '2026-09-11T16:24:16Z'
+started: '2026-09-11T16:25:09Z'
 completed: null
-current_stage: null
+current_stage: model
 stages_completed: []
 requires_bolts: []
 enables_bolts:
