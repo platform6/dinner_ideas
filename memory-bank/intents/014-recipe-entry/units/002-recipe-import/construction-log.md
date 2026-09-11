@@ -51,14 +51,67 @@ that a well-formed reply becomes a draft `validateDraft` accepts. It cannot prov
 recipe page yields a correct draft with no step lost — the thing the bolt exists to guarantee, and
 the requirement the product owner pushed back to add.
 
-That manual pass against real pages and a real key has **not been run**. Recorded as outstanding
-rather than left for green checkmarks to imply, because the whole risk of this bolt sits in the
-half the suite cannot reach.
+That manual pass was recorded as outstanding rather than left for green checkmarks to imply,
+because the whole risk of this bolt sits in the half the suite cannot reach. It was run the same
+day — see below. It passed, and it found three things the suite could not have.
+
+## Manual extraction pass (2026-09-10)
+
+Run live against the real proxy and the household key. Two pages of opposite shape: Smitten
+Kitchen's "pizza beans" (story-heavy blog, **131 KB**, overruns the budget ~3x) and Allrecipes'
+"Thai Red Curry Soup" (bare card, 8 KB, no trim). Full results in bolt 061's `test-walkthrough.md`.
+
+**The DoD line holds.** 14 of 14 source actions preserved on page 1, 11 of 11 on page 2, every
+compression a legal merge rather than a deletion. The rescale is exact on both (x0.375 and x0.5,
+checked ingredient by ingredient). Tag proposal works — `shrimp` proposed from the vocabulary,
+nothing invented. **The no-omission rule held under real length pressure**, which is the risk the
+bolt was shaped around and the thing no unit test could reach.
+
+### Findings
+
+**4. The prompt's numeric instructions are being read as suggestions, but its prohibitions are
+not.** "Never drop a cooking step" held perfectly across 25 source actions. "Around 80 characters"
+produced 197 and 133. Same prompt, same model, same call — the difference is that one is a
+prohibition with a stated reason and an offered alternative, and the other is a number in the
+middle of a sentence. Useful to know before writing more prompt: **state limits as rules with
+consequences, not as adjectives.**
+
+**5. An ambiguity the prompt never resolves: which time to take.** A page giving Prep 25 / Cook 25 /
+Total 50 produced a cook time of **25**. A page giving one number produced that number. Both are
+defensible readings of a silent instruction, and one of them puts a 50-minute dinner in the catalog
+labelled 25 minutes. The spec has always said "cook time" without saying cook time _of what_.
+
+**6. Rate limiting proved story 004 is not cosmetic.** The pass ended on the household's daily cap.
+The placeholder copy said the service "couldn't be reached" — false, and it points at a retry that
+cannot succeed. The real message ("you are out of calls until tomorrow") is a different action for
+the user, not a nicer sentence.
+
+## Prompt fixes (2026-09-11)
+
+Findings 4 and 5 fixed in `prompt.ts` and re-verified against the pages that produced them. Cook
+time on the split-time page went **25 → 50**; summaries went **197 → 90** and **133 → 97**. Step
+coverage unchanged on both pages (14/14 and 11/11), which was the thing worth checking — cutting a
+summary by more than half is real length pressure, and "compress the wording, never drop a step to
+make room" is what kept the step list whole. 557/557 green.
+
+The `no-recipe` branch was also closed: a page of editorial boilerplate returned exactly
+`{"error": "no recipe found"}`. Every live path in this bolt has now been exercised.
+
+### Finding
+
+**7. The fix for finding 4 was to apply finding 4.** "Around 80 characters" was ignored twice;
+"Never longer than 100 characters", with a consequence attached and an escape route offered,
+held on both pages at 90 and 97. Same model, same call, same prompt — the difference is entirely in
+how the limit was phrased. The lesson from the manual pass turned out to be directly actionable on
+the manual pass's own findings, which is the cheapest kind of lesson to have.
+
+Worth carrying into bolt 062's error copy and any later prompt work: **a number stated as a
+preference is advisory; a number stated as a rule with a named cost is followed.**
 
 ### Outstanding for this unit
 
-- **Manual extraction-quality pass** (carried from bolt 061's DoD): several real pages of different
-  shapes — story-heavy blog, bare recipe card, printed-recipe view — checked for a correct draft in
-  both layers with no step lost, and for the 3-serving rescale
 - **Bolt 062**: proxy error messages (story 004), the draft's handoff into unit 001's form
   (story 005), and the import tests (story 006)
+- **For story 004 specifically**: `no-recipe` currently renders as "Couldn't read a recipe from that
+  page", which conflates "there is no recipe here" (do not retry) with "the reply was malformed"
+  (retry may work). Two different actions for the user, one message today

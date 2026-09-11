@@ -123,7 +123,15 @@ stage, and doneness cues like "until the chicken is cooked through".
 to go ahead and preheat the oven".
 
 **The summary is the steps compressed into one line.** Every step represented, joined with commas
-and semicolons, around 80 characters. It is not a separate description and not a tagline.
+and semicolons. **Never longer than 100 characters.** If it does not fit, compress the wording
+further — never drop a step to make room. It is not a separate description and not a tagline.
+
+**"cookTimeMinutes" is the TOTAL time from starting to eating** — preparation plus cooking. If the
+page gives prep and cook times separately, ADD them. If it gives a total, use the total. Never take
+the cook time alone when a prep time is also stated: the family plans a weeknight around this
+number, so a 50-minute dinner filed as 25 minutes is worse than no number at all. If the page
+states no time anywhere, estimate the total from the cooking steps themselves — the times they name
+plus the work they describe — and round to the nearest 5 minutes.
 
 **Quantities are for 3 servings** (2 adults and 1 small child). If the source states a serving
 count, rescale every quantity to 3 — "serves 6" halves everything. If the source states NO serving

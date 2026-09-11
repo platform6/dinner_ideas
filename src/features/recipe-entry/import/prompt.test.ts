@@ -130,6 +130,31 @@ describe('buildSystemPrompt', () => {
     expect(prompt).toContain('Cook the rice according to package directions.');
   });
 
+  it('caps the summary with a rule rather than an adjective', () => {
+    // The live pass produced 133- and 197-character summaries against "around 80 characters".
+    // Prohibitions with a stated consequence held; a bare number did not — hence a hard ceiling.
+    expect(prompt).toMatch(/never longer than 100 characters/i);
+  });
+
+  it('tells the model to compress rather than drop a step when the summary is too long', () => {
+    // The cap must not become a reason to lose a step — the failure this whole bolt guards.
+    expect(prompt).toMatch(/never drop a step to make room/i);
+  });
+
+  it('defines cook time as the TOTAL, not the cook time alone', () => {
+    // A page giving Prep 25 / Cook 25 / Total 50 produced 25 on the live pass. The field now
+    // says what it means.
+    expect(prompt).toMatch(/TOTAL time from starting to eating/);
+    expect(prompt).toMatch(/ADD them/);
+  });
+
+  it('says what to do when the page states no time at all', () => {
+    // Without this the parser's positive-integer requirement fails the whole extraction on an
+    // otherwise good recipe whose page never printed a time.
+    expect(prompt).toMatch(/states no time anywhere/i);
+    expect(prompt).toMatch(/nearest 5 minutes/i);
+  });
+
   it('names the 3-serving convention and what to do when the source states none', () => {
     expect(prompt).toMatch(/3 servings/);
     expect(prompt).toMatch(/servingsStated/);
