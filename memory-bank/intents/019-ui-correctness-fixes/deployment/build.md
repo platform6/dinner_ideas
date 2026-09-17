@@ -5,7 +5,7 @@ commit: 7e955c9
 units:
   [001-copy-corrections, 002-ingredient-aisle-default, 003-expanded-card-layout, 004-mobile-overlap-fixes]
 created: '2026-09-17T19:50:38Z'
-status: deployed
+status: verified
 follows: v0.15.0-b5ea091
 severity: routine
 ---
@@ -76,4 +76,4 @@ v0.15.0 exactly, with no data to undo.
 - **dev**: verified — 777/777 vitest, `tsc -b`, eslint, `vite build`; bolts 075–076 checked in a
   browser at 1, 2 and 3 columns and at phone width
 - **staging**: n/a — product owner decision at Checkpoint 1
-- **production**: live 2026-09-17, PR #24, `origin/main` 887685c; artifact verified byte-identical
+- **production**: live 2026-09-17, PR #24, `origin/main` 887685c; artifact verified byte-identical; smoke test passed

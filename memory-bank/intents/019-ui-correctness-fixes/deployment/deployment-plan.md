@@ -5,8 +5,8 @@ commit: 7e955c9
 units:
   [001-copy-corrections, 002-ingredient-aisle-default, 003-expanded-card-layout, 004-mobile-overlap-fixes]
 created: '2026-09-17T19:52:11Z'
-updated: '2026-09-17T19:55:07Z'
-status: production-live
+updated: '2026-09-17T20:16:38Z'
+status: production-live-verified
 current_checkpoint: 4
 follows: v0.15.0-b5ea091
 environments:
@@ -16,7 +16,7 @@ environments:
   staging:
     status: 'n/a — product owner decision 2026-09-17T19:52:11Z. Static site, no schema change, and the one unproven path is a read the smoke test covers directly.'
   production:
-    status: 'live 2026-09-17 — artifact verified; smoke test pending (product owner)'
+    status: 'live 2026-09-17 — artifact verified; smoke test passed (product owner, 2026-09-17)'
     target: 'Netlify main only'
     db: 'n/a — no migration in this release (`git diff origin/main..dev -- supabase/` empty)'
     fe: 'MERGED 2026-09-17T19:53:07Z — PR #24, origin/main 887685c. Netlify served the previous bundle on the first check and index-HWT1V3UE.js on the second; the live file is byte-identical to the local build and contains "Choose aisle", "Choose an aisle.", `All ${e} dinners picked`, "Lock in this dinner", scrollPaddingBottom and "Add a dinner", with no "Add dinner".'
@@ -89,3 +89,11 @@ Staging was skipped by the product owner's decision at Checkpoint 1.
 1. ~~**Approve the production deploy**~~ **Done 2026-09-17.**
 2. **Run the post-deploy smoke test**, above. Step 1 is the one path never exercised against the
    real database.
+
+## Smoke results (2026-09-17)
+
+**Passed**, reported by the product owner after the release.
+
+That closes the one open risk in this release: bolt 074's aisle-history read — `dinner_ingredients`
+joined to `dinners` — had only ever run against mocks. It has now run against production, and a
+known ingredient's aisle fills in. Nothing else in intent 019 touched the database.
