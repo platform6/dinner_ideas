@@ -328,7 +328,7 @@
 > "COMPLETE" — that is stale labelling in this index's prose only; those story files all carry
 > `status: complete`.
 
-### 018-serving-scale-and-removal — ✅ BUILT (bolts 069–072 complete; not yet deployed — migrations 20260911173308, 20260911181346 pending)
+### 018-serving-scale-and-removal — 🚀 SHIPPED v0.15.0 (bolts 069–072 complete; live on prod 2026-09-17, PR #23)
 
 **Unit: 001-serving-size-setting** — bolt `069` ✅ COMPLETE — the household owns its serving size
 

@@ -3,7 +3,12 @@ bolt: 072-remove-a-dinner
 created: '2026-09-11T18:11:35Z'
 status: accepted
 superseded_by: null
+amended: '2026-09-17T15:26:52Z'
 ---
+
+> **Amended 2026-09-17 after product owner review.** The locked-plan exception is **confirmed**.
+> Two facts below were wrong and are corrected in place, each marked _Corrected_. See
+> [Product owner review](#product-owner-review-2026-09-17) at the end.
 
 # ADR-15: Removing a Dinner Removes Its History — Through One Named Function, Never a Cascade
 
@@ -49,7 +54,10 @@ locked plan holds exactly `dinners_per_week` selections**.
 **History goes because nothing reads the history of a dinner that no longer exists.** Every reader
 of `meal_history` is per dinner: the "last made" label on a card, `dinner_last_chosen`, and lucky
 pick's recency weighting (intent 016). For a removed dinner each has nothing left to label, weight
-or pick, and past weeks' plans are not browsable after rollover (intent 011). Keeping history would
+or pick. _Corrected:_ this originally said past weeks' plans are not browsable after rollover. They
+are: `/plan` week navigation loads any past plan by start date (`useWeekByOffset`, intent 011), so a
+removed dinner also disappears from every past week it was in. The product owner accepted that
+consequence on 2026-09-17. Keeping history would
 need a nullable `dinner_id` plus a snapshot of the name, or a tombstone, and every history reader
 would then have to handle a "removed dinner". That is permanent cost for data with no reader. The
 warning still states the count, so nothing goes silently.
@@ -64,8 +72,8 @@ reading one function.
 _permanence_: a cooked recipe stuck forever. A dinner in this week's locked plan is being cooked this
 week, and becomes removable when the week ends. Removing it now would leave a locked plan with one
 fewer dinner than the household plans for and change a shopping list someone may be shopping
-from. **The product owner should confirm or overturn this exception.** It is the one place intent
-018's construction narrowed an explicit decision.
+from. It is the one place intent 018's construction narrowed an explicit decision, so it went back
+to the product owner, who **confirmed it on 2026-09-17**.
 
 **`definer`, even though ADR-13 argued for `invoker`.** ADR-13's function writes rows the existing
 RLS insert policies already allow, so `invoker` kept those policies in force. This function must
@@ -99,10 +107,17 @@ for one purpose is **a function that names the exception, not a grant or a polic
 - **History is gone for good.** If a future intent adds "what did we eat in March?", the history of
   removed dinners will not be in it. That intent would need a snapshot, or a different removal rule,
   and should read this ADR first.
+- **Past weeks visibly shrink.** A removed dinner leaves every past plan it was in, so `/plan` week
+  navigation shows a locked 3-dinner week as 2. Accepted by the product owner (2026-09-17).
 - One more `security definer` function to keep hardened (ADR-12), and it has to stay on the advisor
   list.
-- The week boundary is computed in UTC, so the locked-plan refusal can last a few hours past local
-  midnight on the week's last day. That errs on the safe side.
+- The week boundary is computed with the database's `current_date`, which is **UTC**, while the
+  app's planning week is local. _Corrected:_ this originally said the refusal errs on the safe side.
+  That holds only east of UTC. For a household behind UTC it lifts **early**: at UTC-4 with a Sunday
+  week start, `start_date + 7 > current_date` stops being true at 20:00 local on Saturday. For the
+  last hours of the week, a dinner in the current locked plan can be removed, and the selections
+  guard allows it too, because its escape uses the same test. Accepted as low harm (the week's last
+  evening). There is no stored household timezone to fix it with.
 
 ## Read When
 
@@ -138,3 +153,18 @@ It excuses a selection delete only when **all three** hold: it is a DELETE; the 
 guard behind the function's own refusal, not a replacement for it. The rest of the guard (the
 `for update` race fix, the locked check, the `dinners_per_week` cap) is restated unchanged, and all
 411 existing pgTAP tests pass against it. ADR-12: `search_path = ''` is restated.
+
+## Product owner review (2026-09-17)
+
+Held after v0.15.0 reached production, against the live code and schema.
+
+| Question                                                                 | Decision      |
+| ------------------------------------------------------------------------ | ------------- |
+| Keep the locked-plan exception (Decision 4), which narrows Checkpoint 2? | **Confirmed** |
+| Accept that a removed dinner disappears from past weeks on `/plan`?      | **Accepted**  |
+
+Two facts in the original text were found wrong during the review and are corrected in place: past
+plans **are** browsable, and the UTC week boundary lifts the refusal **early**, not late, for a
+household behind UTC. Neither changes the decision, so no code changes. For context, at review time
+production's last three plans were 2026-09-13 (draft), 2026-09-06 (draft) and 2026-08-30 (locked),
+so in practice the exception rarely applies.
