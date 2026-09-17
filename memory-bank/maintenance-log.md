@@ -170,3 +170,52 @@
 **Note**: intent 014 `requirements.md` left at `status: complete` — matches project convention where intent status tracks inception completion (all 17 intents read `complete`).
 
 ---
+
+## 2026-09-11T15:24:53Z - Status Sync
+
+**Triggered by**: `status-integrity.cjs` (read-only run) after bolts 061 and 062 were found closed by hand
+
+| Artifact                                                                                         | Old Status                   | New Status                  | Reason            |
+| ------------------------------------------------------------------------------------------------ | ---------------------------- | --------------------------- | ----------------- |
+| memory-bank/intents/014-recipe-entry/units/002-recipe-import/stories/001-paste-box-and-sizing.md | complete, implemented: false | complete, implemented: true | Bolt 061 complete |
+| memory-bank/intents/014-recipe-entry/units/002-recipe-import/stories/002-extraction-prompt.md    | complete, implemented: false | complete, implemented: true | Bolt 061 complete |
+| memory-bank/intents/014-recipe-entry/units/002-recipe-import/stories/003-response-parsing.md     | complete, implemented: false | complete, implemented: true | Bolt 061 complete |
+
+**Cause**: bolts 061 and 062 were closed by hand-editing statuses instead of running
+`bolt-complete.cjs`, which `bolt-start.md` Step 10 makes a hard gate. The hand edit for 061 set
+`status` but not `implemented`; the script sets both. 062's hand edit happened to set both.
+
+**How it was fixed**: `bolt-complete.cjs 061` was run first and refused ("Bolt is already
+complete" — `validateBoltStatus` rejects closed bolts), so the script has no path for a bolt closed
+out of band. `status-integrity.cjs --fix` was NOT used, because it would also rewrite the six
+convention items below. The one missing field was set to exactly the value the script writes.
+
+**Left deliberately**: 6 items flagged by the script remain — unit-briefs at `ready` (script wants
+`stories-defined`) and `requirements.md` at `complete` (script wants `units-defined`) for intents
+017 and 018. This is the project convention recorded in the 2026-09-07 entry above, not drift.
+
+---
+
+## 2026-09-11T16:38:40Z - Timestamp Correction
+
+**Triggered by**: reading the real clock at bolt 069 start and finding memory-bank times later than it
+
+13 timestamps written on 2026-09-11 were estimated rather than read from the clock, and each was
+**later than the commit that recorded it** — impossible for a creation or completion time. Each was
+replaced with that commit's time, which is a hard upper bound. The true times are not recoverable.
+
+| Recorded by commit             | Commit time (UTC)    | Guessed values replaced                  |
+| ------------------------------ | -------------------- | ---------------------------------------- |
+| fd66c42 (bolt 062)             | 2026-09-11T13:56:03Z | 14:05, 14:45, 15:30                      |
+| f0e7c58 (014 deployment plan)  | 2026-09-11T14:11:31Z | 16:00, 16:20                             |
+| d843d49 (story-index gap fix)  | 2026-09-11T15:24:53Z | 19:10, 19:20                             |
+| c9a5c50 (intent 018 inception) | 2026-09-11T16:24:16Z | 18:00, 18:15, 18:20, 18:25, 18:30, 19:40 |
+
+**Known loss**: bolt 062's plan/implement/test stage times now all read 13:56:03Z. Its real order
+is plan → implement → test, as the artifacts themselves show; the times no longer distinguish them,
+and inventing an ordering would repeat the original error.
+
+**Found by**: comparing every timestamp each 2026-09-10/11 commit added against that commit's own
+time. Commits 8e286f7 and c292f11 were clean. From here, timestamps come from `date -u`.
+
+---

@@ -500,6 +500,7 @@ export type Database = {
           dinners_per_week: number;
           id: string;
           name: string;
+          servings_per_dinner: number;
           week_start_day: number;
         };
         Insert: {
@@ -507,6 +508,7 @@ export type Database = {
           dinners_per_week?: number;
           id?: string;
           name: string;
+          servings_per_dinner?: number;
           week_start_day?: number;
         };
         Update: {
@@ -514,6 +516,7 @@ export type Database = {
           dinners_per_week?: number;
           id?: string;
           name?: string;
+          servings_per_dinner?: number;
           week_start_day?: number;
         };
         Relationships: [];
@@ -962,6 +965,8 @@ export type Database = {
         };
         Returns: string;
       };
+      fn_dinner_removal_impact: { Args: { p_dinner_id: string }; Returns: Json };
+      fn_remove_dinner: { Args: { p_dinner_id: string }; Returns: undefined };
       lock_weekly_plan: {
         Args: { p_plan_id: string };
         Returns: {

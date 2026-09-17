@@ -89,7 +89,10 @@ schema:
   ownership:
     inception: [intents, units, stories, story-index, bolts]  # Plans bolts initially
     construction: [units, bolts, decision-index]               # Executes, can replan bolts, maintains decision index
-    operations: [operations]
+    # Local addition (not upstream): Operations also owns the DEPLOYMENT STATUS in each intent's
+    # story-index header. Inception writes "not yet deployed" at planning time and nothing upstream
+    # ever revisits it after a release, so it went stale four times. See verify.md step 7.
+    operations: [operations, deployment-plans, story-index-deployment-status]
 
 # Global Story Index Options
 # Choose ONE approach for project-wide story tracking

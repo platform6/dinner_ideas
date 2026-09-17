@@ -22,6 +22,7 @@ import { IngredientLinesEditor } from '@/features/recipe-entry/components/Ingred
 import { TagEditor } from '@/features/recipe-entry/components/TagEditor';
 import { PasteImportPanel } from '@/features/recipe-entry/components/PasteImportPanel';
 import { extractRecipe } from '@/features/recipe-entry/import/extract';
+import { scaleDraft } from '@/features/recipe-entry/scale';
 import {
   messageForExtractionFailure,
   messageForThrown,
@@ -38,6 +39,7 @@ import {
   type RecipeDraft,
 } from '@/features/recipe-entry/draft';
 import { useAllTags, useDinners } from '@/features/dinners/hooks';
+import { useServingsPerDinner } from '@/features/settings/hooks';
 import { useSaveDinner } from '@/features/recipe-entry/hooks';
 import { mapSaveError, type SaveRejection } from '@/features/recipe-entry/api';
 import { uiIcons } from '@/shared/components/icons';
@@ -77,13 +79,27 @@ export function RecipeEntryPage() {
   // Success feedback belongs on the FORM tab, because that is where a successful import sends the
   // user — a notice left on the paste panel would be announcing itself to an empty room.
   const [importedSummary, setImportedSummary] = useState<string | null>(null);
-  // True when the source stated no serving count, so quantities were taken as written. Lives here
-  // rather than in the editor because it describes the DRAFT, and dies when the draft is replaced.
-  const [quantitiesUnscaled, setQuantitiesUnscaled] = useState(false);
+  // Set when the draft came from an import: what the page said it serves or makes, verbatim, or null
+  // if it said nothing. Since bolt 070 an import's quantities are ALWAYS the page's own, so this is
+  // what they are for. Null here means "typed in by hand". Lives on the page, not the draft, because
+  // the draft is what gets saved and a yield never is (ADR-14).
+  const [importSource, setImportSource] = useState<{ sourceYield: string | null } | null>(null);
+  // Set when the user chooses to scale an import (bolt 071). `before` is the page's own ingredients,
+  // kept for undo; it becomes null the moment the user edits an ingredient, because from then on
+  // restoring it would silently throw their edit away. Nothing sets this except the user's click
+  // (FR-4) — never on arrival, never because the household size is known.
+  const [scaling, setScaling] = useState<{
+    from: number;
+    to: number;
+    before: DraftIngredient[] | null;
+  } | null>(null);
   const [tabIndex, setTabIndex] = useState(0);
 
   const dinners = useDinners();
   const tags = useAllTags();
+  // How many people the household cooks for (intent 018). The fallback mirrors the column's
+  // default so the form is usable before the query lands; it is not a second source of truth.
+  const servingsPerDinner = useServingsPerDinner().data ?? 3;
   const saveDinner = useSaveDinner();
 
   // The same derivation the catalog already uses for its cuisine filter — read from the data, so
@@ -126,7 +142,8 @@ export function RecipeEntryPage() {
       }
 
       setDraft(outcome.draft);
-      setQuantitiesUnscaled(!outcome.servingsStated);
+      setImportSource({ sourceYield: outcome.sourceYield });
+      setScaling(null);
       // A freshly imported draft is not the user's mistake, so nothing is painted red before they
       // have touched anything. And a rejection about a previous draft's name would now be a lie.
       setHasAttemptedSave(false);
@@ -143,6 +160,28 @@ export function RecipeEntryPage() {
     } finally {
       setIsExtracting(false);
     }
+  }
+
+  /**
+   * Scales the imported draft from the page's servings to the household's (bolt 071). Only ever
+   * called by the user pressing the control. `scaleDraft` is non-destructive, so the current
+   * ingredients ARE the undo snapshot.
+   */
+  function handleScale(fromServings: number) {
+    setScaling({ from: fromServings, to: servingsPerDinner, before: draft.ingredients });
+    setDraft((current) => scaleDraft(current, fromServings, servingsPerDinner));
+  }
+
+  function handleUndoScale() {
+    const before = scaling?.before;
+    if (!before) return;
+    setDraft((current) => ({ ...current, ingredients: before }));
+    setScaling(null);
+  }
+
+  /** After an ingredient edit the scaled numbers are the user's own; undo would discard that edit. */
+  function endUndoAfterEdit() {
+    setScaling((current) => (current ? { ...current, before: null } : current));
   }
 
   function handleSubmit() {
@@ -209,11 +248,21 @@ export function RecipeEntryPage() {
                   lines={draft.ingredients}
                   problems={problems}
                   showProblems={hasAttemptedSave}
-                  onChange={(ingredients: DraftIngredient[]) => patchDraft({ ingredients })}
-                  onAddLine={() =>
-                    patchDraft({ ingredients: [...draft.ingredients, createIngredientLine()] })
+                  onChange={(ingredients: DraftIngredient[]) => {
+                    patchDraft({ ingredients });
+                    endUndoAfterEdit();
+                  }}
+                  onAddLine={() => {
+                    patchDraft({ ingredients: [...draft.ingredients, createIngredientLine()] });
+                    endUndoAfterEdit();
+                  }}
+                  servingsPerDinner={servingsPerDinner}
+                  importSource={importSource}
+                  scaled={
+                    scaling ? { from: scaling.from, to: scaling.to, canUndo: scaling.before !== null } : null
                   }
-                  quantitiesUnscaled={quantitiesUnscaled}
+                  onScale={handleScale}
+                  onUndoScale={handleUndoScale}
                 />
               </Section>
 

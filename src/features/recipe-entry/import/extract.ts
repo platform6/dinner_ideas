@@ -18,11 +18,12 @@ export interface ExtractionSuccess {
   ok: true;
   draft: RecipeDraft;
   /**
-   * False when the source stated no serving count, so quantities were taken as-is rather than
-   * rescaled to 3. The user is told, so they correct rather than being silently given the wrong
-   * amounts.
+   * What the page says the recipe serves or makes, verbatim ("4", "8–10", "Makes 24 cookies"), or
+   * null if it stated nothing. Quantities are ALWAYS as the page wrote them (bolt 070); this is what
+   * they are for. It rides on the outcome, not on the draft, because the draft is what gets saved
+   * and a yield never is (ADR-14).
    */
-  servingsStated: boolean;
+  sourceYield: string | null;
   /** True when the paste was too large and its tail was dropped. Reported BEFORE the draft. */
   trimmed: boolean;
 }
@@ -68,7 +69,7 @@ export async function extractRecipe(
   const parsed = parseExtraction(result.text, vocabulary);
   if (!parsed.ok) return { ok: false, reason: parsed.reason, trimmed };
 
-  return { ok: true, draft: parsed.draft, servingsStated: parsed.servingsStated, trimmed };
+  return { ok: true, draft: parsed.draft, sourceYield: parsed.sourceYield, trimmed };
 }
 
 /**

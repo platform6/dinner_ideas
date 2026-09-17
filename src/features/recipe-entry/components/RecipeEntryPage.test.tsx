@@ -8,6 +8,7 @@ import { RecipeEntryPage } from '@/features/recipe-entry/components/RecipeEntryP
 import { fetchActiveDinners, fetchAllTags } from '@/features/dinners/api';
 import { createDinner } from '@/features/recipe-entry/api';
 import { callClaude, ClaudeError } from '@/features/ai/api';
+import { fetchServingsPerDinner } from '@/features/settings/api';
 import type { CatalogDinner, Tag } from '@/features/dinners/types';
 
 vi.mock('@/features/dinners/api');
@@ -20,6 +21,17 @@ vi.mock('@/features/ai/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/features/ai/api')>()),
   callClaude: vi.fn(),
 }));
+vi.mock('@/features/settings/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/features/settings/api')>()),
+  fetchServingsPerDinner: vi.fn(),
+}));
+
+/**
+ * The household in these tests cooks for FIVE, deliberately not the old hard-coded 3. With 3, a
+ * surviving literal would render the same text and every test would pass by coincidence (intent
+ * 018, story 003).
+ */
+const HOUSEHOLD_SERVINGS = 5;
 
 function dinner(name: string, cuisine: string): CatalogDinner {
   return {
@@ -45,9 +57,11 @@ describe('RecipeEntryPage', () => {
   const mockedTags = vi.mocked(fetchAllTags);
   const mockedCreate = vi.mocked(createDinner);
   const mockedCallClaude = vi.mocked(callClaude);
+  const mockedServings = vi.mocked(fetchServingsPerDinner);
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedServings.mockResolvedValue(HOUSEHOLD_SERVINGS);
     mockedDinners.mockResolvedValue([dinner('Tacos', 'Mexican'), dinner('Ramen', 'Japanese')]);
     mockedTags.mockResolvedValue([tag('quick'), tag('weeknight')]);
     mockedCreate.mockResolvedValue('new-dinner-id');
@@ -120,9 +134,20 @@ describe('RecipeEntryPage', () => {
     expect(await screen.findByRole('button', { name: 'Get the recipe' })).toBeDisabled();
   });
 
-  it('states the 3-serving convention where the quantities are typed', async () => {
+  it('guides quantities by the household serving size where they are typed', async () => {
     renderPage();
-    expect(await screen.findByText(/Quantities are for 3 servings/)).toBeInTheDocument();
+    expect(await screen.findByText(/Enter quantities for 5/)).toBeInTheDocument();
+  });
+
+  it('no longer says 3 servings or describes a particular family (FR-6)', async () => {
+    // The ABSENCE is the assertion that catches a surviving literal. "two adults and one small
+    // child" described one particular 3; at any other number it is false, so it is gone.
+    renderPage();
+    await screen.findByText(/Enter quantities for 5/);
+
+    expect(screen.queryByText(/3 servings/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/small child/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/two adults/)).not.toBeInTheDocument();
   });
 
   it('says the summary is not the cooking steps', async () => {
@@ -522,7 +547,7 @@ describe('RecipeEntryPage', () => {
       cuisine: 'Thai',
       cookTimeMinutes: 25,
       summary: 'Fry the shrimp, boil the noodles, toss together.',
-      servingsStated: true,
+      yield: '4',
       ingredients: [{ quantity: 0.75, unit: 'lb', name: 'shrimp', category: 'Protein' }],
       steps: ['Fry the shrimp until pink.', 'Boil the noodles.', 'Toss and serve.'],
       tags: [],
@@ -559,18 +584,35 @@ describe('RecipeEntryPage', () => {
     it('says the quantities were not rescaled when the source gave no serving count', async () => {
       // The caveat now sits WITH the quantities rather than in the paste-tab notice, because that
       // is where the user is reading when the warning matters.
-      replyWith(GOOD_REPLY.replace('"servingsStated":true', '"servingsStated":false'));
+      replyWith(GOOD_REPLY.replace('"yield":"4"', '"yield":null'));
       const user = userEvent.setup();
       renderPage();
 
       await pasteAPage(user);
       await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
 
-      expect(await screen.findByText(/have NOT been adjusted to 3 servings/)).toBeInTheDocument();
+      expect(await screen.findByText(/have NOT been adjusted to 5/)).toBeInTheDocument();
     });
 
-    it('does NOT warn about servings when the source stated a count', async () => {
-      // A warning that shows every time is a warning nobody reads.
+    it('sends NO household serving size to the model — extraction does no arithmetic (bolt 070)', async () => {
+      // The inverse of bolt 069's version of this test, and the point of bolt 070. The household
+      // cooks for 5; the model must not be told, because it is no longer asked to rescale anything.
+      replyWith(GOOD_REPLY);
+      const user = userEvent.setup();
+      renderPage();
+      await screen.findByText(/Enter quantities for 5/);
+
+      await pasteAPage(user);
+      await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+      await waitFor(() => expect(mockedCallClaude).toHaveBeenCalledTimes(1));
+      const { system } = mockedCallClaude.mock.calls[0][0];
+      expect(system).not.toMatch(/5 servings|rescale every quantity/);
+    });
+
+    it('lands the page quantities UNCHANGED, and says what they are for', async () => {
+      // The reply's yield is 4 and the household cooks for 5. Nothing may be scaled on the way in
+      // (FR-4); the review says so instead.
       replyWith(GOOD_REPLY);
       const user = userEvent.setup();
       renderPage();
@@ -579,7 +621,30 @@ describe('RecipeEntryPage', () => {
       await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
 
       await screen.findByDisplayValue('Shrimp Noodle Bowls');
-      expect(screen.queryByText(/have NOT been adjusted/)).not.toBeInTheDocument();
+      expect(screen.getByDisplayValue('0.75')).toBeInTheDocument();
+      expect(
+        screen.getByText(/as the page wrote them — for 4\. They have NOT been adjusted to 5/),
+      ).toBeInTheDocument();
+    });
+
+    it('says the quantities match when the page already serves the household size', async () => {
+      // "NOT adjusted to 5" about quantities already for 5 would be true and misleading.
+      replyWith(GOOD_REPLY.replace('"yield":"4"', '"yield":"5"'));
+      const user = userEvent.setup();
+      renderPage();
+
+      await pasteAPage(user);
+      await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+      expect(await screen.findByText(/for 5, which matches your household/)).toBeInTheDocument();
+      expect(screen.queryByText(/NOT been adjusted/)).not.toBeInTheDocument();
+    });
+
+    it('shows no import note on a dinner typed in by hand', async () => {
+      renderPage();
+      await screen.findByText(/Enter quantities for 5/);
+
+      expect(screen.queryByText(/as the page wrote them|didn’t say how many/)).not.toBeInTheDocument();
     });
 
     describe('the draft lands in the form (story 005)', () => {
@@ -688,6 +753,129 @@ describe('RecipeEntryPage', () => {
           'Boil the noodles.',
           'Toss and serve.',
         ]);
+      });
+    });
+
+    describe('scaling on review (intent 018, story 003)', () => {
+      /** Imports a page whose yield is `statedYield` (household cooks for 5, 0.75 lb of shrimp). */
+      async function importWithYield(user: ReturnType<typeof userEvent.setup>, statedYield: string | null) {
+        replyWith(GOOD_REPLY.replace('"yield":"4"', `"yield":${JSON.stringify(statedYield)}`));
+        renderPage();
+        await screen.findByText(/Enter quantities for 5/);
+        await pasteAPage(user);
+        await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+        await screen.findByDisplayValue('Shrimp Noodle Bowls');
+      }
+
+      it('offers to scale, naming BOTH numbers — and scales nothing until asked (FR-4)', async () => {
+        // The regression bolt 071's brief warns about: auto-scaling "because the household size is
+        // right there". The page's 0.75 must be on the form until the user presses the button.
+        const user = userEvent.setup();
+        await importWithYield(user, '4');
+
+        expect(screen.getByRole('button', { name: 'Scale from 4 to 5' })).toBeInTheDocument();
+        expect(screen.getByDisplayValue('0.75')).toBeInTheDocument();
+      });
+
+      it('scales every quantity when pressed, and says what it did', async () => {
+        const user = userEvent.setup();
+        await importWithYield(user, '4');
+
+        await user.click(screen.getByRole('button', { name: 'Scale from 4 to 5' }));
+
+        // 0.75 × 5/4 = 0.9375 → nearest ⅛ → 1 (bolt 070's rounding rule).
+        expect(screen.getByDisplayValue('1')).toBeInTheDocument();
+        expect(screen.queryByDisplayValue('0.75')).not.toBeInTheDocument();
+        expect(screen.getByText(/Scaled from 4 to 5/)).toBeInTheDocument();
+      });
+
+      it('undoes back to the page’s own quantities, without re-importing (FR-3)', async () => {
+        const user = userEvent.setup();
+        await importWithYield(user, '4');
+        await user.click(screen.getByRole('button', { name: 'Scale from 4 to 5' }));
+
+        await user.click(screen.getByRole('button', { name: /Undo/ }));
+
+        expect(screen.getByDisplayValue('0.75')).toBeInTheDocument();
+        expect(mockedCallClaude).toHaveBeenCalledTimes(1);
+        // And the offer is back, starting again from the page's numbers.
+        expect(screen.getByRole('button', { name: 'Scale from 4 to 5' })).toBeInTheDocument();
+      });
+
+      it('ends undo once the user edits a quantity — those numbers are theirs now', async () => {
+        // Restoring the snapshot after an edit would silently throw the edit away.
+        const user = userEvent.setup();
+        await importWithYield(user, '4');
+        await user.click(screen.getByRole('button', { name: 'Scale from 4 to 5' }));
+
+        const quantity = screen.getByDisplayValue('1');
+        await user.clear(quantity);
+        await user.type(quantity, '1.25');
+
+        expect(screen.queryByRole('button', { name: /Undo/ })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Scale from/ })).not.toBeInTheDocument();
+        expect(screen.getByText(/they’re yours now/)).toBeInTheDocument();
+      });
+
+      it('saves the PAGE’S quantities when the user never scales', async () => {
+        const user = userEvent.setup();
+        await importWithYield(user, '4');
+
+        await user.click(screen.getByRole('button', { name: 'Save dinner' }));
+
+        await waitFor(() => expect(mockedCreate).toHaveBeenCalledTimes(1));
+        expect(mockedCreate.mock.calls[0][0].ingredients[0].quantity).toBe('0.75');
+      });
+
+      it('saves the SCALED quantities when the user scaled', async () => {
+        const user = userEvent.setup();
+        await importWithYield(user, '4');
+        await user.click(screen.getByRole('button', { name: 'Scale from 4 to 5' }));
+
+        await user.click(screen.getByRole('button', { name: 'Save dinner' }));
+
+        await waitFor(() => expect(mockedCreate).toHaveBeenCalledTimes(1));
+        expect(mockedCreate.mock.calls[0][0].ingredients[0].quantity).toBe('1');
+      });
+
+      it('asks for the base when the page gave a RANGE — and does not pick one (Checkpoint 2)', async () => {
+        const user = userEvent.setup();
+        await importWithYield(user, '8–10');
+
+        const base = screen.getByLabelText('Scale from how many servings');
+        expect(base).toHaveValue('');
+        expect(screen.getByRole('button', { name: 'Scale to 5' })).toBeDisabled();
+        expect(screen.queryByRole('button', { name: /Scale from \d/ })).not.toBeInTheDocument();
+
+        await user.type(base, '8');
+        await user.click(screen.getByRole('button', { name: 'Scale to 5' }));
+
+        // 0.75 × 5/8 = 0.46875 → nearest ⅛ → 0.5.
+        expect(screen.getByDisplayValue('0.5')).toBeInTheDocument();
+        expect(screen.getByText(/Scaled from 8 to 5/)).toBeInTheDocument();
+      });
+
+      it('offers nothing to scale from a count of pieces, and says why', async () => {
+        const user = userEvent.setup();
+        await importWithYield(user, 'Makes 24 cookies');
+
+        expect(screen.queryByRole('button', { name: /^Scale/ })).not.toBeInTheDocument();
+        expect(screen.getByText(/isn’t a number of people/)).toBeInTheDocument();
+      });
+
+      it('offers nothing when the page stated no yield', async () => {
+        const user = userEvent.setup();
+        await importWithYield(user, null);
+
+        expect(screen.queryByRole('button', { name: /^Scale/ })).not.toBeInTheDocument();
+        expect(screen.getByText(/didn’t say how many it serves/)).toBeInTheDocument();
+      });
+
+      it('offers nothing when the page already serves the household size', async () => {
+        const user = userEvent.setup();
+        await importWithYield(user, '5');
+
+        expect(screen.queryByRole('button', { name: /^Scale/ })).not.toBeInTheDocument();
       });
     });
 

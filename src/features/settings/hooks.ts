@@ -2,8 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   fetchDinnersPerWeek,
+  fetchServingsPerDinner,
   fetchWeekStartDay,
   updateDinnersPerWeek,
+  updateServingsPerDinner,
   updateWeekStartDay,
 } from '@/features/settings/api';
 
@@ -59,6 +61,33 @@ export function useUpdateDinnersPerWeek(householdId: string | null) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: dinnersPerWeekKey });
       void queryClient.invalidateQueries({ queryKey: ['weekly-plan'] });
+    },
+  });
+}
+
+/** Query key for how many people the household cooks a dinner for (intent 018). */
+export const servingsPerDinnerKey = ['household', 'servings-per-dinner'] as const;
+
+/** Reads `households.servings_per_dinner` (1..12, default 3). */
+export function useServingsPerDinner() {
+  return useQuery({ queryKey: servingsPerDinnerKey, queryFn: fetchServingsPerDinner });
+}
+
+/**
+ * Owner-only write of the serving size. Unlike `useUpdateDinnersPerWeek` it invalidates ONLY its
+ * own key, and that is the point (ADR-14): no stored dinner, plan or shopping list depends on this
+ * number, so nothing else has to refetch. If this ever needs to invalidate dinner data, something
+ * has started treating stored quantities as "for N people" — read ADR-14 first.
+ */
+export function useUpdateServingsPerDinner(householdId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (servingsPerDinner: number) => {
+      if (!householdId) throw new Error('No household in context');
+      return updateServingsPerDinner(householdId, servingsPerDinner);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: servingsPerDinnerKey });
     },
   });
 }

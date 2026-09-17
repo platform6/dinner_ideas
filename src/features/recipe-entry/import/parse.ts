@@ -22,7 +22,7 @@ export type ExtractionFailure =
   | 'bad-values';
 
 export type ParseResult =
-  { ok: true; draft: RecipeDraft; servingsStated: boolean } | { ok: false; reason: ExtractionFailure };
+  { ok: true; draft: RecipeDraft; sourceYield: string | null } | { ok: false; reason: ExtractionFailure };
 
 /**
  * Pulls the JSON object out of the model's reply.
@@ -126,7 +126,7 @@ export function parseExtraction(text: string, vocabulary: readonly string[]): Pa
 
   return {
     ok: true,
-    servingsStated: raw.servingsStated !== false,
+    sourceYield: acceptYield(raw.yield),
     draft: {
       name: raw.name.trim(),
       cuisineType: raw.cuisine.trim(),
@@ -137,6 +137,24 @@ export function parseExtraction(text: string, vocabulary: readonly string[]): Pa
       tagNames: acceptTags(raw.tags, vocabulary),
     },
   };
+}
+
+/**
+ * What the page says the recipe serves or makes, kept VERBATIM (intent 018, bolt 070).
+ *
+ * Lenient, like tags and unlike ingredients. A malformed yield costs the scale control a base and
+ * nothing else — it is never saved (ADR-14) — so failing an otherwise good recipe over it would be
+ * all cost. A number becomes its string; anything that is not a non-empty string or a positive
+ * number becomes null.
+ *
+ * No interpretation here: "8–10" stays "8–10". What a yield means as a number is `readYield`'s
+ * job, so the page's own words survive to the screen.
+ */
+function acceptYield(value: unknown): string | null {
+  if (typeof value === 'number') return Number.isFinite(value) && value > 0 ? String(value) : null;
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
 }
 
 /**

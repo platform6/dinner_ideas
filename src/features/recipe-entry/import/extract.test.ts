@@ -21,7 +21,7 @@ const GOOD_REPLY = JSON.stringify({
   cuisine: 'Thai',
   cookTimeMinutes: 25,
   summary: 'Fry the shrimp, boil the noodles, toss together.',
-  servingsStated: true,
+  yield: '4',
   ingredients: [{ quantity: 0.75, unit: 'lb', name: 'shrimp', category: 'Protein' }],
   steps: ['Fry the shrimp until pink.', 'Boil the noodles.', 'Toss together and serve.'],
   tags: ['shrimp'],
@@ -169,12 +169,29 @@ describe('extractRecipe', () => {
       expect(outcome.ok && outcome.draft.steps).toHaveLength(3);
     });
 
-    it('passes servingsStated through, so the user can be told to check quantities', async () => {
-      replyWith(GOOD_REPLY.replace('"servingsStated":true', '"servingsStated":false'));
+    it('passes the page yield through VERBATIM, so review can say what the quantities are for', async () => {
+      replyWith(GOOD_REPLY.replace('"yield":"4"', '"yield":"8–10"'));
 
       const outcome = await extractRecipe('a recipe page', VOCABULARY);
 
-      expect(outcome.ok && outcome.servingsStated).toBe(false);
+      // A range stays a range: nothing on the way to the screen may resolve it (Checkpoint 2).
+      expect(outcome.ok && outcome.sourceYield).toBe('8–10');
+    });
+
+    it('reports a null yield when the page stated none', async () => {
+      replyWith(GOOD_REPLY.replace('"yield":"4"', '"yield":null'));
+
+      const outcome = await extractRecipe('a recipe page', VOCABULARY);
+
+      expect(outcome.ok && outcome.sourceYield).toBeNull();
+    });
+
+    it('returns the page quantities untouched — extraction does no arithmetic (bolt 070)', async () => {
+      // The reply says 0.75 lb; the draft must say 0.75, whatever the household cooks for. There
+      // is no household number anywhere in this call any more.
+      const outcome = await extractRecipe('a recipe page', VOCABULARY);
+
+      expect(outcome.ok && outcome.draft.ingredients[0].quantity).toBe('0.75');
     });
 
     it.each([

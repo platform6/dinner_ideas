@@ -155,9 +155,38 @@ describe('buildSystemPrompt', () => {
     expect(prompt).toMatch(/nearest 5 minutes/i);
   });
 
-  it('names the 3-serving convention and what to do when the source states none', () => {
-    expect(prompt).toMatch(/3 servings/);
-    expect(prompt).toMatch(/servingsStated/);
+  describe('the model does no arithmetic on quantities (intent 018, bolt 070)', () => {
+    it('contains NO instruction to rescale', () => {
+      // The boundary move this bolt exists for. Bolt 069 parameterised the old rule to N; this
+      // bolt deleted it. The ABSENCE is the assertion — a rule reworded back in would pass any
+      // test that only checks for the new wording.
+      expect(prompt).not.toMatch(/rescale every quantity/i);
+      expect(prompt).not.toMatch(/quantities are for \S+ servings/i);
+      expect(prompt).not.toMatch(/servingsStated/);
+    });
+
+    it('forbids rescaling, converting and rounding, and says why', () => {
+      // Bolt 061's finding: prohibitions with a reason hold where adjectives do not.
+      expect(prompt).toMatch(/copy every quantity exactly as the page gives it/i);
+      expect(prompt).toMatch(/never rescale, convert or round/i);
+    });
+
+    it('asks for the yield word for word, and never to collapse a range', () => {
+      expect(prompt).toMatch(/"yield": string or null/);
+      expect(prompt).toMatch(/copied word for word/i);
+      expect(prompt).toMatch(/never turn a range into one number/i);
+    });
+
+    it('takes no household serving size — the model has no use for it any more', () => {
+      // buildSystemPrompt lost its second argument. If a later change passes a household number
+      // in, the model is being set up to do arithmetic again.
+      expect(buildSystemPrompt.length).toBe(1);
+    });
+
+    it('describes no particular family — that was only ever true of one 3', () => {
+      expect(prompt).not.toMatch(/small child/i);
+      expect(prompt).not.toMatch(/2 adults|two adults/i);
+    });
   });
 
   it('lists every ingredient category, so nothing can be left uncategorised', () => {

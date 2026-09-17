@@ -1,5 +1,4 @@
 import {
-  Alert,
   Box,
   Button,
   FormControl,
@@ -13,6 +12,7 @@ import {
 } from '@chakra-ui/react';
 
 import { problemFor, type DraftIngredient, type DraftProblem } from '@/features/recipe-entry/draft';
+import { ScaleControl, type ScaledState } from '@/features/recipe-entry/components/ScaleControl';
 import { INGREDIENT_CATEGORIES, type IngredientCategory } from '@/features/store-config/types';
 import { uiIcons } from '@/shared/components/icons';
 
@@ -29,11 +29,24 @@ interface IngredientLinesEditorProps {
   onChange: (lines: DraftIngredient[]) => void;
   onAddLine: () => void;
   /**
-   * True when an imported draft's source stated no serving count, so its quantities were taken as
-   * written rather than rescaled to 3. Shown beside the convention it contradicts — the one place
-   * the user is already reading when they look at a quantity.
+   * How many people the household cooks for (`households.servings_per_dinner`, intent 018). Passed
+   * in rather than fetched here so the editor stays presentational. Required, with no default: a
+   * default would be a hard-coded 3 by another name, which is what FR-6 removes.
    */
-  quantitiesUnscaled?: boolean;
+  servingsPerDinner: number;
+  /**
+   * Present when the draft came from an import, carrying what the page said it serves or makes
+   * (verbatim, or null). An import's quantities are always the page's own (bolt 070), so the editor
+   * says what they are for — beside the guidance, where the user is already reading. Absent or null
+   * for a dinner typed in by hand.
+   */
+  importSource?: { sourceYield: string | null } | null;
+  /** Set once the user has chosen to scale an imported draft (bolt 071); null until then. */
+  scaled?: ScaledState | null;
+  /** Scale every quantity from `fromServings` to the household's size. Only ever user-initiated. */
+  onScale?: (fromServings: number) => void;
+  /** Put the page's own quantities back. */
+  onUndoScale?: () => void;
 }
 
 /**
@@ -51,7 +64,11 @@ export function IngredientLinesEditor({
   showProblems,
   onChange,
   onAddLine,
-  quantitiesUnscaled,
+  servingsPerDinner,
+  importSource,
+  scaled = null,
+  onScale = () => {},
+  onUndoScale = () => {},
 }: IngredientLinesEditorProps) {
   const problem = (field: string) => (showProblems ? problemFor(problems, field) : undefined);
 
@@ -66,19 +83,23 @@ export function IngredientLinesEditor({
   return (
     <Stack gap={3}>
       {/*
-        The 3-serving convention lives only in a column comment today, which is exactly how a
-        convention gets lost. It is stated here, in front of the person typing the quantities.
+        GUIDANCE for what is being typed, not a statement about the catalog (ADR-14): since intent
+        018 a stored dinner's quantities are what the household cooks, and an import kept as
+        written is not "for N". The old line also named a particular family ("two adults and one
+        small child"), which is only true of one particular 3 — so it is gone rather than derived.
       */}
-      <Text textStyle="faint">Quantities are for 3 servings — two adults and one small child.</Text>
+      <Text textStyle="faint">
+        Enter quantities for {servingsPerDinner} — the number your household cooks for.
+      </Text>
 
-      {quantitiesUnscaled && (
-        <Alert layerStyle="notice" role="status">
-          <uiIcons.info size={16} strokeWidth={2} style={{ flexShrink: 0, marginRight: '8px' }} />
-          <Text>
-            That page didn’t say how many it serves, so these quantities are exactly as written — they have
-            NOT been adjusted to 3 servings. Check them before saving.
-          </Text>
-        </Alert>
+      {importSource && (
+        <ScaleControl
+          sourceYield={importSource.sourceYield}
+          servingsPerDinner={servingsPerDinner}
+          scaled={scaled}
+          onScale={onScale}
+          onUndo={onUndoScale}
+        />
       )}
 
       {problem('ingredients') && (

@@ -64,6 +64,39 @@ export async function updateDinnersPerWeek(householdId: string, dinnersPerWeek: 
   if (error) throw error;
 }
 
+/** The `households.servings_per_dinner` default, and the fallback when no row is readable. */
+const DEFAULT_SERVINGS_PER_DINNER = 3;
+
+/** The 1..12 bound the column's `check` enforces (intent 018, bolt 069). Exported for the control. */
+export const SERVINGS_PER_DINNER_RANGE = { min: 1, max: 12 } as const;
+
+/**
+ * How many people this household cooks a dinner for (intent 018). Same RLS as its two siblings.
+ *
+ * ⚠ ADR-14: this is the TARGET offered when scaling an imported draft, and the guidance shown when
+ * typing quantities in. It does NOT describe stored dinners, and nothing rescales a saved dinner
+ * when it changes.
+ */
+export async function fetchServingsPerDinner(): Promise<number> {
+  const { data, error } = await supabase.from('households').select('servings_per_dinner').maybeSingle();
+  if (error) throw error;
+  return data?.servings_per_dinner ?? DEFAULT_SERVINGS_PER_DINNER;
+}
+
+/**
+ * Owner-only, enforced by the "Household updatable by an owner" RLS policy. A plain PostgREST
+ * update, like `updateDinnersPerWeek`: `households` has no column-level grants, so ADR-6 does not
+ * apply (verified against the migrations at bolt 069 stage 4). The 1..12 bound is a database
+ * `check`; the control offers exactly that range.
+ */
+export async function updateServingsPerDinner(householdId: string, servingsPerDinner: number): Promise<void> {
+  const { error } = await supabase
+    .from('households')
+    .update({ servings_per_dinner: servingsPerDinner })
+    .eq('id', householdId);
+  if (error) throw error;
+}
+
 export interface AiConfig {
   /** null = use the server default model. */
   modelOverride: ClaudeModel | null;

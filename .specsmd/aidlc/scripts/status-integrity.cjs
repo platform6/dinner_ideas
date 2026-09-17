@@ -33,6 +33,7 @@ const MEMORY_BANK_DIR = 'memory-bank';
 const BOLTS_DIR = path.join(MEMORY_BANK_DIR, 'bolts');
 const INTENTS_DIR = path.join(MEMORY_BANK_DIR, 'intents');
 const MAINTENANCE_LOG = path.join(MEMORY_BANK_DIR, 'maintenance-log.md');
+const STORY_INDEX = path.join(MEMORY_BANK_DIR, 'story-index.md');
 
 /**
  * Extract frontmatter from a markdown file
@@ -476,6 +477,66 @@ ${fixedItems.map(item => {
 }
 
 /**
+ * Check that story-index headers do not claim an intent is undeployed when its deployment plan
+ * says it is live. (Local addition — not in upstream specsmd.)
+ *
+ * The story index is owned by Inception, which writes "not yet deployed" when the intent is
+ * planned; nothing in the upstream flow ever revisits it after Operations ships. The deployment
+ * plan's frontmatter `status` is the authoritative record, so a header contradicting it is drift.
+ *
+ * Deliberately narrow: it only flags a header that makes an explicit undeployed claim. Headers
+ * that say nothing about deployment are not flagged — older intents never carried the claim.
+ * Report-only: the header is prose, so --fix leaves it for a person to edit.
+ */
+async function checkDeploymentStatus() {
+    const inconsistencies = [];
+    if (!(await fs.pathExists(STORY_INDEX)) || !(await fs.pathExists(INTENTS_DIR))) {
+        return inconsistencies;
+    }
+
+    const headers = new Map();
+    const indexContent = await fs.readFile(STORY_INDEX, 'utf8');
+    for (const line of indexContent.split(/\r?\n/)) {
+        const match = line.match(/^###\s+(\d{3}-[a-z0-9-]+)\s*(.*)$/);
+        if (match) headers.set(match[1], match[2].replace(/^[—-]\s*/, ''));
+    }
+
+    const intentDirs = await fs.readdir(INTENTS_DIR).catch(() => []);
+    for (const intent of intentDirs) {
+        const deploymentDir = path.join(INTENTS_DIR, intent, 'deployment');
+        if (!(await fs.pathExists(deploymentDir))) continue;
+
+        // An intent can carry more than one plan (a follow-up release); any live plan means live.
+        let liveStatus = null;
+        const planFiles = (await fs.readdir(deploymentDir).catch(() => [])).filter((f) =>
+            f.startsWith('deployment-plan') && f.endsWith('.md'),
+        );
+        for (const planFile of planFiles) {
+            const content = await fs.readFile(path.join(deploymentDir, planFile), 'utf8');
+            const frontmatter = extractFrontmatter(content);
+            if (frontmatter && typeof frontmatter.status === 'string' && frontmatter.status.startsWith('production-live')) {
+                liveStatus = frontmatter.status;
+            }
+        }
+        if (!liveStatus) continue;
+
+        const header = headers.get(intent);
+        if (header && /not yet deployed|awaiting release/i.test(header)) {
+            inconsistencies.push({
+                type: 'deployment',
+                path: STORY_INDEX,
+                intent,
+                current: `"${intent}" header: ${header.length > 60 ? header.slice(0, 57) + '...' : header}`,
+                expected: 'shipped',
+                reason: `deployment plan says ${liveStatus} (report-only: edit the header by hand)`,
+            });
+        }
+    }
+
+    return inconsistencies;
+}
+
+/**
  * Main: Check and fix status inconsistencies
  */
 async function statusIntegrity(fix = false) {
@@ -505,14 +566,14 @@ async function statusIntegrity(fix = false) {
     }
 
     // Step 2: Check story status
-    console.log(`${colors.dim}[1/3] Checking story status...${colors.reset}`);
+    console.log(`${colors.dim}[1/4] Checking story status...${colors.reset}`);
     for (const bolt of bolts) {
         const storyIssues = await checkStoryStatus(bolt);
         inconsistencies.push(...storyIssues);
     }
 
     // Step 3: Check unit status
-    console.log(`${colors.dim}[2/3] Checking unit status...${colors.reset}`);
+    console.log(`${colors.dim}[2/4] Checking unit status...${colors.reset}`);
     for (const intent of intents) {
         if (await fs.pathExists(path.join(INTENTS_DIR, intent, 'units'))) {
             const unitDirs = await fs.readdir(path.join(INTENTS_DIR, intent, 'units')).catch(() => []);
@@ -525,11 +586,15 @@ async function statusIntegrity(fix = false) {
     }
 
     // Step 4: Check intent status
-    console.log(`${colors.dim}[3/3] Checking intent status...${colors.reset}`);
+    console.log(`${colors.dim}[3/4] Checking intent status...${colors.reset}`);
     for (const intent of intents) {
         const intentIssues = await checkIntentStatus(intent);
         inconsistencies.push(...intentIssues);
     }
+
+    // Step 5: Check story-index deployment claims against deployment plans (local addition)
+    console.log(`${colors.dim}[4/4] Checking story-index deployment status...${colors.reset}`);
+    inconsistencies.push(...(await checkDeploymentStatus()));
 
     // Display results
     console.log();
@@ -563,6 +628,9 @@ async function statusIntegrity(fix = false) {
                     fixed = await fixUnitStatus(issue);
                 } else if (issue.type === 'intent') {
                     fixed = await fixIntentStatus(issue);
+                } else if (issue.type === 'deployment') {
+                    console.log(`  ${colors.yellow}−${colors.reset} Skipped (report-only): ${issue.intent} header in story-index.md`);
+                    continue;
                 }
 
                 if (fixed) {

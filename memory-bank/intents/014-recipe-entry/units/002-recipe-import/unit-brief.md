@@ -4,7 +4,7 @@ intent: 014-recipe-entry
 phase: inception
 status: complete
 created: '2026-09-07T02:55:00Z'
-updated: '2026-09-11T15:30:00Z'
+updated: '2026-09-11T13:56:03Z'
 ---
 
 # Unit Brief: Recipe Import

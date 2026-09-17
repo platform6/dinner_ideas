@@ -225,7 +225,7 @@
 
 ---
 
-### 013-placement-edit-control — ✅ COMPLETE (bolts 055, 056, 057 shipped v0.11.0; 058 ✅ built, awaiting release)
+### 013-placement-edit-control — 🚀 SHIPPED (bolts 055, 056, 057 in v0.11.0; 058 in v0.11.2, verified on prod 2026-09-08)
 
 **Unit: 001-placement-review-state** — bolt `055` ✅ COMPLETE
 
@@ -249,7 +249,7 @@
 
 ---
 
-### 014-recipe-entry — ✅ BUILT (bolts 059–062 complete; not yet deployed)
+### 014-recipe-entry — 🚀 SHIPPED v0.14.0 (bolts 059–062 complete; live on prod 2026-09-11, PR #22)
 
 **Unit: 001-recipe-manual-entry** — bolts `059`, `060` ✅ COMPLETE — the catalog is writable
 
@@ -273,7 +273,7 @@
 
 ---
 
-### 015-dinners-per-week — ✅ BUILT (bolts 063–065 complete; not yet deployed)
+### 015-dinners-per-week — 🚀 SHIPPED v0.12.0 (bolts 063–065 complete; live + verified on prod 2026-09-08)
 
 **Unit: 001-dinners-per-week-model** — bolts `063`, `064` ✅ COMPLETE — the rule lives in Postgres
 
@@ -290,7 +290,7 @@
 
 ---
 
-### 016-feeling-lucky — ✅ BUILT (bolt 066 complete; not yet deployed)
+### 016-feeling-lucky — 🚀 SHIPPED v0.13.0 (bolt 066 complete; live on prod 2026-09-08)
 
 **Unit: 001-lucky-pick** — bolt `066` ✅ COMPLETE
 
@@ -327,3 +327,25 @@
 > 058 closed the last open story. Some intent 010 entries below still read "GENERATED" rather than
 > "COMPLETE" — that is stale labelling in this index's prose only; those story files all carry
 > `status: complete`.
+
+### 018-serving-scale-and-removal — ✅ BUILT (bolts 069–072 complete; not yet deployed — migrations 20260911173308, 20260911181346 pending)
+
+**Unit: 001-serving-size-setting** — bolt `069` ✅ COMPLETE — the household owns its serving size
+
+- [x] **001-servings-column** (serving-size-setting): `households.servings_per_dinner`, default 3, constrained - Must - ✅ COMPLETE
+- [x] **002-servings-setting-control** (serving-size-setting): Owner-editable control on `/settings`, explains what it drives - Must - ✅ COMPLETE
+- [x] **003-no-more-hardcoded-three** (serving-size-setting): The literal 3 stops appearing; asserted on RENDERED text - Must - ✅ COMPLETE
+
+**Unit: 002-scale-on-review** — bolts `070`, `071` ✅ COMPLETE — arithmetic moves out of the model
+
+- [x] **001-extraction-reports-servings** (scale-on-review): The prompt stops rescaling; the source count is carried AS STATED - Must - ✅ COMPLETE
+- [x] **002-scaling-is-pure-code** (scale-on-review): Pure, tested, non-destructive; the rounding rule is written down - Must - ✅ COMPLETE
+- [x] **003-scale-control-on-review** (scale-on-review): Offered, never applied uninvited; names both numbers - Must - ✅ COMPLETE
+
+**Unit: 003-remove-a-dinner** — bolt `072` ✅ COMPLETE — the catalog is correctable
+
+- [x] **001-remove-a-dinner** (remove-a-dinner): Dinner + children deleted atomically; shared tags survive - Must - ✅ COMPLETE
+- [x] **002-confirm-before-removing** (remove-a-dinner): Confirmed; warns what it affects; "Not interested" stays distinct - Must - ✅ COMPLETE
+- [x] **003-removal-tests** (remove-a-dinner): pgTAP mirror of the aggregate write test - Must - ✅ COMPLETE
+
+---
