@@ -34,13 +34,17 @@ import {
   createStep,
   toggleTagName,
   validateDraft,
+  type AisleHistory,
   type DraftIngredient,
   type DraftStep,
   type RecipeDraft,
 } from '@/features/recipe-entry/draft';
+
+/** Stable across renders, so the editor doesn't see a new map every time while history loads. */
+const NO_AISLE_HISTORY: AisleHistory = new Map();
 import { useAllTags, useDinners } from '@/features/dinners/hooks';
 import { useServingsPerDinner } from '@/features/settings/hooks';
-import { useSaveDinner } from '@/features/recipe-entry/hooks';
+import { useAisleHistory, useSaveDinner } from '@/features/recipe-entry/hooks';
 import { mapSaveError, type SaveRejection } from '@/features/recipe-entry/api';
 import { uiIcons } from '@/shared/components/icons';
 
@@ -100,6 +104,8 @@ export function RecipeEntryPage() {
   // How many people the household cooks for (intent 018). The fallback mirrors the column's
   // default so the form is usable before the query lands; it is not a second source of truth.
   const servingsPerDinner = useServingsPerDinner().data ?? 3;
+  // Until it loads, nothing matches and new lines stay at "Choose aisle": the safe direction.
+  const aisleHistory = useAisleHistory().data ?? NO_AISLE_HISTORY;
   const saveDinner = useSaveDinner();
 
   // The same derivation the catalog already uses for its cuisine filter — read from the data, so
@@ -257,6 +263,7 @@ export function RecipeEntryPage() {
                     endUndoAfterEdit();
                   }}
                   servingsPerDinner={servingsPerDinner}
+                  aisleHistory={aisleHistory}
                   importSource={importSource}
                   scaled={
                     scaling ? { from: scaling.from, to: scaling.to, canUndo: scaling.before !== null } : null

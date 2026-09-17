@@ -3,8 +3,8 @@
 ## Overview
 
 - **Total stories**: 178
-- **Completed**: 172
-- **Planned**: 6
+- **Completed**: 174
+- **Planned**: 4
 - **In Progress**: 0
 - **Deferred**: 0
 - **Last updated**: 2026-09-17
@@ -316,8 +316,8 @@
 
 ## Stories by Status
 
-- **Completed**: 172
-- **Planned**: 6
+- **Completed**: 174
+- **Planned**: 4
 - **In Progress**: 0
 - **Deferred**: 0
 
@@ -350,17 +350,17 @@
 
 ---
 
-### 019-ui-correctness-fixes — ⏳ IN PROGRESS (bolt 073 ✅; 074–076 planned; not yet deployed)
+### 019-ui-correctness-fixes — ⏳ IN PROGRESS (bolts 073–074 ✅; 075–076 planned; not yet deployed)
 
 **Unit: 001-copy-corrections** — bolt `073` ✅ COMPLETE — counts and names agree with the app
 
 - [x] **001-plan-copy-reads-dinner-count** (copy-corrections): `/plan` copy reads `dinners_per_week`; tested with N ≠ 3 - Must - ✅ COMPLETE
 - [x] **002-one-name-for-add-a-dinner** (copy-corrections): "Add a dinner" everywhere, guarded by a test - Should - ✅ COMPLETE
 
-**Unit: 002-ingredient-aisle-default** — bolt `074` — no silent Produce; the household's own aisle
+**Unit: 002-ingredient-aisle-default** — bolt `074` ✅ COMPLETE — no silent Produce; the household's own aisle
 
-- [ ] **001-no-default-aisle** (ingredient-aisle-default): New lines start with no aisle; saving requires one - Must - [ ] PLANNED
-- [ ] **002-aisle-from-household-history** (ingredient-aisle-default): Filled from the last dinner that used it; a chosen aisle is never overwritten - Must - [ ] PLANNED
+- [x] **001-no-default-aisle** (ingredient-aisle-default): New lines start with no aisle; saving requires one - Must - ✅ COMPLETE
+- [x] **002-aisle-from-household-history** (ingredient-aisle-default): Filled from the last dinner that used it; a chosen aisle is never overwritten - Must - ✅ COMPLETE
 
 **Unit: 003-expanded-card-layout** — bolt `075` — cuttable; layout only
 

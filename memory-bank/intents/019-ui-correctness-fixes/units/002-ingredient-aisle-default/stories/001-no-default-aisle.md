@@ -2,11 +2,11 @@
 id: 001-no-default-aisle
 unit: 002-ingredient-aisle-default
 intent: 019-ui-correctness-fixes
-status: planned
+status: complete
 priority: must
 created: '2026-09-17T15:57:07Z'
 assigned_bolt: null
-implemented: false
+implemented: true
 ---
 
 # Story: 001-no-default-aisle

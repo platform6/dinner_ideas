@@ -3,15 +3,24 @@ id: 074-ingredient-aisle-default
 unit: 002-ingredient-aisle-default
 intent: 019-ui-correctness-fixes
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-no-default-aisle
   - 002-aisle-from-household-history
 created: '2026-09-17T15:57:07Z'
-started: null
-completed: null
+started: '2026-09-17T16:19:45Z'
+completed: '2026-09-17T16:38:28Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-17T16:21:47Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-17T16:27:05Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-17T16:38:28Z'
+    artifact: test-walkthrough.md
 requires_bolts: []
 enables_bolts: []
 requires_units: []
