@@ -3,8 +3,8 @@
 ## Overview
 
 - **Total stories**: 178
-- **Completed**: 175
-- **Planned**: 3
+- **Completed**: 177
+- **Planned**: 1
 - **In Progress**: 0
 - **Deferred**: 0
 - **Last updated**: 2026-09-17
@@ -316,8 +316,8 @@
 
 ## Stories by Status
 
-- **Completed**: 175
-- **Planned**: 3
+- **Completed**: 177
+- **Planned**: 1
 - **In Progress**: 0
 - **Deferred**: 0
 
@@ -350,7 +350,7 @@
 
 ---
 
-### 019-ui-correctness-fixes — ⏳ IN PROGRESS (bolts 073–075 ✅; 076 planned; not yet deployed)
+### 019-ui-correctness-fixes — ✅ BUILT (bolts 073–076 complete; not yet deployed — no migrations)
 
 **Unit: 001-copy-corrections** — bolt `073` ✅ COMPLETE — counts and names agree with the app
 
@@ -366,9 +366,9 @@
 
 - [x] **001-expanded-card-spans-row** (expanded-card-layout): An open card spans its row; no reordering - Should - ✅ COMPLETE
 
-**Unit: 004-mobile-overlap-fixes** — bolt `076` — cuttable; added from the mobile review
+**Unit: 004-mobile-overlap-fixes** — bolt `076` ✅ COMPLETE — cuttable; added from the mobile review
 
-- [ ] **001-footer-never-hides-content** (mobile-overlap-fixes): The end of the list and focused items sit above the sticky footer - Should - [ ] PLANNED
-- [ ] **002-card-menu-clears-title** (mobile-overlap-fixes): "More actions" never covers the dinner's name - Should - [ ] PLANNED
+- [x] **001-footer-never-hides-content** (mobile-overlap-fixes): The end of the list and focused items sit above the sticky footer - Should - ✅ COMPLETE
+- [x] **002-card-menu-clears-title** (mobile-overlap-fixes): "More actions" never covers the dinner's name - Should - ✅ COMPLETE
 
 ---

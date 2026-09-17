@@ -4,7 +4,7 @@ intent: 019-ui-correctness-fixes
 phase: inception
 unit_type: frontend
 default_bolt_type: simple-construction-bolt
-status: ready
+status: complete
 created: '2026-09-17T16:01:11Z'
 updated: '2026-09-17T16:01:11Z'
 ---

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   Alert,
   AlertIcon,
@@ -29,6 +29,7 @@ import { useAddTag, useDinnerFullDetails, useRemoveTag } from '@/features/dinner
 import { isRosieApproved } from '@/features/dinners/tags';
 import type { CatalogDinner } from '@/features/dinners/types';
 import { RemoveDinnerDialog } from '@/features/dinners/components/RemoveDinnerDialog';
+import { cardMenuDistance } from '@/features/dinners/components/card-menu-offset';
 import { categoryIcon, cuisineIcon, metaIcons, stepIcon, uiIcons } from '@/shared/components/icons';
 
 interface SelectionProps {
@@ -233,6 +234,29 @@ function PickPill({ dinner, selection }: { dinner: CatalogDinner; selection: Sel
 export function DinnerCard({ dinner, onSuppress, isMutating, selection, lastChosenText }: DinnerCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  // Opens the action menu below the whole header block, so a wrapped title stays readable (intent
+  // 019, FR-7). A Popper offset function, measured each time the menu is positioned: Chakra applies
+  // custom `modifiers` after its own, to let callers override them. Refs only, so it never changes.
+  const menuModifiers = useMemo(
+    () => [
+      {
+        name: 'offset',
+        options: {
+          offset: ({ placement }: { placement: string }) => [
+            0,
+            cardMenuDistance(
+              placement,
+              menuButtonRef.current?.getBoundingClientRect().bottom ?? null,
+              headerRef.current?.getBoundingClientRect().bottom ?? null,
+            ),
+          ],
+        },
+      },
+    ],
+    [],
+  );
   const CuisineIcon = cuisineIcon(dinner.cuisine_type);
   const isLocked = selection.selectionDisabled && !selection.isSelected;
   const visibleTags = dinner.tags.filter((tag) => tag !== 'rosie-approved');
@@ -248,7 +272,7 @@ export function DinnerCard({ dinner, onSuppress, isMutating, selection, lastChos
       transition="opacity 0.15s ease, border-color 0.12s ease"
       _hover={{ borderColor: 'line.brand' }}
     >
-      <HStack justify="space-between" align="start" mb={2} gap={2}>
+      <HStack ref={headerRef} justify="space-between" align="start" mb={2} gap={2}>
         <HStack align="start" gap={3}>
           <Center w="76px" h="76px" borderRadius="control" bg="paper.sunken" color="ink.300" flexShrink={0}>
             <CuisineIcon size={30} strokeWidth={1.5} />
@@ -275,8 +299,9 @@ export function DinnerCard({ dinner, onSuppress, isMutating, selection, lastChos
           )}
           {/* FR-5: "Not interested" lives here, not as a persistent button on the card face —
               a rare, destructive-feeling action shouldn't sit next to the primary pick action. */}
-          <Menu placement="bottom-end">
+          <Menu placement="bottom-end" modifiers={menuModifiers}>
             <MenuButton
+              ref={menuButtonRef}
               as={Button}
               variant="ghost"
               size="sm"

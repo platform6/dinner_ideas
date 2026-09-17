@@ -4,6 +4,7 @@ import { Link as RouterLink, useLocation } from 'react-router-dom';
 
 import { useAuth } from '@/features/auth/useAuth';
 import { navItems, uiIcons } from '@/shared/components/icons';
+import { TAB_BAR_HEIGHT_PX } from '@/shared/components/tab-bar';
 
 /**
  * App shell. One breakpoint — `md` (768px):
@@ -20,7 +21,7 @@ import { navItems, uiIcons } from '@/shared/components/icons';
  */
 
 const RAIL_WIDTH = '240px';
-const TAB_BAR_HEIGHT = '70px';
+const TAB_BAR_HEIGHT = `${TAB_BAR_HEIGHT_PX}px`;
 const WIDE_ROUTES = new Set(['/', '/store-config']);
 
 interface LayoutProps {

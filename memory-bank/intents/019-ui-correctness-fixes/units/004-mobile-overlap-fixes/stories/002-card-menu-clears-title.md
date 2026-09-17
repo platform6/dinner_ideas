@@ -2,11 +2,11 @@
 id: 002-card-menu-clears-title
 unit: 004-mobile-overlap-fixes
 intent: 019-ui-correctness-fixes
-status: planned
+status: complete
 priority: should
 created: '2026-09-17T16:01:11Z'
 assigned_bolt: null
-implemented: false
+implemented: true
 ---
 
 # Story: 002-card-menu-clears-title

@@ -1,6 +1,6 @@
 import type { ComponentProps } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -212,6 +212,21 @@ describe('DinnerCard overflow menu', () => {
   it('is not a persistent button on the card face', () => {
     renderCard();
     expect(screen.queryByRole('button', { name: /not interested/i })).not.toBeInTheDocument();
+  });
+
+  it('should open from the keyboard and close on Escape, back on its button (intent 019, FR-7)', async () => {
+    const user = userEvent.setup();
+    renderCard();
+    const button = screen.getByRole('button', { name: `More actions for ${dinner.name}` });
+
+    button.focus();
+    await user.keyboard('{Enter}');
+    expect(await screen.findByRole('menuitem', { name: /not interested/i })).toBeVisible();
+    expect(button).toHaveAttribute('aria-expanded', 'true');
+
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(button).toHaveAttribute('aria-expanded', 'false'));
+    expect(button).toHaveFocus();
   });
 
   it('suppresses the dinner via the overflow menu (FR-5)', async () => {

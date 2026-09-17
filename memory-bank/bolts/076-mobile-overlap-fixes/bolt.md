@@ -3,15 +3,24 @@ id: 076-mobile-overlap-fixes
 unit: 004-mobile-overlap-fixes
 intent: 019-ui-correctness-fixes
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-footer-never-hides-content
   - 002-card-menu-clears-title
 created: '2026-09-17T16:01:11Z'
-started: null
-completed: null
+started: '2026-09-17T17:00:23Z'
+completed: '2026-09-17T17:44:08Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-17T17:27:07Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-17T17:39:33Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-17T17:44:08Z'
+    artifact: test-walkthrough.md
 requires_bolts: []
 enables_bolts: []
 requires_units: []

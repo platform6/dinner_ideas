@@ -38,6 +38,7 @@ import {
 } from '@/features/store-config/hooks';
 import type { ResolvedItem } from '@/features/store-config/types';
 import { categoryIcon, uiIcons } from '@/shared/components/icons';
+import { StickyPhoneFooter } from '@/shared/components/StickyPhoneFooter';
 
 function itemKey(category: string, name: string, unit: string) {
   return `${category}-${name}-${unit}`;
@@ -422,22 +423,16 @@ export function ShoppingListPage() {
             </Stack>
           )}
 
-          {/* Phone only: a sticky footer, lifted clear of the 70px tab bar. At md+ these controls
-              live in the page header instead — sticky footers are a phone affordance (finding 3). */}
+          {/* Phone only: a sticky footer above the tab bar, which also keeps focused items from being
+              scrolled beneath it (intent 019, FR-6). At md+ these controls live in the page header
+              instead — sticky footers are a phone affordance (finding 3). */}
           {!actionsInHeader && (
-            <Box
-              position="sticky"
-              bottom="70px"
-              bg="paper.base"
-              pt={3}
-              borderTopWidth="1px"
-              borderColor="line.subtle"
-            >
+            <StickyPhoneFooter>
               <Stack gap={2}>
                 {copyButton}
                 {lockNudge}
               </Stack>
-            </Box>
+            </StickyPhoneFooter>
           )}
         </>
       )}
