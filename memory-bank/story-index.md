@@ -3,8 +3,8 @@
 ## Overview
 
 - **Total stories**: 178
-- **Completed**: 170
-- **Planned**: 8
+- **Completed**: 172
+- **Planned**: 6
 - **In Progress**: 0
 - **Deferred**: 0
 - **Last updated**: 2026-09-17
@@ -316,8 +316,8 @@
 
 ## Stories by Status
 
-- **Completed**: 170
-- **Planned**: 8
+- **Completed**: 172
+- **Planned**: 6
 - **In Progress**: 0
 - **Deferred**: 0
 
@@ -350,12 +350,12 @@
 
 ---
 
-### 019-ui-correctness-fixes — 📋 PLANNED (bolts 073–076; not yet deployed)
+### 019-ui-correctness-fixes — ⏳ IN PROGRESS (bolt 073 ✅; 074–076 planned; not yet deployed)
 
-**Unit: 001-copy-corrections** — bolt `073` — counts and names agree with the app
+**Unit: 001-copy-corrections** — bolt `073` ✅ COMPLETE — counts and names agree with the app
 
-- [ ] **001-plan-copy-reads-dinner-count** (copy-corrections): `/plan` copy reads `dinners_per_week`; tested with N ≠ 3 - Must - [ ] PLANNED
-- [ ] **002-one-name-for-add-a-dinner** (copy-corrections): "Add a dinner" everywhere, guarded by a test - Should - [ ] PLANNED
+- [x] **001-plan-copy-reads-dinner-count** (copy-corrections): `/plan` copy reads `dinners_per_week`; tested with N ≠ 3 - Must - ✅ COMPLETE
+- [x] **002-one-name-for-add-a-dinner** (copy-corrections): "Add a dinner" everywhere, guarded by a test - Should - ✅ COMPLETE
 
 **Unit: 002-ingredient-aisle-default** — bolt `074` — no silent Produce; the household's own aisle
 

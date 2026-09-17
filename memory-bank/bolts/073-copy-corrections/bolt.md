@@ -3,15 +3,24 @@ id: 073-copy-corrections
 unit: 001-copy-corrections
 intent: 019-ui-correctness-fixes
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-plan-copy-reads-dinner-count
   - 002-one-name-for-add-a-dinner
 created: '2026-09-17T15:57:07Z'
-started: null
-completed: null
+started: '2026-09-17T16:07:49Z'
+completed: '2026-09-17T16:18:54Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-17T16:11:36Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-17T16:15:45Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-17T16:18:54Z'
+    artifact: test-walkthrough.md
 requires_bolts: []
 enables_bolts: []
 requires_units: []

@@ -77,6 +77,17 @@ describe('CatalogPage (suppress flow)', () => {
     await waitFor(() => expect(mockedSetActive).toHaveBeenCalledWith('1', false));
   });
 
+  it('should name both add-a-dinner links "Add a dinner" (intent 019, FR-5)', async () => {
+    renderPage();
+
+    expect(await screen.findByText('Tacos')).toBeInTheDocument();
+    // jsdom applies no media queries, so the phone icon link and the md+ text link both render.
+    const links = screen.getAllByRole('link', { name: 'Add a dinner' });
+    expect(links).toHaveLength(2);
+    for (const link of links) expect(link).toHaveAttribute('href', '/dinners/new');
+    expect(screen.queryByText('Add dinner')).not.toBeInTheDocument();
+  });
+
   it('links to the dedicated Suppressed page instead of a toggle', async () => {
     renderPage();
 

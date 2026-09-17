@@ -2,11 +2,11 @@
 id: 002-one-name-for-add-a-dinner
 unit: 001-copy-corrections
 intent: 019-ui-correctness-fixes
-status: planned
+status: complete
 priority: should
 created: '2026-09-17T15:57:07Z'
 assigned_bolt: null
-implemented: false
+implemented: true
 ---
 
 # Story: 002-one-name-for-add-a-dinner

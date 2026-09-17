@@ -59,7 +59,8 @@ export function LockWeekControl({ selectionCount, dinnersPerWeek, onLock, isLock
       }}
     >
       <Text textStyle="meta" whiteSpace="nowrap">
-        Lock in these {selectionCount}? You won’t be able to change this week’s picks.
+        {selectionCount === 1 ? 'Lock in this dinner?' : `Lock in these ${selectionCount}?`} You won’t be able
+        to change this week’s picks.
       </Text>
       <Button ref={keepEditingRef} variant="quiet" size="sm" onClick={() => setIsConfirming(false)}>
         Keep editing

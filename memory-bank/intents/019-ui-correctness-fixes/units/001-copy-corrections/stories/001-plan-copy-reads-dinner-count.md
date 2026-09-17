@@ -2,11 +2,11 @@
 id: 001-plan-copy-reads-dinner-count
 unit: 001-copy-corrections
 intent: 019-ui-correctness-fixes
-status: planned
+status: complete
 priority: must
 created: '2026-09-17T15:57:07Z'
 assigned_bolt: null
-implemented: false
+implemented: true
 ---
 
 # Story: 001-plan-copy-reads-dinner-count

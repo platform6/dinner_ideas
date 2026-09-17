@@ -33,7 +33,7 @@ import { categoryIcon, cuisineIcon, metaIcons, stepIcon, uiIcons } from '@/share
 
 interface SelectionProps {
   isSelected: boolean;
-  /** True when 3 dinners are already selected and this one isn't one of them. */
+  /** True when the week already holds `dinners_per_week` picks and this one isn't one of them. */
   selectionDisabled: boolean;
   isTogglingSelection: boolean;
   onToggleSelect: (id: string) => void;
@@ -192,7 +192,7 @@ function DinnerCardDetails({ dinnerId }: { dinnerId: string }) {
 
 /**
  * The pick control (FR-2/FR-3): a 3-state pill — outline "Pick" -> solid "Picked" -> locked
- * "Full" once 3 are already chosen — backed by a real `Checkbox` so the existing
+ * "Full" once `dinners_per_week` are already chosen — backed by a real `Checkbox` so the existing
  * `getByRole('checkbox', { name: 'Pick X for this week' })` test contract (and the underlying
  * accessibility semantics) keep working unchanged. The pill visual replaces the checkbox's
  * default control/label rendering via `sx`, not the input itself.

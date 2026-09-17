@@ -29,6 +29,23 @@ import { LockWeekControl } from '@/features/weekly-plan/components/LockWeekContr
 import { useDinnersPerWeek } from '@/features/settings/hooks';
 import { uiIcons } from '@/shared/components/icons';
 
+/**
+ * Copy that states the household's dinner count (intent 019, FR-1). Both render only once the
+ * week holds all `dinnersPerWeek` picks, so the count here is always the number on the page.
+ */
+function lockHelpText(dinnersPerWeek: number): string {
+  const locks =
+    dinnersPerWeek === 1
+      ? 'Locks this dinner and adds it to your history.'
+      : `Locks these ${dinnersPerWeek} dinners and adds them to your history.`;
+  return `${locks} You can still shop your list either way.`;
+}
+
+function allPickedText(dinnersPerWeek: number): string {
+  const picked = dinnersPerWeek === 1 ? 'Your dinner is picked.' : `All ${dinnersPerWeek} dinners picked.`;
+  return `${picked} Your shopping list is ready.`;
+}
+
 export function PlanPage() {
   const [offset, setOffset] = useState(0);
   const week = useWeekByOffset(offset);
@@ -55,7 +72,7 @@ export function PlanPage() {
       // Surfaced by the `lockPlan.isError` alert below; the control returns to idle.
     }
   }
-  // md+ lays the three picks side by side as vertical cards; phone keeps horizontal rows.
+  // md+ lays the picks side by side as vertical cards; phone keeps horizontal rows.
   const threeAcross = useBreakpointValue({ base: false, md: true }, { ssr: false }) ?? false;
   const isFull = isCurrentWeek && !isLocked && selections.length === dinnersPerWeek;
 
@@ -127,9 +144,7 @@ export function PlanPage() {
             isLocking={lockPlan.isPending}
             onLock={() => void handleLock()}
           />
-          <Text textStyle="faint">
-            Locks these 3 dinners and adds them to your history. You can still shop your list either way.
-          </Text>
+          <Text textStyle="faint">{lockHelpText(dinnersPerWeek)}</Text>
         </Stack>
       )}
 
@@ -271,7 +286,7 @@ export function PlanPage() {
         <Box layerStyle="cardDashed" textAlign="center">
           <uiIcons.allDone size={20} strokeWidth={1.8} color="var(--chakra-colors-brand-500)" />
           <Text textStyle="faint" mt={2} mb={3}>
-            All three picked. Your shopping list is ready.
+            {allPickedText(dinnersPerWeek)}
           </Text>
           <Button
             as={RouterLink}

@@ -13,7 +13,7 @@ import {
   lockPlan,
   removeSelection,
 } from '@/features/weekly-plan/api';
-import { fetchWeekStartDay } from '@/features/settings/api';
+import { fetchDinnersPerWeek, fetchWeekStartDay } from '@/features/settings/api';
 import { currentPlanningWeekStart, formatWeekRange } from '@/features/weekly-plan/date';
 import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/types';
 
@@ -79,6 +79,9 @@ describe('PlanPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(fetchWeekStartDay).mockResolvedValue(0);
+    // Set explicitly: left unmocked, the page falls back to 3, which is how "Locks these 3
+    // dinners" survived intent 015 (intent 019, bolt 073).
+    vi.mocked(fetchDinnersPerWeek).mockResolvedValue(3);
     mockedRemoveSelection.mockResolvedValue(undefined);
     mockedLockPlan.mockResolvedValue(plan({ locked_at: '2026-08-25T12:00:00Z' }));
   });
@@ -242,11 +245,77 @@ describe('PlanPage', () => {
     );
     renderPage();
 
-    expect(await screen.findByText(/all three picked/i)).toBeInTheDocument();
+    expect(await screen.findByText('All 3 dinners picked. Your shopping list is ready.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /see shopping list/i })).toHaveAttribute(
       'href',
       '/shopping-list',
     );
+  });
+
+  describe('copy states the household’s dinner count (intent 019, FR-1)', () => {
+    function picks(count: number): SelectionWithDinner[] {
+      return Array.from({ length: count }, (_, i) =>
+        selection({
+          id: `sel-${i + 1}`,
+          dinner_id: `dinner-${i + 1}`,
+          dinners: { ...selection({}).dinners, id: `dinner-${i + 1}`, name: `Dinner ${i + 1}` },
+        }),
+      );
+    }
+
+    it.each([
+      {
+        count: 1,
+        lockHelp: 'Locks this dinner and adds it to your history. You can still shop your list either way.',
+        allPicked: 'Your dinner is picked. Your shopping list is ready.',
+      },
+      {
+        count: 3,
+        lockHelp:
+          'Locks these 3 dinners and adds them to your history. You can still shop your list either way.',
+        allPicked: 'All 3 dinners picked. Your shopping list is ready.',
+      },
+      {
+        count: 5,
+        lockHelp:
+          'Locks these 5 dinners and adds them to your history. You can still shop your list either way.',
+        allPicked: 'All 5 dinners picked. Your shopping list is ready.',
+      },
+    ])(
+      'should render the lock help and all-picked copy for $count per week',
+      async ({ count, lockHelp, allPicked }) => {
+        vi.mocked(fetchDinnersPerWeek).mockResolvedValue(count);
+        mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: picks(count) }));
+        renderPage();
+
+        expect(await screen.findByText(lockHelp)).toBeInTheDocument();
+        expect(screen.getByText(allPicked)).toBeInTheDocument();
+      },
+    );
+
+    it('should not say "3 dinners" or "three" anywhere when the household plans 5', async () => {
+      vi.mocked(fetchDinnersPerWeek).mockResolvedValue(5);
+      mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: picks(5) }));
+      const { container } = renderPage();
+
+      await screen.findByText('All 5 dinners picked. Your shopping list is ready.');
+      // A bare "3" can't be asserted absent: the week label renders dates such as "8/23".
+      expect(container.textContent).not.toMatch(/\b3 dinners\b/i);
+      expect(container.textContent).not.toMatch(/\bthree\b/i);
+    });
+
+    it('should confirm "Lock in this dinner?" when the household plans 1', async () => {
+      const user = userEvent.setup();
+      vi.mocked(fetchDinnersPerWeek).mockResolvedValue(1);
+      mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: picks(1) }));
+      renderPage();
+
+      await user.click(await screen.findByRole('button', { name: /lock in this week/i }));
+
+      expect(
+        screen.getByText(/^Lock in this dinner\? You won’t be able to change this week’s picks\.$/),
+      ).toBeInTheDocument();
+    });
   });
 
   it('anchors offset 0 on the current planning week, not on today, when no plan exists', async () => {
