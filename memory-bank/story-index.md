@@ -350,7 +350,7 @@
 
 ---
 
-### 019-ui-correctness-fixes — ✅ BUILT (bolts 073–076 complete; not yet deployed — no migrations)
+### 019-ui-correctness-fixes — 🚀 SHIPPED v0.16.0 (bolts 073–076 complete; live on prod 2026-09-17, PR #24; smoke test pending)
 
 **Unit: 001-copy-corrections** — bolt `073` ✅ COMPLETE — counts and names agree with the app
 
