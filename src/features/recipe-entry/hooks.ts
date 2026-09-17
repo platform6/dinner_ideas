@@ -1,7 +1,23 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { createDinner } from '@/features/recipe-entry/api';
-import type { RecipeDraft } from '@/features/recipe-entry/draft';
+import { createDinner, fetchAisleHistory } from '@/features/recipe-entry/api';
+import { buildAisleHistory, type RecipeDraft } from '@/features/recipe-entry/draft';
+
+/**
+ * The aisle the household last used for each ingredient name (intent 019, FR-3).
+ *
+ * Fetched once when the entry form opens. Typing reads the map in memory, so no keystroke makes a
+ * request (NFR-2), and a window refocus doesn't refetch mid-entry. Keyed under `['dinners']`, so
+ * `useSaveDinner`'s invalidation refreshes it after every save.
+ */
+export function useAisleHistory() {
+  return useQuery({
+    queryKey: ['dinners', 'aisle-history'],
+    queryFn: fetchAisleHistory,
+    select: buildAisleHistory,
+    refetchOnWindowFocus: false,
+  });
+}
 
 /**
  * Saves a draft as a real dinner (intent 014, story 005).

@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RecipeEntryPage } from '@/features/recipe-entry/components/RecipeEntryPage';
 import { fetchActiveDinners, fetchAllTags } from '@/features/dinners/api';
-import { createDinner } from '@/features/recipe-entry/api';
+import { createDinner, fetchAisleHistory } from '@/features/recipe-entry/api';
 import { callClaude, ClaudeError } from '@/features/ai/api';
 import { fetchServingsPerDinner } from '@/features/settings/api';
 import type { CatalogDinner, Tag } from '@/features/dinners/types';
@@ -16,6 +16,8 @@ vi.mock('@/features/dinners/api');
 vi.mock('@/features/recipe-entry/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/features/recipe-entry/api')>()),
   createDinner: vi.fn(),
+  // Mocked: the real one would reach the Supabase client (intent 019, bolt 074).
+  fetchAisleHistory: vi.fn(),
 }));
 vi.mock('@/features/ai/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/features/ai/api')>()),
@@ -58,10 +60,12 @@ describe('RecipeEntryPage', () => {
   const mockedCreate = vi.mocked(createDinner);
   const mockedCallClaude = vi.mocked(callClaude);
   const mockedServings = vi.mocked(fetchServingsPerDinner);
+  const mockedAisleHistory = vi.mocked(fetchAisleHistory);
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockedServings.mockResolvedValue(HOUSEHOLD_SERVINGS);
+    mockedAisleHistory.mockResolvedValue([]);
     mockedDinners.mockResolvedValue([dinner('Tacos', 'Mexican'), dinner('Ramen', 'Japanese')]);
     mockedTags.mockResolvedValue([tag('quick'), tag('weeknight')]);
     mockedCreate.mockResolvedValue('new-dinner-id');
@@ -75,6 +79,8 @@ describe('RecipeEntryPage', () => {
     await user.type(screen.getByLabelText(/^One-line summary/), 'Chicken and peppers.');
     await user.type(screen.getByLabelText('Quantity'), '1.5');
     await user.type(screen.getByLabelText('Ingredient'), 'Chicken thighs');
+    // No default aisle since intent 019: a valid draft picks one.
+    await user.selectOptions(screen.getByLabelText('Part of the store'), 'Protein');
     await user.type(screen.getByLabelText('Step 1'), 'Roast for 30 minutes.');
   }
 
@@ -169,11 +175,133 @@ describe('RecipeEntryPage', () => {
 
     const category = await screen.findByLabelText('Part of the store');
     expect(category.tagName).toBe('SELECT');
-    expect(
-      within(category)
-        .getAllByRole('option')
-        .map((o) => o.textContent),
-    ).toEqual(['Produce', 'Protein', 'Dairy', 'Grains', 'Pantry']);
+    const options = within(category).getAllByRole('option');
+    expect(options.map((o) => o.textContent)).toEqual([
+      'Choose aisle',
+      'Produce',
+      'Protein',
+      'Dairy',
+      'Grains',
+      'Pantry',
+    ]);
+    // "Choose aisle" is a prompt, not a sixth category: it can't be picked (intent 019, FR-2).
+    expect(options[0]).toBeDisabled();
+    expect(options.slice(1).every((o) => !(o as HTMLOptionElement).disabled)).toBe(true);
+  });
+
+  describe('the aisle for an ingredient (intent 019)', () => {
+    const aisleOf = (index = 0) => screen.getAllByLabelText('Part of the store')[index] as HTMLSelectElement;
+    const shownAisle = (select: HTMLSelectElement) => select.selectedOptions[0]?.textContent;
+
+    /** Waits for the history itself, not just the page, so a fill can't be missed by timing. */
+    async function renderWithHistory(rows: Awaited<ReturnType<typeof fetchAisleHistory>>) {
+      mockedAisleHistory.mockResolvedValue(rows);
+      renderPage();
+      await screen.findByLabelText('Ingredient');
+      await waitFor(() => expect(mockedAisleHistory).toHaveBeenCalled());
+      // Let the resolved query settle into the page before typing.
+      await screen.findByRole('button', { name: 'quick' });
+    }
+
+    it('should start a new line on "Choose aisle", not Produce', async () => {
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByRole('button', { name: 'Add an ingredient' }));
+
+      for (const select of screen.getAllByLabelText('Part of the store') as HTMLSelectElement[]) {
+        expect(select.value).toBe('');
+        expect(shownAisle(select)).toBe('Choose aisle');
+      }
+    });
+
+    it('should refuse to save a line with no aisle, and say so on that line, linked to its control', async () => {
+      const user = userEvent.setup();
+      renderPage();
+      await fillValidDraft(user);
+      await user.click(screen.getByRole('button', { name: 'Add an ingredient' }));
+      await user.type(screen.getAllByLabelText('Quantity')[1], '2');
+      await user.type(screen.getAllByLabelText('Ingredient')[1], 'Saffron');
+
+      await user.click(screen.getByRole('button', { name: 'Save dinner' }));
+
+      const message = await screen.findByText('Choose an aisle.');
+      expect(mockedCreate).not.toHaveBeenCalled();
+      expect(screen.getAllByText('Choose an aisle.')).toHaveLength(1);
+      expect(aisleOf(1)).toHaveAttribute('aria-invalid', 'true');
+      expect(aisleOf(1).getAttribute('aria-describedby')).toContain(message.id);
+      expect(aisleOf(0)).not.toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('should fill a known ingredient from the most recent dinner that used it', async () => {
+      const user = userEvent.setup();
+      await renderWithHistory([
+        { name: 'Chicken thighs', category: 'Protein', dinnerCreatedAt: '2026-01-01T00:00:00Z' },
+        { name: 'chicken thighs', category: 'Pantry', dinnerCreatedAt: '2026-03-01T00:00:00Z' },
+      ]);
+
+      await user.type(screen.getByLabelText('Ingredient'), '  CHICKEN thighs');
+
+      expect(aisleOf().value).toBe('Pantry');
+    });
+
+    it('should let a filled aisle follow the name, and clear when the name stops matching', async () => {
+      const user = userEvent.setup();
+      await renderWithHistory([
+        { name: 'chicken thighs', category: 'Protein', dinnerCreatedAt: '2026-01-01T00:00:00Z' },
+      ]);
+      const name = screen.getByLabelText('Ingredient');
+
+      await user.type(name, 'Chicken thighs');
+      expect(aisleOf().value).toBe('Protein');
+
+      await user.type(name, ', cubed');
+      expect(aisleOf().value).toBe('');
+      expect(shownAisle(aisleOf())).toBe('Choose aisle');
+    });
+
+    it('should never overwrite an aisle the cook picked', async () => {
+      const user = userEvent.setup();
+      await renderWithHistory([
+        { name: 'chicken thighs', category: 'Protein', dinnerCreatedAt: '2026-01-01T00:00:00Z' },
+      ]);
+
+      await user.selectOptions(aisleOf(), 'Dairy');
+      await user.type(screen.getByLabelText('Ingredient'), 'Chicken thighs');
+
+      expect(aisleOf().value).toBe('Dairy');
+    });
+
+    it('should save the filled aisle', async () => {
+      const user = userEvent.setup();
+      await renderWithHistory([
+        { name: 'chicken thighs', category: 'Pantry', dinnerCreatedAt: '2026-01-01T00:00:00Z' },
+      ]);
+      await user.type(screen.getByLabelText(/^Name/), 'Fajitas');
+      await user.type(screen.getByLabelText(/^Kind of food/), 'Mexican');
+      await user.type(screen.getByLabelText(/^Cook time/), '30');
+      await user.type(screen.getByLabelText(/^One-line summary/), 'Chicken and peppers.');
+      await user.type(screen.getByLabelText('Quantity'), '1.5');
+      await user.type(screen.getByLabelText('Ingredient'), 'Chicken thighs');
+      await user.type(screen.getByLabelText('Step 1'), 'Roast for 30 minutes.');
+
+      await user.click(screen.getByRole('button', { name: 'Save dinner' }));
+
+      await waitFor(() => expect(mockedCreate).toHaveBeenCalledTimes(1));
+      expect(mockedCreate.mock.calls[0][0].ingredients[0]).toMatchObject({ category: 'Pantry' });
+    });
+
+    it('should fetch the history once, and make no request while a name is typed (NFR-2)', async () => {
+      const user = userEvent.setup();
+      await renderWithHistory([
+        { name: 'chicken thighs', category: 'Protein', dinnerCreatedAt: '2026-01-01T00:00:00Z' },
+      ]);
+
+      // 22 keystrokes, each one a rename that looks the name up (NFR-2 names 20).
+      await user.type(screen.getByLabelText('Ingredient'), 'Boneless chicken thigh');
+
+      expect(mockedAisleHistory).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('suggests cuisines from the catalog rather than a hardcoded list', async () => {
@@ -705,6 +833,28 @@ describe('RecipeEntryPage', () => {
         await user.type(step, 'Boil the noodles for 4 minutes.');
 
         expect(step).toHaveValue('Boil the noodles for 4 minutes.');
+      });
+
+      it('should keep an imported aisle even when household history disagrees (intent 019)', async () => {
+        // History says shrimp is Pantry; the import said Protein. The import counts as chosen, so
+        // neither landing the draft nor editing the name may change it.
+        mockedAisleHistory.mockResolvedValue([
+          { name: 'shrimp', category: 'Pantry', dinnerCreatedAt: '2026-03-01T00:00:00Z' },
+        ]);
+        replyWith(GOOD_REPLY);
+        const user = userEvent.setup();
+        renderPage();
+
+        await pasteAPage(user);
+        await user.click(screen.getByRole('button', { name: 'Get the recipe' }));
+
+        const name = await screen.findByDisplayValue('shrimp');
+        const aisle = screen.getByLabelText('Part of the store') as HTMLSelectElement;
+        expect(aisle.value).toBe('Protein');
+
+        await user.clear(name);
+        await user.type(name, 'Shrimp');
+        expect(aisle.value).toBe('Protein');
       });
 
       it('WRITES NOTHING until the user explicitly saves', async () => {

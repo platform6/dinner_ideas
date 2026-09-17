@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ShoppingListPage } from '@/features/shopping-list/components/ShoppingListPage';
 import { fetchDinnersByIds } from '@/features/dinners/api';
@@ -128,6 +128,60 @@ describe('ShoppingListPage', () => {
     mockedFetchActiveStore.mockResolvedValue(null);
     mockedFetchResolvedItems.mockResolvedValue([]);
     mockedWriteText.mockResolvedValue(undefined);
+  });
+
+  describe('the phone footer and focus (intent 019, FR-6)', () => {
+    const padding = () => document.documentElement.style.scrollPaddingBottom;
+
+    /**
+     * Makes Chakra's breakpoint hooks see a viewport `widthPx` wide, by answering its
+     * `(min-width: …em) and (max-width: …em)` queries the way a browser would.
+     */
+    function viewportIs(widthPx: number) {
+      vi.stubGlobal('matchMedia', (query: string) => {
+        const min = /min-width:\s*([\d.]+)em/.exec(query);
+        const max = /max-width:\s*([\d.]+)em/.exec(query);
+        const matches = (!min || widthPx >= Number(min[1]) * 16) && (!max || widthPx <= Number(max[1]) * 16);
+        return {
+          matches,
+          media: query,
+          onchange: null,
+          addListener: () => {},
+          removeListener: () => {},
+          addEventListener: () => {},
+          removeEventListener: () => {},
+          dispatchEvent: () => false,
+        };
+      });
+    }
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+      document.documentElement.style.scrollPaddingBottom = '';
+    });
+
+    it('should reserve the footer as bottom scroll padding on a phone, and release it on leaving', async () => {
+      viewportIs(390);
+      mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: threeSelections }));
+      const { unmount } = renderPage();
+
+      await screen.findByText('Produce');
+      // jsdom has no layout, so the footer measures 0px tall: the tab bar and clearance remain.
+      await waitFor(() => expect(padding()).toBe('78px'));
+
+      unmount();
+      expect(padding()).toBe('');
+    });
+
+    it('should set no scroll padding at md+, where the actions sit in the header', async () => {
+      viewportIs(1024);
+      mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: threeSelections }));
+      renderPage();
+
+      await screen.findByText('Produce');
+      expect(screen.getByRole('button', { name: /copy shopping list/i })).toBeInTheDocument();
+      expect(padding()).toBe('');
+    });
   });
 
   it('shows a gate message when fewer than 3 dinners are picked', async () => {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   Alert,
   AlertIcon,
@@ -29,11 +29,12 @@ import { useAddTag, useDinnerFullDetails, useRemoveTag } from '@/features/dinner
 import { isRosieApproved } from '@/features/dinners/tags';
 import type { CatalogDinner } from '@/features/dinners/types';
 import { RemoveDinnerDialog } from '@/features/dinners/components/RemoveDinnerDialog';
+import { cardMenuDistance } from '@/features/dinners/components/card-menu-offset';
 import { categoryIcon, cuisineIcon, metaIcons, stepIcon, uiIcons } from '@/shared/components/icons';
 
 interface SelectionProps {
   isSelected: boolean;
-  /** True when 3 dinners are already selected and this one isn't one of them. */
+  /** True when the week already holds `dinners_per_week` picks and this one isn't one of them. */
   selectionDisabled: boolean;
   isTogglingSelection: boolean;
   onToggleSelect: (id: string) => void;
@@ -192,7 +193,7 @@ function DinnerCardDetails({ dinnerId }: { dinnerId: string }) {
 
 /**
  * The pick control (FR-2/FR-3): a 3-state pill — outline "Pick" -> solid "Picked" -> locked
- * "Full" once 3 are already chosen — backed by a real `Checkbox` so the existing
+ * "Full" once `dinners_per_week` are already chosen — backed by a real `Checkbox` so the existing
  * `getByRole('checkbox', { name: 'Pick X for this week' })` test contract (and the underlying
  * accessibility semantics) keep working unchanged. The pill visual replaces the checkbox's
  * default control/label rendering via `sx`, not the input itself.
@@ -233,6 +234,29 @@ function PickPill({ dinner, selection }: { dinner: CatalogDinner; selection: Sel
 export function DinnerCard({ dinner, onSuppress, isMutating, selection, lastChosenText }: DinnerCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  // Opens the action menu below the whole header block, so a wrapped title stays readable (intent
+  // 019, FR-7). A Popper offset function, measured each time the menu is positioned: Chakra applies
+  // custom `modifiers` after its own, to let callers override them. Refs only, so it never changes.
+  const menuModifiers = useMemo(
+    () => [
+      {
+        name: 'offset',
+        options: {
+          offset: ({ placement }: { placement: string }) => [
+            0,
+            cardMenuDistance(
+              placement,
+              menuButtonRef.current?.getBoundingClientRect().bottom ?? null,
+              headerRef.current?.getBoundingClientRect().bottom ?? null,
+            ),
+          ],
+        },
+      },
+    ],
+    [],
+  );
   const CuisineIcon = cuisineIcon(dinner.cuisine_type);
   const isLocked = selection.selectionDisabled && !selection.isSelected;
   const visibleTags = dinner.tags.filter((tag) => tag !== 'rosie-approved');
@@ -240,11 +264,15 @@ export function DinnerCard({ dinner, onSuppress, isMutating, selection, lastChos
   return (
     <Box
       layerStyle={selection.isSelected ? 'cardSelected' : 'card'}
+      // This Box is the catalog grid's item. Open, it spans the whole row so no card sits beside a
+      // tall empty space (intent 019, FR-4). `1 / -1` covers however many columns the grid has, and
+      // at one column changes nothing. The grid never backfills, so order stays as listed.
+      gridColumn={isExpanded ? '1 / -1' : undefined}
       opacity={isLocked ? 0.55 : 1}
       transition="opacity 0.15s ease, border-color 0.12s ease"
       _hover={{ borderColor: 'line.brand' }}
     >
-      <HStack justify="space-between" align="start" mb={2} gap={2}>
+      <HStack ref={headerRef} justify="space-between" align="start" mb={2} gap={2}>
         <HStack align="start" gap={3}>
           <Center w="76px" h="76px" borderRadius="control" bg="paper.sunken" color="ink.300" flexShrink={0}>
             <CuisineIcon size={30} strokeWidth={1.5} />
@@ -271,8 +299,9 @@ export function DinnerCard({ dinner, onSuppress, isMutating, selection, lastChos
           )}
           {/* FR-5: "Not interested" lives here, not as a persistent button on the card face —
               a rare, destructive-feeling action shouldn't sit next to the primary pick action. */}
-          <Menu placement="bottom-end">
+          <Menu placement="bottom-end" modifiers={menuModifiers}>
             <MenuButton
+              ref={menuButtonRef}
               as={Button}
               variant="ghost"
               size="sm"
@@ -328,6 +357,7 @@ export function DinnerCard({ dinner, onSuppress, isMutating, selection, lastChos
           size="sm"
           variant="ghost"
           rightIcon={isExpanded ? <uiIcons.collapse size={14} /> : <uiIcons.expand size={14} />}
+          aria-expanded={isExpanded}
           onClick={() => setIsExpanded((prev) => !prev)}
         >
           Details

@@ -11,7 +11,14 @@ import {
   Text,
 } from '@chakra-ui/react';
 
-import { problemFor, type DraftIngredient, type DraftProblem } from '@/features/recipe-entry/draft';
+import {
+  chooseAisle,
+  problemFor,
+  renameIngredientLine,
+  type AisleHistory,
+  type DraftIngredient,
+  type DraftProblem,
+} from '@/features/recipe-entry/draft';
 import { ScaleControl, type ScaledState } from '@/features/recipe-entry/components/ScaleControl';
 import { INGREDIENT_CATEGORIES, type IngredientCategory } from '@/features/store-config/types';
 import { uiIcons } from '@/shared/components/icons';
@@ -34,6 +41,11 @@ interface IngredientLinesEditorProps {
    * default would be a hard-coded 3 by another name, which is what FR-6 removes.
    */
   servingsPerDinner: number;
+  /**
+   * The aisle the household last used for each ingredient name (intent 019, FR-3). Passed in, like
+   * `servingsPerDinner`, so the editor stays presentational; empty while it loads.
+   */
+  aisleHistory: AisleHistory;
   /**
    * Present when the draft came from an import, carrying what the page said it serves or makes
    * (verbatim, or null). An import's quantities are always the page's own (bolt 070), so the editor
@@ -65,6 +77,7 @@ export function IngredientLinesEditor({
   onChange,
   onAddLine,
   servingsPerDinner,
+  aisleHistory,
   importSource,
   scaled = null,
   onScale = () => {},
@@ -73,7 +86,11 @@ export function IngredientLinesEditor({
   const problem = (field: string) => (showProblems ? problemFor(problems, field) : undefined);
 
   function patchLine(id: string, patch: Partial<DraftIngredient>) {
-    onChange(lines.map((line) => (line.id === id ? { ...line, ...patch } : line)));
+    updateLine(id, (line) => ({ ...line, ...patch }));
+  }
+
+  function updateLine(id: string, update: (line: DraftIngredient) => DraftIngredient) {
+    onChange(lines.map((line) => (line.id === id ? update(line) : line)));
   }
 
   function removeLine(id: string) {
@@ -112,6 +129,7 @@ export function IngredientLinesEditor({
         {lines.map((line) => {
           const quantityProblem = problem(`ingredients.${line.id}.quantity`);
           const nameProblem = problem(`ingredients.${line.id}.name`);
+          const categoryProblem = problem(`ingredients.${line.id}.category`);
 
           return (
             <Grid
@@ -156,7 +174,11 @@ export function IngredientLinesEditor({
                   aria-label="Ingredient"
                   placeholder="Chicken thighs"
                   value={line.name}
-                  onChange={(event) => patchLine(line.id, { name: event.target.value })}
+                  onChange={(event) =>
+                    updateLine(line.id, (current) =>
+                      renameIngredientLine(current, event.target.value, aisleHistory),
+                    )
+                  }
                 />
                 <FormErrorMessage fontSize="xs">{nameProblem}</FormErrorMessage>
               </FormControl>
@@ -165,23 +187,33 @@ export function IngredientLinesEditor({
                 A Select over INGREDIENT_CATEGORIES, imported rather than re-listed. The five
                 values are a CHECK constraint on the column; a second copy here would drift from
                 it the first time the constraint changes.
+
+                No default aisle (intent 019, FR-2): a new line shows "Choose aisle" until its name
+                is known or the cook picks one. That option is disabled, so it can't be picked back
+                once a real aisle is set. Inside a FormControl so "Choose an aisle" is linked to it.
               */}
-              <Box gridArea="category">
+              <FormControl gridArea="category" isInvalid={Boolean(categoryProblem)}>
                 <Select
                   size="sm"
                   aria-label="Part of the store"
-                  value={line.category}
+                  value={line.category ?? ''}
                   onChange={(event) =>
-                    patchLine(line.id, { category: event.target.value as IngredientCategory })
+                    updateLine(line.id, (current) =>
+                      chooseAisle(current, event.target.value as IngredientCategory),
+                    )
                   }
                 >
+                  <option value="" disabled>
+                    Choose aisle
+                  </option>
                   {INGREDIENT_CATEGORIES.map((category) => (
                     <option key={category} value={category}>
                       {category}
                     </option>
                   ))}
                 </Select>
-              </Box>
+                <FormErrorMessage fontSize="xs">{categoryProblem}</FormErrorMessage>
+              </FormControl>
 
               <Box gridArea="remove" justifySelf="end">
                 <IconButton

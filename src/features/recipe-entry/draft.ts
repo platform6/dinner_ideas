@@ -1,4 +1,5 @@
 import { normalizeTagName } from '@/features/dinners/tags';
+import { nameKey } from '@/features/shopping-list/reorder';
 import { INGREDIENT_CATEGORIES, type IngredientCategory } from '@/features/store-config/types';
 
 /**
@@ -40,8 +41,23 @@ export interface DraftIngredient {
   quantity: string;
   unit: string;
   name: string;
-  category: IngredientCategory;
+  /**
+   * Which part of the store it comes from. `null` until known or chosen: a new line has no aisle
+   * rather than a guessed one, because a wrong default silently misfiles the shopping list (intent
+   * 019, FR-2). `validateDraft` refuses to save a `null`.
+   */
+  category: IngredientCategory | null;
+  /**
+   * Who set `category`. Client-only, never sent to the database.
+   *
+   * - `unset`: nothing has, so `category` is `null`
+   * - `history`: filled from the household's own dinners, so it follows the name while that holds
+   * - `chosen`: the cook picked it, or an import supplied it, so nothing else may change it
+   */
+  categorySource: CategorySource;
 }
+
+export type CategorySource = 'unset' | 'history' | 'chosen';
 
 export interface DraftStep {
   /** Client-only, stable for the life of the line. Never sent to the database. */
@@ -68,7 +84,64 @@ function nextLineId(prefix: string): string {
 }
 
 export function createIngredientLine(): DraftIngredient {
-  return { id: nextLineId('ing'), quantity: '', unit: '', name: '', category: 'Produce' };
+  return { id: nextLineId('ing'), quantity: '', unit: '', name: '', category: null, categorySource: 'unset' };
+}
+
+/** The aisle the household last used for each ingredient, keyed by `nameKey` (intent 019, FR-3). */
+export type AisleHistory = ReadonlyMap<string, IngredientCategory>;
+
+/** One saved ingredient line, with its dinner's creation time so the most recent can win. */
+export interface AisleHistoryRow {
+  name: string;
+  category: string;
+  dinnerCreatedAt: string;
+}
+
+/**
+ * Reduces the household's saved ingredient lines to one aisle per name.
+ *
+ * Names match on `nameKey` (trimmed, lowercased), the same rule as `items.name_key` and the
+ * shopping list, so "Chicken thighs " and "chicken thighs" are one ingredient while "chicken thighs,
+ * cubed" is another. Where dinners disagree, the most recently created one wins, which follows the
+ * household's latest correction. A category outside the five is skipped rather than trusted.
+ */
+export function buildAisleHistory(rows: readonly AisleHistoryRow[]): AisleHistory {
+  const latest = new Map<string, { category: IngredientCategory; createdAt: string }>();
+  for (const row of rows) {
+    if (!(INGREDIENT_CATEGORIES as readonly string[]).includes(row.category)) continue;
+    const key = nameKey(row.name);
+    if (!key) continue;
+    const current = latest.get(key);
+    // ISO-8601 timestamps from one column compare correctly as strings.
+    if (!current || row.dinnerCreatedAt > current.createdAt) {
+      latest.set(key, { category: row.category as IngredientCategory, createdAt: row.dinnerCreatedAt });
+    }
+  }
+  return new Map([...latest].map(([key, value]) => [key, value.category]));
+}
+
+/**
+ * Renames a line, letting its aisle follow the name only if nobody chose that aisle.
+ *
+ * A chosen aisle, picked by the cook or supplied by an import, is never touched: that is the rule
+ * that matters most here. Otherwise a known name fills its aisle from history, and an unknown one
+ * returns the line to no aisle, so a filled aisle never outlives the name it was filled for.
+ */
+export function renameIngredientLine(
+  line: DraftIngredient,
+  name: string,
+  history: AisleHistory,
+): DraftIngredient {
+  if (line.categorySource === 'chosen') return { ...line, name };
+  const known = history.get(nameKey(name));
+  return known
+    ? { ...line, name, category: known, categorySource: 'history' }
+    : { ...line, name, category: null, categorySource: 'unset' };
+}
+
+/** The cook picked an aisle. From here on nothing else changes it. */
+export function chooseAisle(line: DraftIngredient, category: IngredientCategory): DraftIngredient {
+  return { ...line, category, categorySource: 'chosen' };
 }
 
 export function createStep(): DraftStep {
@@ -184,7 +257,9 @@ export function validateDraft(draft: RecipeDraft): DraftProblem[] {
         message: 'Quantity must be more than zero.',
       });
     }
-    if (!INGREDIENT_CATEGORIES.includes(line.category)) {
+    if (line.category === null) {
+      problems.push({ field: `ingredients.${line.id}.category`, message: 'Choose an aisle.' });
+    } else if (!INGREDIENT_CATEGORIES.includes(line.category)) {
       problems.push({
         field: `ingredients.${line.id}.category`,
         message: 'Pick which part of the store this comes from.',

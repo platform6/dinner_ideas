@@ -2,12 +2,12 @@
 
 ## Overview
 
-- **Total stories**: 162
-- **Completed**: 155
-- **Planned**: 7
+- **Total stories**: 178
+- **Completed**: 177
+- **Planned**: 1
 - **In Progress**: 0
 - **Deferred**: 0
-- **Last updated**: 2026-09-08
+- **Last updated**: 2026-09-17
 
 ---
 
@@ -316,8 +316,8 @@
 
 ## Stories by Status
 
-- **Completed**: 147
-- **Planned**: 15
+- **Completed**: 177
+- **Planned**: 1
 - **In Progress**: 0
 - **Deferred**: 0
 
@@ -328,7 +328,7 @@
 > "COMPLETE" — that is stale labelling in this index's prose only; those story files all carry
 > `status: complete`.
 
-### 018-serving-scale-and-removal — ✅ BUILT (bolts 069–072 complete; not yet deployed — migrations 20260911173308, 20260911181346 pending)
+### 018-serving-scale-and-removal — 🚀 SHIPPED v0.15.0 (bolts 069–072 complete; live on prod 2026-09-17, PR #23)
 
 **Unit: 001-serving-size-setting** — bolt `069` ✅ COMPLETE — the household owns its serving size
 
@@ -347,5 +347,28 @@
 - [x] **001-remove-a-dinner** (remove-a-dinner): Dinner + children deleted atomically; shared tags survive - Must - ✅ COMPLETE
 - [x] **002-confirm-before-removing** (remove-a-dinner): Confirmed; warns what it affects; "Not interested" stays distinct - Must - ✅ COMPLETE
 - [x] **003-removal-tests** (remove-a-dinner): pgTAP mirror of the aggregate write test - Must - ✅ COMPLETE
+
+---
+
+### 019-ui-correctness-fixes — ✅ BUILT (bolts 073–076 complete; not yet deployed — no migrations)
+
+**Unit: 001-copy-corrections** — bolt `073` ✅ COMPLETE — counts and names agree with the app
+
+- [x] **001-plan-copy-reads-dinner-count** (copy-corrections): `/plan` copy reads `dinners_per_week`; tested with N ≠ 3 - Must - ✅ COMPLETE
+- [x] **002-one-name-for-add-a-dinner** (copy-corrections): "Add a dinner" everywhere, guarded by a test - Should - ✅ COMPLETE
+
+**Unit: 002-ingredient-aisle-default** — bolt `074` ✅ COMPLETE — no silent Produce; the household's own aisle
+
+- [x] **001-no-default-aisle** (ingredient-aisle-default): New lines start with no aisle; saving requires one - Must - ✅ COMPLETE
+- [x] **002-aisle-from-household-history** (ingredient-aisle-default): Filled from the last dinner that used it; a chosen aisle is never overwritten - Must - ✅ COMPLETE
+
+**Unit: 003-expanded-card-layout** — bolt `075` ✅ COMPLETE — cuttable; layout only
+
+- [x] **001-expanded-card-spans-row** (expanded-card-layout): An open card spans its row; no reordering - Should - ✅ COMPLETE
+
+**Unit: 004-mobile-overlap-fixes** — bolt `076` ✅ COMPLETE — cuttable; added from the mobile review
+
+- [x] **001-footer-never-hides-content** (mobile-overlap-fixes): The end of the list and focused items sit above the sticky footer - Should - ✅ COMPLETE
+- [x] **002-card-menu-clears-title** (mobile-overlap-fixes): "More actions" never covers the dinner's name - Should - ✅ COMPLETE
 
 ---

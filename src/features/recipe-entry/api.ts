@@ -1,5 +1,28 @@
 import { supabase } from '@/shared/lib/supabase';
-import { numberedSteps, parsePositiveNumber, type RecipeDraft } from '@/features/recipe-entry/draft';
+import {
+  numberedSteps,
+  parsePositiveNumber,
+  type AisleHistoryRow,
+  type RecipeDraft,
+} from '@/features/recipe-entry/draft';
+
+/**
+ * Every ingredient line the household has saved, with its dinner's creation time: the source for
+ * filling a known ingredient's aisle (intent 019, FR-3).
+ *
+ * Reads `dinner_ingredients` rather than the catalog's dinner list, because that list is active
+ * dinners only and a dinner marked "Not interested" still holds aisles the household chose. Scoped to
+ * the household by the existing SELECT policies; nothing here filters by household.
+ */
+export async function fetchAisleHistory(): Promise<AisleHistoryRow[]> {
+  const { data, error } = await supabase
+    .from('dinner_ingredients')
+    .select('name, category, dinners(created_at)');
+  if (error) throw error;
+  return data.flatMap((row) =>
+    row.dinners ? [{ name: row.name, category: row.category, dinnerCreatedAt: row.dinners.created_at }] : [],
+  );
+}
 
 /**
  * Creates a dinner — the row, its ingredient lines, its cooking steps and its tags — in ONE
@@ -21,12 +44,17 @@ export async function createDinner(draft: RecipeDraft): Promise<string> {
     // here because the type says `number | null` and a silent `!` would be a lie.
     p_cook_time_minutes: parsePositiveNumber(draft.cookTimeMinutes) ?? 0,
     p_instructions: draft.summary.trim(),
-    p_ingredients: draft.ingredients.map((line) => ({
-      quantity: parsePositiveNumber(line.quantity) ?? 0,
-      unit: line.unit.trim(),
-      name: line.name.trim(),
-      category: line.category,
-    })),
+    p_ingredients: draft.ingredients.map((line) => {
+      // `validateDraft` refuses a line with no aisle, so this is unreachable. Unlike a quantity, an
+      // aisle has no honest default, so it throws rather than sending a guess (intent 019, FR-2).
+      if (line.category === null) throw new Error('An ingredient line has no aisle; validate before saving.');
+      return {
+        quantity: parsePositiveNumber(line.quantity) ?? 0,
+        unit: line.unit.trim(),
+        name: line.name.trim(),
+        category: line.category,
+      };
+    }),
     // Ordered. The function numbers them with ORDINALITY, so the displayed order IS the stored
     // order and a gap cannot be expressed.
     p_steps: numberedSteps(draft.steps).map((step) => step.instruction.trim()),

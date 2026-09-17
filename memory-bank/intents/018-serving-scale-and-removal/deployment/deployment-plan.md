@@ -4,30 +4,44 @@ release: v0.15.0-b5ea091
 commit: b5ea091
 units: [001-serving-size-setting, 002-scale-on-review, 003-remove-a-dinner]
 created: '2026-09-11T18:27:24Z'
-updated: '2026-09-11T18:27:24Z'
-status: planned
-current_checkpoint: 1
+updated: '2026-09-17T15:31:11Z'
+status: production-live-verified
+current_checkpoint: 4
 follows: v0.14.0-fd66c42
+severity: out-of-order-release
 environments:
   dev:
     status: verified
     target: 'local — vitest 725/725, pgTAP 446/446 on a local stack with both migrations applied, tsc -b, eslint clean'
   staging:
-    status: 'awaiting product owner decision — see "Staging" below'
+    status: 'n/a — skipped. Production was already half-deployed (frontend live without its migrations), so the product owner chose on 2026-09-17 to finish the release immediately rather than rehearse on a branch.'
   production:
-    status: not-started
-    target: 'Supabase (two migrations) THEN Netlify main'
-    db: 'PENDING — 20260911173308_servings_per_dinner.sql and 20260911181346_remove_dinner.sql. Confirmed absent from prod via `supabase migration list` (remote empty for both).'
-    fe: 'NOT STARTED — 7 commits unreleased, and `dev` is not pushed.'
+    status: 'live 2026-09-17 — database verified; smoke test passed (product owner, 2026-09-17)'
+    target: 'Supabase linked gpkqsedtlzxczmarxjia + Netlify main'
+    db: 'APPLIED 2026-09-17 (before 15:18:24Z) — both migrations via `supabase db push`, run by the product owner after a dry run listed exactly these two. VERIFIED: `supabase migration list` shows remote timestamps for both; households.servings_per_dinner defaults to 3, NOT NULL, CHECK 1..12 (1 household, on the default); fn_remove_dinner is definer and fn_dinner_removal_impact is invoker, both search_path="", executable by authenticated and not anon; fn_weekly_plan_selections_guard now carries the app.dinner_removal escape; fn_dinner_removal_impact on a nonexistent id raises P0002 (probed in a transaction that was rolled back).'
+    fe: 'MERGED 2026-09-17T13:19:14Z — PR #23, origin/main 4e6a156 (contains b5ea091). Merged BEFORE the migrations, contrary to this plan. Live bundle index-CSSRjKNz.js contains "Servings per dinner", "Scale from", "fn_remove_dinner" and "servings_per_dinner".'
     edge_function: 'n/a — claude-proxy unchanged.'
 ---
 
 # Deployment Plan: intent 018 — scaling and removal (release v0.15.0)
 
-Current production is **v0.14.0** (`origin/main` @ `8bbc804`, PR #22, live 2026-09-11).
+Previous production was **v0.14.0** (`origin/main` @ `8bbc804`, PR #22, live 2026-09-11).
 
-**Prepared, not executed.** It was written while the product owner had waived construction
-checkpoints. Shipping to the family is outward-facing and was deliberately left for them to approve.
+## ⚠ What actually happened (2026-09-17)
+
+This plan was not followed in order. PR #23 merged `dev` → `main` at 13:19Z, so Netlify shipped the
+frontend while both migrations were still absent from production. From then until the migrations were
+applied (confirmed at 15:18:24Z), roughly two hours, `fetchServingsPerDinner` would have thrown on the
+missing column (Settings → Recipes, recipe entry), and **Remove…** would have called functions that did
+not exist. Planning, the shopping list and cooking view did not depend on either migration.
+
+The master agent's analysis found the gap. The product owner chose to finish the release rather than
+revert `main`, and approved production directly. Staging was skipped, for the reason above. The
+database verification passed, and the product owner reported the post-deploy smoke test successful
+the same day (see Smoke results at the end).
+
+Lesson: merging `dev` → `main` _is_ the frontend deploy. With pending migrations, push the database
+first, as the Ordering section says.
 
 ## Scope
 
@@ -115,8 +129,20 @@ since the `for update` race fix, and a branch rehearsal on production data is ch
 
 ## Decisions the product owner still needs to make
 
-1. **Approve this plan** (Checkpoint 1), and decide on staging
-2. **ADR-15's locked-plan exception**: removal is refused for a dinner in this week's locked plan
-   until the week ends. This narrows the Checkpoint 2 decision "warn, don't refuse". Confirm it, or
-   overturn it, which would mean making removal edit a locked plan mid-week
+1. ~~**Approve this plan**~~ **Resolved 2026-09-17**: superseded by the out-of-order release; staging
+   skipped (see top)
+2. ~~**ADR-15's locked-plan exception**~~ **Resolved 2026-09-17: confirmed.** The product owner
+   also accepted that a removed dinner disappears from past weeks on `/plan`. ADR-15 amended
 3. **`Daily call limit`** is 10, set during v0.14.0 testing, and smoke step 3 spends a call
+
+## Smoke results (2026-09-17)
+
+**Reported successful by the product owner.** Afterwards, a read-only query on production showed:
+
+- `servings_per_dinner` is **4** for the household, consistent with steps 1–2.
+- **The 2026-09-11 "Salted Chocolate Toffee Pretzel Bark" is still in the catalog** (created
+  09-11 14:25Z, the v0.14.0 import). Step 6 names it as the dinner to remove, so either removal was
+  exercised on a different dinner or the old bark was kept on purpose. Its quantities are the known-wrong ones.
+- The current week's plan (2026-09-13) is a **draft**, and no locked plan covers a week still in progress,
+  so step 7's refusal could not have been exercised on production. It is covered by pgTAP
+  (`remove_dinner_test.sql`) and `RemoveDinnerDialog.test.tsx`.

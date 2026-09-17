@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildAisleHistory,
+  chooseAisle,
   createEmptyDraft,
   createIngredientLine,
   createStep,
@@ -9,8 +11,10 @@ import {
   numberedSteps,
   parsePositiveNumber,
   problemFor,
+  renameIngredientLine,
   toggleTagName,
   validateDraft,
+  type AisleHistoryRow,
   type RecipeDraft,
 } from '@/features/recipe-entry/draft';
 
@@ -21,7 +25,16 @@ function validDraft(overrides: Partial<RecipeDraft> = {}): RecipeDraft {
     cuisineType: 'Mexican',
     cookTimeMinutes: '30',
     summary: 'Chicken and peppers roasted on one pan.',
-    ingredients: [{ ...createIngredientLine(), quantity: '1.5', unit: 'lb', name: 'Chicken thighs' }],
+    ingredients: [
+      {
+        ...createIngredientLine(),
+        quantity: '1.5',
+        unit: 'lb',
+        name: 'Chicken thighs',
+        category: 'Protein',
+        categorySource: 'chosen',
+      },
+    ],
     steps: [{ ...createStep(), instruction: 'Roast for 30 minutes.' }],
     tagNames: [],
     ...overrides,
@@ -249,12 +262,115 @@ describe('validateDraft', () => {
   });
 
   it('accepts a fractional quantity — the column is numeric, not integer', () => {
-    const line = { ...createIngredientLine(), quantity: '0.5', name: 'Butter' };
+    const line = chooseAisle({ ...createIngredientLine(), quantity: '0.5', name: 'Butter' }, 'Dairy');
     expect(validateDraft(validDraft({ ingredients: [line] }))).toEqual([]);
+  });
+
+  it('should refuse a line with no aisle, saying "Choose an aisle." on that line (intent 019)', () => {
+    const line = { ...createIngredientLine(), quantity: '1', name: 'Chicken thighs' };
+    const problems = validateDraft(validDraft({ ingredients: [line] }));
+
+    expect(problemFor(problems, `ingredients.${line.id}.category`)).toBe('Choose an aisle.');
+    expect(isDraftComplete(validDraft({ ingredients: [line] }))).toBe(false);
   });
 
   it('accepts a draft with no tags — they are optional', () => {
     expect(validateDraft(validDraft({ tagNames: [] }))).toEqual([]);
+  });
+});
+
+describe('createIngredientLine (intent 019, FR-2)', () => {
+  it('should start with no aisle rather than a guessed one', () => {
+    const line = createIngredientLine();
+    expect(line.category).toBeNull();
+    expect(line.categorySource).toBe('unset');
+  });
+});
+
+describe('buildAisleHistory (intent 019, FR-3)', () => {
+  function row(name: string, category: string, dinnerCreatedAt: string): AisleHistoryRow {
+    return { name, category, dinnerCreatedAt };
+  }
+
+  it('should key names by nameKey, so spacing and case do not split an ingredient', () => {
+    const history = buildAisleHistory([row('  Chicken Thighs ', 'Protein', '2026-01-01T00:00:00Z')]);
+    expect(history.get('chicken thighs')).toBe('Protein');
+  });
+
+  it('should take the aisle from the most recently created dinner, whatever the row order', () => {
+    const rows = [
+      row('chicken thighs', 'Pantry', '2026-03-01T00:00:00Z'),
+      row('Chicken thighs', 'Protein', '2026-01-01T00:00:00Z'),
+      row('CHICKEN THIGHS', 'Produce', '2026-02-01T00:00:00Z'),
+    ];
+    expect(buildAisleHistory(rows).get('chicken thighs')).toBe('Pantry');
+    expect(buildAisleHistory([...rows].reverse()).get('chicken thighs')).toBe('Pantry');
+  });
+
+  it('should keep "chicken thighs, cubed" a separate ingredient', () => {
+    const history = buildAisleHistory([row('chicken thighs', 'Protein', '2026-01-01T00:00:00Z')]);
+    expect(history.has('chicken thighs, cubed')).toBe(false);
+  });
+
+  it('should skip a category outside the five, and a blank name', () => {
+    const history = buildAisleHistory([
+      row('shrimp', 'Seafood', '2026-05-01T00:00:00Z'),
+      row('shrimp', 'Protein', '2026-01-01T00:00:00Z'),
+      row('   ', 'Pantry', '2026-01-01T00:00:00Z'),
+    ]);
+    expect(history.get('shrimp')).toBe('Protein');
+    expect(history.size).toBe(1);
+  });
+});
+
+describe('renameIngredientLine and chooseAisle (intent 019, FR-3)', () => {
+  const history = buildAisleHistory([
+    { name: 'Chicken thighs', category: 'Protein', dinnerCreatedAt: '2026-01-01T00:00:00Z' },
+    { name: 'Rice', category: 'Grains', dinnerCreatedAt: '2026-01-01T00:00:00Z' },
+  ]);
+
+  it('should fill an unset aisle from history when the name matches, ignoring spacing and case', () => {
+    const line = renameIngredientLine(createIngredientLine(), ' CHICKEN thighs ', history);
+    expect(line).toMatchObject({ name: ' CHICKEN thighs ', category: 'Protein', categorySource: 'history' });
+  });
+
+  it('should leave an unset aisle unset when the name is unknown', () => {
+    const line = renameIngredientLine(createIngredientLine(), 'Saffron', history);
+    expect(line).toMatchObject({ category: null, categorySource: 'unset' });
+  });
+
+  it('should let a history-filled aisle follow the name: refill on a match, unset on a miss', () => {
+    const filled = renameIngredientLine(createIngredientLine(), 'Chicken thighs', history);
+    expect(renameIngredientLine(filled, 'Rice', history)).toMatchObject({
+      category: 'Grains',
+      categorySource: 'history',
+    });
+    expect(renameIngredientLine(filled, 'Chicken thighs, cubed', history)).toMatchObject({
+      category: null,
+      categorySource: 'unset',
+    });
+  });
+
+  it('should never change a chosen aisle, whatever the name becomes', () => {
+    let line = chooseAisle(createIngredientLine(), 'Dairy');
+    for (const name of ['Chicken thighs', 'Rice', 'Saffron', '']) {
+      line = renameIngredientLine(line, name, history);
+      expect(line).toMatchObject({ name, category: 'Dairy', categorySource: 'chosen' });
+    }
+  });
+
+  it('should make a history-filled aisle chosen once the cook picks one, even the same one', () => {
+    const filled = renameIngredientLine(createIngredientLine(), 'Chicken thighs', history);
+    const picked = chooseAisle(filled, 'Protein');
+    expect(picked.categorySource).toBe('chosen');
+    expect(renameIngredientLine(picked, 'Saffron', history).category).toBe('Protein');
+  });
+
+  it('should not mutate the line it is given', () => {
+    const line = createIngredientLine();
+    renameIngredientLine(line, 'Rice', history);
+    chooseAisle(line, 'Pantry');
+    expect(line).toMatchObject({ name: '', category: null, categorySource: 'unset' });
   });
 });
 

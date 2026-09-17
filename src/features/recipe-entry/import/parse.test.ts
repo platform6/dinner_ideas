@@ -56,6 +56,16 @@ describe('parseExtraction — a good response', () => {
     expect(result.draft.ingredients[0].quantity).toBe('0.75');
   });
 
+  it('should mark every imported aisle as chosen, so household history never overrides it (intent 019)', () => {
+    const result = parseExtraction(reply(), VOCABULARY);
+    if (!result.ok) throw new Error('expected a draft');
+
+    expect(result.draft.ingredients.map((i) => [i.category, i.categorySource])).toEqual([
+      ['Protein', 'chosen'],
+      ['Grains', 'chosen'],
+    ]);
+  });
+
   it('gives every line its own id, so the editors can address them individually', () => {
     const result = parseExtraction(reply(), VOCABULARY);
     if (!result.ok) throw new Error('expected a draft');

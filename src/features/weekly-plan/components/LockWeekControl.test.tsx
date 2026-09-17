@@ -48,6 +48,18 @@ describe('LockWeekControl', () => {
     expect(screen.queryByRole('button', { name: /^lock in this week$/i })).not.toBeInTheDocument();
   });
 
+  it('should ask "Lock in this dinner?" rather than "these 1" for a single pick (intent 019)', async () => {
+    const user = userEvent.setup();
+    renderControl({ selectionCount: 1, dinnersPerWeek: 1 });
+
+    await user.click(screen.getByRole('button', { name: /lock in this week/i }));
+
+    expect(
+      screen.getByText(/^lock in this dinner\? you won’t be able to change this week’s picks\.$/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/these 1/i)).not.toBeInTheDocument();
+  });
+
   it('dismisses the confirm on "Keep editing" without calling onLock', async () => {
     const user = userEvent.setup();
     const { onLock } = renderControl();

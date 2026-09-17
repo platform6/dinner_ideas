@@ -186,7 +186,7 @@ export function CatalogPage() {
             size="sm"
             display={{ base: 'none', md: 'inline-flex' }}
           >
-            Add dinner
+            Add a dinner
           </Button>
           <IconButton
             as={RouterLink}

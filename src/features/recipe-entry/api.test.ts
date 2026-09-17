@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createDinner, mapSaveError } from '@/features/recipe-entry/api';
+import { createDinner, fetchAisleHistory, mapSaveError } from '@/features/recipe-entry/api';
 import { createIngredientLine, createStep, type RecipeDraft } from '@/features/recipe-entry/draft';
 import { supabase } from '@/shared/lib/supabase';
 
-vi.mock('@/shared/lib/supabase', () => ({ supabase: { rpc: vi.fn() } }));
+vi.mock('@/shared/lib/supabase', () => ({ supabase: { rpc: vi.fn(), from: vi.fn() } }));
 
 function draft(overrides: Partial<RecipeDraft> = {}): RecipeDraft {
   return {
@@ -93,6 +93,62 @@ describe('createDinner', () => {
     mockedRpc.mockResolvedValue({ data: null, error: { code: '23505' } } as any);
 
     await expect(createDinner(draft())).rejects.toMatchObject({ code: '23505' });
+  });
+
+  it('should refuse to send a line with no aisle, rather than guess one (intent 019)', async () => {
+    const unset = { ...createIngredientLine(), quantity: '1', name: 'Saffron' };
+
+    await expect(createDinner(draft({ ingredients: [unset] }))).rejects.toThrow(/no aisle/i);
+    expect(mockedRpc).not.toHaveBeenCalled();
+  });
+
+  it('should send the aisle but never the client-only category source', async () => {
+    await createDinner(draft());
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [first] = (mockedRpc.mock.calls[0][1] as any).p_ingredients;
+    expect(first).toEqual({ quantity: 1.5, unit: 'lb', name: 'Chicken thighs', category: 'Protein' });
+  });
+});
+
+describe('fetchAisleHistory (intent 019, FR-3)', () => {
+  const mockedFrom = vi.mocked(supabase.from);
+
+  function respondWith(result: { data: unknown; error: unknown }) {
+    const select = vi.fn().mockResolvedValue(result);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockedFrom.mockReturnValue({ select } as any);
+    return select;
+  }
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it("should read every saved ingredient line with its dinner's creation time, with no active filter", async () => {
+    const select = respondWith({ data: [], error: null });
+
+    await fetchAisleHistory();
+
+    expect(mockedFrom).toHaveBeenCalledWith('dinner_ingredients');
+    expect(select).toHaveBeenCalledWith('name, category, dinners(created_at)');
+  });
+
+  it('should flatten each row and skip one whose dinner is not visible', async () => {
+    respondWith({
+      data: [
+        { name: 'Chicken thighs', category: 'Protein', dinners: { created_at: '2026-02-01T00:00:00Z' } },
+        { name: 'Rice', category: 'Grains', dinners: null },
+      ],
+      error: null,
+    });
+
+    await expect(fetchAisleHistory()).resolves.toEqual([
+      { name: 'Chicken thighs', category: 'Protein', dinnerCreatedAt: '2026-02-01T00:00:00Z' },
+    ]);
+  });
+
+  it('should throw the error so the query reports it', async () => {
+    respondWith({ data: null, error: { code: '42501' } });
+    await expect(fetchAisleHistory()).rejects.toMatchObject({ code: '42501' });
   });
 });
 

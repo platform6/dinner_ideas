@@ -116,6 +116,8 @@ export function parseExtraction(text: string, vocabulary: readonly string[]): Pa
       unit: typeof line.unit === 'string' ? line.unit.trim() : '',
       name: line.name.trim(),
       category: line.category as IngredientCategory,
+      // An import's aisle counts as chosen: the household's history never overrides it (intent 019).
+      categorySource: 'chosen',
     });
   }
 
