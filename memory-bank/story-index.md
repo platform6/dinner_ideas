@@ -3,8 +3,8 @@
 ## Overview
 
 - **Total stories**: 178
-- **Completed**: 174
-- **Planned**: 4
+- **Completed**: 175
+- **Planned**: 3
 - **In Progress**: 0
 - **Deferred**: 0
 - **Last updated**: 2026-09-17
@@ -316,8 +316,8 @@
 
 ## Stories by Status
 
-- **Completed**: 174
-- **Planned**: 4
+- **Completed**: 175
+- **Planned**: 3
 - **In Progress**: 0
 - **Deferred**: 0
 
@@ -350,7 +350,7 @@
 
 ---
 
-### 019-ui-correctness-fixes — ⏳ IN PROGRESS (bolts 073–074 ✅; 075–076 planned; not yet deployed)
+### 019-ui-correctness-fixes — ⏳ IN PROGRESS (bolts 073–075 ✅; 076 planned; not yet deployed)
 
 **Unit: 001-copy-corrections** — bolt `073` ✅ COMPLETE — counts and names agree with the app
 
@@ -362,9 +362,9 @@
 - [x] **001-no-default-aisle** (ingredient-aisle-default): New lines start with no aisle; saving requires one - Must - ✅ COMPLETE
 - [x] **002-aisle-from-household-history** (ingredient-aisle-default): Filled from the last dinner that used it; a chosen aisle is never overwritten - Must - ✅ COMPLETE
 
-**Unit: 003-expanded-card-layout** — bolt `075` — cuttable; layout only
+**Unit: 003-expanded-card-layout** — bolt `075` ✅ COMPLETE — cuttable; layout only
 
-- [ ] **001-expanded-card-spans-row** (expanded-card-layout): An open card spans its row; no reordering - Should - [ ] PLANNED
+- [x] **001-expanded-card-spans-row** (expanded-card-layout): An open card spans its row; no reordering - Should - ✅ COMPLETE
 
 **Unit: 004-mobile-overlap-fixes** — bolt `076` — cuttable; added from the mobile review
 

@@ -126,6 +126,60 @@ describe('DinnerCard details section', () => {
   });
 });
 
+describe('DinnerCard in the catalog grid (intent 019, FR-4)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedFetchDetails.mockResolvedValue(details);
+  });
+
+  /**
+   * The card root's computed `grid-column`, spaces removed. The root is the catalog grid's item.
+   * Emotion writes `1 / -1` as `1/-1`, and an unset span computes to `''`, so comparing the value
+   * (rather than `toHaveStyle`) makes the collapsed case a real assertion too.
+   */
+  function gridColumnOf(container: HTMLElement): string {
+    const root = container.firstElementChild;
+    if (!(root instanceof HTMLElement)) throw new Error('expected the card to render a root element');
+    return getComputedStyle(root).gridColumn.replace(/\s/g, '');
+  }
+
+  it('should take one column and report collapsed while Details is closed', () => {
+    const { container } = renderCard();
+
+    expect(gridColumnOf(container)).toBe('');
+    expect(screen.getByRole('button', { name: /details/i })).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('should span the whole row while Details is open, and return to one column when closed', async () => {
+    const user = userEvent.setup();
+    const { container } = renderCard();
+    const toggle = screen.getByRole('button', { name: /details/i });
+
+    await user.click(toggle);
+    expect(gridColumnOf(container)).toBe('1/-1');
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+    await user.click(toggle);
+    expect(gridColumnOf(container)).toBe('');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('should keep focus on the same Details toggle through expand and collapse', async () => {
+    const user = userEvent.setup();
+    renderCard();
+    const toggle = screen.getByRole('button', { name: /details/i });
+
+    await user.click(toggle);
+    await screen.findByText('Cook the meat.');
+    expect(screen.getByRole('button', { name: /details/i })).toBe(toggle);
+    expect(toggle).toHaveFocus();
+
+    await user.keyboard('{Enter}');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle).toHaveFocus();
+  });
+});
+
 describe('DinnerCard at capacity (story 017)', () => {
   beforeEach(() => {
     vi.clearAllMocks();

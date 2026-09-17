@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -86,6 +86,50 @@ describe('CatalogPage (suppress flow)', () => {
     expect(links).toHaveLength(2);
     for (const link of links) expect(link).toHaveAttribute('href', '/dinners/new');
     expect(screen.queryByText('Add dinner')).not.toBeInTheDocument();
+  });
+
+  it('should span only the expanded card across the grid, keep order, and allow several open (intent 019, FR-4)', async () => {
+    mockedFetchActive.mockResolvedValue([
+      dinner({ id: '1', name: 'Tacos' }),
+      dinner({ id: '2', name: 'Pasta' }),
+      dinner({ id: '3', name: 'Curry' }),
+    ]);
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText('Curry');
+
+    /** The grid item holding an element: its ancestor whose parent is the catalog grid. */
+    function gridItemOf(element: HTMLElement): HTMLElement {
+      let node = element;
+      while (node.parentElement && getComputedStyle(node.parentElement).display !== 'grid') {
+        node = node.parentElement;
+      }
+      if (!node.parentElement) throw new Error('expected the card to sit inside the catalog grid');
+      return node;
+    }
+    const names = ['Tacos', 'Pasta', 'Curry'];
+    const cardFor = (name: string) => gridItemOf(screen.getByText(name));
+    const spanOf = (name: string) => getComputedStyle(cardFor(name)).gridColumn.replace(/\s/g, '');
+    const spans = () => Object.fromEntries(names.map((name) => [name, spanOf(name)]));
+    const toggleFor = (name: string) => within(cardFor(name)).getByRole('button', { name: /details/i });
+    // Each card's position among the grid's children. DOM order is reading order (NFR-3), and the
+    // catalog sorts, so compare against where the cards started rather than the list above.
+    const positions = () =>
+      Object.fromEntries(
+        names.map((name) => [name, [...cardFor(name).parentElement!.children].indexOf(cardFor(name))]),
+      );
+    const before = positions();
+
+    await user.click(toggleFor('Pasta'));
+    expect(spans()).toEqual({ Tacos: '', Pasta: '1/-1', Curry: '' });
+
+    await user.click(toggleFor('Tacos'));
+    expect(spans()).toEqual({ Tacos: '1/-1', Pasta: '1/-1', Curry: '' });
+    expect(positions()).toEqual(before);
+
+    await user.click(toggleFor('Pasta'));
+    expect(spans()).toEqual({ Tacos: '1/-1', Pasta: '', Curry: '' });
+    expect(positions()).toEqual(before);
   });
 
   it('links to the dedicated Suppressed page instead of a toggle', async () => {

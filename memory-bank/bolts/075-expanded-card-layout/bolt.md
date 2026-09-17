@@ -3,14 +3,23 @@ id: 075-expanded-card-layout
 unit: 003-expanded-card-layout
 intent: 019-ui-correctness-fixes
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-expanded-card-spans-row
 created: '2026-09-17T15:57:07Z'
-started: null
-completed: null
+started: '2026-09-17T16:39:30Z'
+completed: '2026-09-17T16:59:07Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-17T16:40:55Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-17T16:42:36Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-17T16:59:07Z'
+    artifact: test-walkthrough.md
 requires_bolts: []
 enables_bolts: []
 requires_units: []

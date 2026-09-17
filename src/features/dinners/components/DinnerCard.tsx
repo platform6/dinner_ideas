@@ -240,6 +240,10 @@ export function DinnerCard({ dinner, onSuppress, isMutating, selection, lastChos
   return (
     <Box
       layerStyle={selection.isSelected ? 'cardSelected' : 'card'}
+      // This Box is the catalog grid's item. Open, it spans the whole row so no card sits beside a
+      // tall empty space (intent 019, FR-4). `1 / -1` covers however many columns the grid has, and
+      // at one column changes nothing. The grid never backfills, so order stays as listed.
+      gridColumn={isExpanded ? '1 / -1' : undefined}
       opacity={isLocked ? 0.55 : 1}
       transition="opacity 0.15s ease, border-color 0.12s ease"
       _hover={{ borderColor: 'line.brand' }}
@@ -328,6 +332,7 @@ export function DinnerCard({ dinner, onSuppress, isMutating, selection, lastChos
           size="sm"
           variant="ghost"
           rightIcon={isExpanded ? <uiIcons.collapse size={14} /> : <uiIcons.expand size={14} />}
+          aria-expanded={isExpanded}
           onClick={() => setIsExpanded((prev) => !prev)}
         >
           Details
