@@ -2,9 +2,9 @@
 
 ## Overview
 
-- **Total stories**: 178
+- **Total stories**: 183
 - **Completed**: 177
-- **Planned**: 1
+- **Planned**: 6
 - **In Progress**: 0
 - **Deferred**: 0
 - **Last updated**: 2026-09-17
@@ -317,7 +317,7 @@
 ## Stories by Status
 
 - **Completed**: 177
-- **Planned**: 1
+- **Planned**: 6
 - **In Progress**: 0
 - **Deferred**: 0
 
@@ -370,5 +370,23 @@
 
 - [x] **001-footer-never-hides-content** (mobile-overlap-fixes): The end of the list and focused items sit above the sticky footer - Should - ✅ COMPLETE
 - [x] **002-card-menu-clears-title** (mobile-overlap-fixes): "More actions" never covers the dinner's name - Should - ✅ COMPLETE
+
+---
+
+### 024-mobile-ergonomics — 📋 PLANNED (bolts 077–079; not yet deployed)
+
+**Unit: 001-touch-target-size** — bolt `077` — the theme's small control becomes 44px on a phone
+
+- [ ] **001-sm-is-44-on-a-phone** (touch-target-size): 44px below md, 34px at md+; md/lg unchanged - Must - [ ] PLANNED
+- [ ] **002-no-screen-reflows-badly** (touch-target-size): Every named screen checked on a phone and at 1024px - Must - [ ] PLANNED
+
+**Unit: 002-dense-row-layouts** — bolt `078` — two rows stop crowding what matters
+
+- [ ] **001-remove-step-is-not-a-mis-tap** (dense-row-layouts): Remove leaves the reorder arrows; all three reach 44px - Must - [ ] PLANNED
+- [ ] **002-store-row-shows-its-name** (dense-row-layouts): The aisle name gets the row; actions move below - Must - [ ] PLANNED
+
+**Unit: 003-aisle-sheet-close** — bolt `079` — cuttable
+
+- [ ] **001-sheet-closes-visibly** (aisle-sheet-close): A close control big enough to hit; the last action clears the edge - Should - [ ] PLANNED
 
 ---

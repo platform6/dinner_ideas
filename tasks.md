@@ -9,8 +9,7 @@ Status as of 2026-09-17. Intents live in `memory-bank/intents/`.
 Everything else that was in this inbox, and the product owner's mobile review (since deleted), is
 now in one of these. 019 is planned; the rest are drafts awaiting requirements.
 
-- `019-ui-correctness-fixes`: hard-coded "3" on `/plan`, Produce default, Details grid reflow,
-  "Add dinner" vs "Add a dinner", shopping-list footer and card menu overlaps on mobile
+- ~~`019-ui-correctness-fixes`~~ — **shipped v0.16.0, 2026-09-17**
 - `020-visual-hierarchy-and-affordances`: card title contrast, "Full" state, palette hierarchy,
   sidebar sections, unlabelled icon buttons
 - `021-catalog-findability`: title search, pagination and total count, filter dropdowns, "Not
@@ -18,7 +17,7 @@ now in one of these. 019 is planned; the rest are drafts awaiting requirements.
 - `022-recipe-entry-and-settings-polish`: scaling accordion, URL field, hint clarity, hide API key
   once set
 - `023-shopping-list-consolidation`: merge similar ingredients, empty aisles in Store setup
-- `024-mobile-ergonomics`: touch targets, Store setup row truncation, aisle-picker sheet
+- `024-mobile-ergonomics`: touch targets, Store setup row truncation, aisle-picker sheet — **planned**, bolts 077–079
 
 ## Not yet an intent
 
