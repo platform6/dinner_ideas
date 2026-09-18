@@ -2,11 +2,11 @@
 id: 001-sheet-closes-visibly
 unit: 003-aisle-sheet-close
 intent: 024-mobile-ergonomics
-status: planned
+status: complete
 priority: should
 created: '2026-09-18T13:10:36Z'
 assigned_bolt: null
-implemented: false
+implemented: true
 ---
 
 # Story: 001-sheet-closes-visibly

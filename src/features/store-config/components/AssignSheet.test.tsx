@@ -241,6 +241,80 @@ describe('AssignSheet — the picker', () => {
   });
 });
 
+describe('AssignSheet — the close control (intent 024, FR-4)', () => {
+  it('should offer a labelled close control, 44px on a phone', async () => {
+    renderSheet();
+
+    const close = await screen.findByRole('button', { name: 'Close' });
+    // jsdom applies the base rule, so this is the phone size (bolt 077).
+    expect(getComputedStyle(close).height).toBe('44px');
+    expect(getComputedStyle(close).minWidth).toBe('44px');
+  });
+
+  it('should close the sheet when it is pressed', async () => {
+    const user = userEvent.setup();
+    const { onClose } = renderSheet();
+
+    await user.click(await screen.findByRole('button', { name: 'Close' }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('should return focus to the control that opened the sheet', async () => {
+    const user = userEvent.setup();
+
+    function Harness() {
+      const openerRef = useRef<HTMLButtonElement>(null);
+      const [isOpen, setIsOpen] = useState(false);
+
+      return (
+        <ChakraProvider theme={theme}>
+          <button type="button" ref={openerRef} onClick={() => setIsOpen(true)}>
+            opener
+          </button>
+          <AssignSheet
+            item={item({ itemId: 'q', itemName: 'Cheddar' })}
+            locations={locations}
+            allItems={[]}
+            dismissedItemIds={new Set()}
+            isOpen={isOpen}
+            isSaving={false}
+            finalFocusRef={openerRef}
+            onClose={() => setIsOpen(false)}
+            onPlace={vi.fn()}
+            onUnplace={vi.fn()}
+            onDismissSuggestion={vi.fn()}
+          />
+        </ChakraProvider>
+      );
+    }
+
+    render(<Harness />);
+    await user.click(screen.getByRole('button', { name: 'opener' }));
+    await screen.findByRole('dialog');
+
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'opener' })).toHaveFocus());
+  });
+
+  it('should not disturb the actions already in the sheet', async () => {
+    renderSheet({
+      item: item({
+        itemId: 'q',
+        itemName: 'Organic Black Beans',
+        state: 'placed',
+        locationId: 'loc-1',
+        locationName: 'Produce',
+      }),
+    });
+
+    expect(await screen.findByRole('button', { name: /take it off the path/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /put organic black beans in produce/i })).toBeInTheDocument();
+  });
+});
+
 describe('AssignSheet — accessibility', () => {
   it('closes on Escape', async () => {
     const user = userEvent.setup();

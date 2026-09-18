@@ -3,14 +3,23 @@ id: 079-aisle-sheet-close
 unit: 003-aisle-sheet-close
 intent: 024-mobile-ergonomics
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-sheet-closes-visibly
 created: '2026-09-18T13:10:36Z'
-started: null
-completed: null
+started: '2026-09-18T17:58:01Z'
+completed: '2026-09-18T20:33:00Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-18T18:56:18Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-18T20:00:07Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-18T20:33:00Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 077-touch-target-size
 enables_bolts: []

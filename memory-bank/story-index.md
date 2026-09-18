@@ -3,8 +3,8 @@
 ## Overview
 
 - **Total stories**: 183
-- **Completed**: 181
-- **Planned**: 2
+- **Completed**: 182
+- **Planned**: 1
 - **In Progress**: 0
 - **Deferred**: 0
 - **Last updated**: 2026-09-17
@@ -316,8 +316,8 @@
 
 ## Stories by Status
 
-- **Completed**: 181
-- **Planned**: 2
+- **Completed**: 182
+- **Planned**: 1
 - **In Progress**: 0
 - **Deferred**: 0
 
@@ -373,7 +373,7 @@
 
 ---
 
-### 024-mobile-ergonomics — ⏳ IN PROGRESS (bolts 077–078 ✅; 079 planned; not yet deployed)
+### 024-mobile-ergonomics — ✅ BUILT (bolts 077–079 complete; not yet deployed — no migrations)
 
 **Unit: 001-touch-target-size** — bolt `077` ✅ COMPLETE — the theme's small control becomes 44px on a phone
 
@@ -385,8 +385,8 @@
 - [x] **001-remove-step-is-not-a-mis-tap** (dense-row-layouts): Remove leaves the reorder arrows; all three reach 44px - Must - ✅ COMPLETE
 - [x] **002-store-row-shows-its-name** (dense-row-layouts): The aisle name gets the row; actions move below - Must - ✅ COMPLETE
 
-**Unit: 003-aisle-sheet-close** — bolt `079` — cuttable
+**Unit: 003-aisle-sheet-close** — bolt `079` ✅ COMPLETE — cuttable, but built
 
-- [ ] **001-sheet-closes-visibly** (aisle-sheet-close): A close control big enough to hit; the last action clears the edge - Should - [ ] PLANNED
+- [x] **001-sheet-closes-visibly** (aisle-sheet-close): A close control big enough to hit; the last action pinned clear of the edge - Should - ✅ COMPLETE
 
 ---

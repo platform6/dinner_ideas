@@ -4,7 +4,7 @@ intent: 024-mobile-ergonomics
 phase: inception
 unit_type: frontend
 default_bolt_type: simple-construction-bolt
-status: ready
+status: complete
 created: '2026-09-18T13:10:36Z'
 updated: '2026-09-18T13:10:36Z'
 ---
