@@ -3,15 +3,24 @@ id: 077-touch-target-size
 unit: 001-touch-target-size
 intent: 024-mobile-ergonomics
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-sm-is-44-on-a-phone
   - 002-no-screen-reflows-badly
 created: '2026-09-18T13:10:36Z'
-started: null
-completed: null
+started: '2026-09-18T13:18:22Z'
+completed: '2026-09-18T14:04:18Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-18T13:20:00Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-18T13:54:07Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-18T14:04:18Z'
+    artifact: test-walkthrough.md
 requires_bolts: []
 enables_bolts: []
 requires_units: []

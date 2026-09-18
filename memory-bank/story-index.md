@@ -3,8 +3,8 @@
 ## Overview
 
 - **Total stories**: 183
-- **Completed**: 177
-- **Planned**: 6
+- **Completed**: 179
+- **Planned**: 4
 - **In Progress**: 0
 - **Deferred**: 0
 - **Last updated**: 2026-09-17
@@ -316,8 +316,8 @@
 
 ## Stories by Status
 
-- **Completed**: 177
-- **Planned**: 6
+- **Completed**: 179
+- **Planned**: 4
 - **In Progress**: 0
 - **Deferred**: 0
 
@@ -373,12 +373,12 @@
 
 ---
 
-### 024-mobile-ergonomics — 📋 PLANNED (bolts 077–079; not yet deployed)
+### 024-mobile-ergonomics — ⏳ IN PROGRESS (bolt 077 ✅; 078–079 planned; not yet deployed)
 
-**Unit: 001-touch-target-size** — bolt `077` — the theme's small control becomes 44px on a phone
+**Unit: 001-touch-target-size** — bolt `077` ✅ COMPLETE — the theme's small control becomes 44px on a phone
 
-- [ ] **001-sm-is-44-on-a-phone** (touch-target-size): 44px below md, 34px at md+; md/lg unchanged - Must - [ ] PLANNED
-- [ ] **002-no-screen-reflows-badly** (touch-target-size): Every named screen checked on a phone and at 1024px - Must - [ ] PLANNED
+- [x] **001-sm-is-44-on-a-phone** (touch-target-size): 44px below md, 34px at md+; md/lg unchanged; also select, tab, menu item, tag, pick pill - Must - ✅ COMPLETE
+- [x] **002-no-screen-reflows-badly** (touch-target-size): Swept on a phone and at 1018px; /plan + /shopping-list deferred to the release smoke test - Must - ✅ COMPLETE
 
 **Unit: 002-dense-row-layouts** — bolt `078` — two rows stop crowding what matters
 

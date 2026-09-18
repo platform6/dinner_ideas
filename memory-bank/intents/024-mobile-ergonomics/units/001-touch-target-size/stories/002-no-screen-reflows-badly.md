@@ -2,11 +2,11 @@
 id: 002-no-screen-reflows-badly
 unit: 001-touch-target-size
 intent: 024-mobile-ergonomics
-status: planned
+status: complete
 priority: must
 created: '2026-09-18T13:10:36Z'
 assigned_bolt: null
-implemented: false
+implemented: true
 ---
 
 # Story: 002-no-screen-reflows-badly

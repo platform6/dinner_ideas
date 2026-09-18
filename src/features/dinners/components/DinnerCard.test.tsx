@@ -1,4 +1,5 @@
 import type { ComponentProps } from 'react';
+import { ChakraProvider } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -13,6 +14,7 @@ import {
   removeTagFromDinner,
 } from '@/features/dinners/api';
 import type { CatalogDinner, DinnerFullDetails } from '@/features/dinners/types';
+import { theme } from '@/shared/theme';
 
 vi.mock('@/features/dinners/api');
 
@@ -177,6 +179,61 @@ describe('DinnerCard in the catalog grid (intent 019, FR-4)', () => {
     await user.keyboard('{Enter}');
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
     expect(toggle).toHaveFocus();
+  });
+});
+
+describe('DinnerCard pick pill size (intent 024, FR-1)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedFetchDetails.mockResolvedValue(details);
+  });
+
+  /**
+   * With the theme provider, unlike the other cases in this file. A responsive value only becomes
+   * media queries when Chakra knows the breakpoints; without the provider the array collapses and
+   * this would assert nothing.
+   */
+  function renderThemedCard() {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <ChakraProvider theme={theme}>
+        <QueryClientProvider client={queryClient}>
+          <DinnerCard
+            dinner={dinner}
+            onSuppress={vi.fn()}
+            isMutating={false}
+            selection={{
+              isSelected: false,
+              selectionDisabled: false,
+              isTogglingSelection: false,
+              onToggleSelect: vi.fn(),
+            }}
+          />
+        </QueryClientProvider>
+      </ChakraProvider>,
+    );
+    const label = screen.getByRole('checkbox', { name: 'Pick Tacos for this week' }).closest('label');
+    const pill = label?.querySelector('span span');
+    if (!(pill instanceof HTMLElement)) throw new Error('expected the pill inside the label');
+    return pill;
+  }
+
+  it('should be 44px tall on a phone', () => {
+    // jsdom applies the base rule and not the min-width query, so a computed height here is the
+    // phone value. What jsdom cannot show is the md+ value, which the next case reads from the CSS.
+    expect(getComputedStyle(renderThemedCard()).height).toBe('44px');
+  });
+
+  it('should keep the denser 34px from md up, behind a min-width query', () => {
+    // jsdom never applies that query (above), so this reads the generated CSS instead. The measured
+    // proof at both widths is the browser sweep recorded in the bolt's walkthrough (NFR-3).
+    const pill = renderThemedCard();
+    const className = [...pill.classList].find((c) => c.startsWith('css-'));
+    const css = [...document.querySelectorAll('style')].map((sheet) => sheet.textContent ?? '').join('\n');
+    const own = css.split('}').filter((rule) => className && rule.includes(className));
+
+    expect(own.some((rule) => /height:\s*44px/.test(rule))).toBe(true);
+    expect(css).toMatch(/@media screen and \(min-width: 48em\)[^@]*height:\s*34px/);
   });
 });
 
