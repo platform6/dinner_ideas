@@ -2,11 +2,11 @@
 id: 001-remove-step-is-not-a-mis-tap
 unit: 002-dense-row-layouts
 intent: 024-mobile-ergonomics
-status: planned
+status: complete
 priority: must
 created: '2026-09-18T13:10:36Z'
 assigned_bolt: null
-implemented: false
+implemented: true
 ---
 
 # Story: 001-remove-step-is-not-a-mis-tap

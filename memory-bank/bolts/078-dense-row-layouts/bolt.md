@@ -3,15 +3,24 @@ id: 078-dense-row-layouts
 unit: 002-dense-row-layouts
 intent: 024-mobile-ergonomics
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-remove-step-is-not-a-mis-tap
   - 002-store-row-shows-its-name
 created: '2026-09-18T13:10:36Z'
-started: null
-completed: null
+started: '2026-09-18T14:34:05Z'
+completed: '2026-09-18T17:55:00Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-18T14:35:46Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-18T14:40:08Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-18T17:54:59Z'
+    artifact: test-walkthrough.md
 requires_bolts:
   - 077-touch-target-size
 enables_bolts: []
