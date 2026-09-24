@@ -373,7 +373,7 @@
 
 ---
 
-### 024-mobile-ergonomics — 🚀 SHIPPED v0.17.0 (bolts 077–079 complete; live on prod 2026-09-24, PR #25; smoke test pending)
+### 024-mobile-ergonomics — 🚀 SHIPPED v0.17.0 (bolts 077–079 complete; live + verified on prod 2026-09-24, PR #25)
 
 **Unit: 001-touch-target-size** — bolt `077` ✅ COMPLETE — the theme's small control becomes 44px on a phone
 

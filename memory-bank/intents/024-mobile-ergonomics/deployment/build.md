@@ -4,7 +4,7 @@ release: v0.17.0-ba15bc0
 commit: ba15bc0
 units: [001-touch-target-size, 002-dense-row-layouts, 003-aisle-sheet-close]
 created: '2026-09-24T13:54:53Z'
-status: deployed
+status: verified
 follows: v0.16.0-7e955c9
 severity: routine
 ---
@@ -74,4 +74,4 @@ to undo.
 - **dev**: verified: 798/798 vitest, `tsc -b`, eslint, `vite build`; bolts 077–079 checked in a
   browser at phone width and 1024px
 - **staging**: n/a: product owner decision at Checkpoint 1
-- **production**: live 2026-09-24, PR #25, `origin/main` adfc711; artifact verified byte-identical; smoke test pending
+- **production**: live 2026-09-24, PR #25, `origin/main` adfc711; artifact verified byte-identical; smoke test passed

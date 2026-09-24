@@ -4,9 +4,9 @@ release: v0.17.0-ba15bc0
 commit: ba15bc0
 units: [001-touch-target-size, 002-dense-row-layouts, 003-aisle-sheet-close]
 created: '2026-09-24T13:54:53Z'
-updated: '2026-09-24T14:44:21Z'
-status: production-live
-current_checkpoint: 3
+updated: '2026-09-24T14:47:43Z'
+status: production-live-verified
+current_checkpoint: 4
 follows: v0.16.0-7e955c9
 environments:
   dev:
@@ -15,7 +15,7 @@ environments:
   staging:
     status: 'n/a: product owner decision 2026-09-24T14:41:58Z. Static site, no schema change, rollback is a revert.'
   production:
-    status: 'live 2026-09-24: artifact verified; smoke test pending'
+    status: 'live 2026-09-24: artifact verified; smoke test passed (product owner, 2026-09-24)'
     target: 'Netlify main only'
     db: 'n/a: no migration in this release (`git diff origin/main..dev -- supabase/` empty)'
     fe: 'MERGED 2026-09-24T14:43:26Z: PR #25, origin/main adfc711. Netlify served index-HWT1V3UE.js for two checks, then index-CnkZZmdO.js at 14:44:21Z; the live file is byte-identical to the local build (sha256 551d441c…d4fa09) and contains ["44px",null,"34px"] ×3, ["44px",null,"38px"] ×1 and safe-area-inset-bottom.'
@@ -81,5 +81,11 @@ contains every marker from the build check. Before the merge, the v0.16.0 bundle
 ## Decisions the product owner still needs to make
 
 1. ~~**Approve the production deploy**~~ **Done 2026-09-24.**
-2. **Run the post-deploy smoke test** above, on a phone. Step 1 matters most: it's the only check on
-   screens the bolts didn't measure.
+2. ~~**Run the post-deploy smoke test**~~ **Done 2026-09-24.**
+
+## Smoke results (2026-09-24)
+
+**Passed**, reported by the product owner after the release.
+
+That closes this release's one open risk: the 44px `sm` size reaches 78 controls, and the bolts only
+measured the screens FR-1 named. The product owner found nothing wrapping or overflowing on a phone.
