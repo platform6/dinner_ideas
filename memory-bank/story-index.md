@@ -2,9 +2,9 @@
 
 ## Overview
 
-- **Total stories**: 183
+- **Total stories**: 189
 - **Completed**: 182
-- **Planned**: 1
+- **Planned**: 7
 - **In Progress**: 0
 - **Deferred**: 0
 - **Last updated**: 2026-09-24
@@ -317,7 +317,7 @@
 ## Stories by Status
 
 - **Completed**: 182
-- **Planned**: 1
+- **Planned**: 7
 - **In Progress**: 0
 - **Deferred**: 0
 
@@ -370,6 +370,25 @@
 
 - [x] **001-footer-never-hides-content** (mobile-overlap-fixes): The end of the list and focused items sit above the sticky footer - Should - ✅ COMPLETE
 - [x] **002-card-menu-clears-title** (mobile-overlap-fixes): "More actions" never covers the dinner's name - Should - ✅ COMPLETE
+
+---
+
+### 023-shopping-list-consolidation — 📋 PLANNED (bolts 080–082; not yet built)
+
+**Unit: 001-line-merging** — bolt `080` — one line per grocery; ships only with 081
+
+- [ ] **001-prep-notes-dont-split-a-line** (line-merging): Text after a comma and prep words don't split a line; plurals stay apart - Must - [ ] PLANNED
+- [ ] **002-one-amount-per-unit** (line-merging): Each unit's total side by side, with no conversion - Must - [ ] PLANNED
+- [ ] **003-plain-label** (line-merging): The line reads "chicken thighs", not "chicken thighs, cubed" - Must - [ ] PLANNED
+
+**Unit: 002-merged-line-aisle** — bolt `081` — merging never loses an aisle
+
+- [ ] **001-merged-line-finds-its-aisle** (merged-line-aisle): Exact name, else placed source, else first source - Must - [ ] PLANNED
+- [ ] **002-sheet-and-checks-follow-the-line** (merged-line-aisle): Aisle sheet and check marks work on a merged line - Must - [ ] PLANNED
+
+**Unit: 003-empty-aisle-toggle** — bolt `082` — cuttable
+
+- [ ] **001-empty-aisles-tucked-away** (empty-aisle-toggle): Empty aisles hidden behind "Show N empty aisles" - Should - [ ] PLANNED
 
 ---
 
