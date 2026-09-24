@@ -3,8 +3,8 @@
 ## Overview
 
 - **Total stories**: 189
-- **Completed**: 182
-- **Planned**: 7
+- **Completed**: 185
+- **Planned**: 4
 - **In Progress**: 0
 - **Deferred**: 0
 - **Last updated**: 2026-09-24
@@ -316,8 +316,8 @@
 
 ## Stories by Status
 
-- **Completed**: 182
-- **Planned**: 7
+- **Completed**: 185
+- **Planned**: 4
 - **In Progress**: 0
 - **Deferred**: 0
 
@@ -373,13 +373,13 @@
 
 ---
 
-### 023-shopping-list-consolidation — 📋 PLANNED (bolts 080–082; not yet built)
+### 023-shopping-list-consolidation — ⏳ IN PROGRESS (bolt 080 ✅; 081–082 planned; not yet deployed)
 
-**Unit: 001-line-merging** — bolt `080` — one line per grocery; ships only with 081
+**Unit: 001-line-merging** — bolt `080` ✅ COMPLETE — one line per grocery; ships only with 081
 
-- [ ] **001-prep-notes-dont-split-a-line** (line-merging): Text after a comma and prep words don't split a line; plurals stay apart - Must - [ ] PLANNED
-- [ ] **002-one-amount-per-unit** (line-merging): Each unit's total side by side, with no conversion - Must - [ ] PLANNED
-- [ ] **003-plain-label** (line-merging): The line reads "chicken thighs", not "chicken thighs, cubed" - Must - [ ] PLANNED
+- [x] **001-prep-notes-dont-split-a-line** (line-merging): A note after the comma doesn't split a line; a leading prep word ("diced tomatoes") is kept - Must - ✅ COMPLETE
+- [x] **002-one-amount-per-unit** (line-merging): Each unit's total side by side, no conversion; cup/cups are one unit - Must - ✅ COMPLETE
+- [x] **003-plain-label** (line-merging): The line reads "chicken thighs", not "chicken thighs, cubed" - Must - ✅ COMPLETE
 
 **Unit: 002-merged-line-aisle** — bolt `081` — merging never loses an aisle
 

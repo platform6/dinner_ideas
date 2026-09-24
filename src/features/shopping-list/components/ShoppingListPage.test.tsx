@@ -256,6 +256,46 @@ describe('ShoppingListPage', () => {
     await waitFor(() => expect(mockedWriteText).toHaveBeenCalled());
     expect(await screen.findByText(/^copied!$/i)).toBeInTheDocument();
   });
+
+  it('should show a prep-note variant as one line with both amounts, and copy the same text (intent 023)', async () => {
+    const [tacos, pasta, curry] = threeDinners;
+    mockedFetchDinnersByIds.mockResolvedValue([
+      {
+        ...tacos,
+        dinner_ingredients: [
+          { id: '1-a', dinner_id: '1', name: 'Chicken thighs', unit: 'lb', quantity: 2, category: 'Protein' },
+        ],
+      },
+      {
+        ...pasta,
+        dinner_ingredients: [
+          {
+            id: '2-a',
+            dinner_id: '2',
+            name: 'chicken thighs, cubed',
+            unit: '',
+            quantity: 4,
+            category: 'Protein',
+          },
+        ],
+      },
+      curry,
+    ]);
+    mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: threeSelections }));
+    const user = setupUser();
+    renderPage();
+
+    await screen.findByText('Protein');
+    expect(screen.getAllByRole('checkbox', { name: /chicken thighs/i })).toHaveLength(1);
+    expect(screen.getByText('2 lb + 4')).toBeInTheDocument();
+    expect(screen.getByText('Chicken thighs')).toBeInTheDocument();
+    expect(screen.queryByText(/cubed/)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /copy shopping list/i }));
+    await waitFor(() =>
+      expect(mockedWriteText).toHaveBeenCalledWith(expect.stringContaining('- 2 lb + 4 Chicken thighs')),
+    );
+  });
 });
 
 /**

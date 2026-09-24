@@ -1,9 +1,9 @@
 ---
 intent: 023-shopping-list-consolidation
 phase: inception
-status: units-defined
+status: complete
 created: '2026-09-17T15:43:09Z'
-updated: '2026-09-24T14:56:28Z'
+updated: '2026-09-24T16:38:31Z'
 ---
 
 # Requirements: A shopping list you can shop from without merging lines in your head
@@ -37,22 +37,25 @@ triaged into intents 019–023 on 2026-09-17. Clarified at Checkpoint 1 on 2026-
 
 ## Functional Requirements
 
-### FR-1: Lines that differ only by prep notes merge into one
+### FR-1: Lines that differ only by a prep note after a comma merge into one
 
 - **Description**: When the shopping list is built, two ingredient lines are the same item if their
-  names match after removing prep notes. That means removing everything from the first comma on,
-  and removing prep words (for example diced, cubed, minced, chopped, sliced, grated, shredded,
-  crushed, peeled, and the adverbs finely and roughly) wherever they appear as whole words. The
-  prep-word list is one editable constant, as `SIMILARITY_TUNING` is.
+  names match after removing everything from the first comma on.
 - **Acceptance Criteria**:
   - "chicken thighs" and "chicken thighs, cubed" produce one line
-  - "onion", "diced onion" and "onion, finely chopped" produce one line
+  - "onion", "onion, diced" and "onion, finely chopped" produce one line
   - Case and surrounding spaces still don't matter, as today
   - Plurals are not merged: "onion" and "onions" stay two lines (a deliberate choice for precision)
-  - A name that is only prep words, like "chopped", is never reduced to an empty key. It keeps its
-    raw name
+  - A prep word **before** the name is kept: "diced tomatoes" and "tomatoes" stay two lines
+  - A name that is only a note, like ", diced", is never reduced to an empty key. It keeps its raw
+    name
   - The cooking view and the dinner's own ingredient list are unchanged. Prep notes stay there
 - **Priority**: Must
+- **Changed during construction (bolt 080, 2026-09-24)**: the approved rule also removed prep words
+  anywhere in the name. Run against the household's catalog, a leading prep word almost always
+  named how the product is sold ("diced tomatoes" is a can, "shredded cheese" is a bag), and
+  canned diced tomatoes merged into fresh ones. No leading prep word in the catalog should have
+  merged. The product owner chose the comma-only rule.
 
 ### FR-2: A merged line shows one amount per unit, side by side
 
@@ -62,6 +65,8 @@ triaged into intents 019–023 on 2026-09-17. Clarified at Checkpoint 1 on 2026-
   - 1 lb + 1 lb of chicken thighs → "2 lb chicken thighs"
   - 2 lb + 4 (no unit) of chicken thighs → one line reading "2 lb + 4 chicken thighs"
   - 1 tbsp + 2 tsp → "1 tbsp + 2 tsp", not converted
+  - A unit's singular and plural are the same unit: 4.5 cups + 4.5 cup → "9 cups" (added during
+    bolt 080 by the product owner, after the catalog showed "4.5 cups + 4.5 cup")
   - Amounts appear in a stable order (the order each unit first appears across the week's dinners),
     so the line doesn't reshuffle when the list re-renders
   - Copy to clipboard uses the same text as the screen

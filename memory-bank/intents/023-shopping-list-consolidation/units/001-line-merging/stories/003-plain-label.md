@@ -2,11 +2,11 @@
 id: 003-plain-label
 unit: 001-line-merging
 intent: 023-shopping-list-consolidation
-status: draft
+status: complete
 priority: must
 created: '2026-09-24T14:56:10Z'
 assigned_bolt: 080-line-merging
-implemented: false
+implemented: true
 ---
 
 # Story: 003-plain-label

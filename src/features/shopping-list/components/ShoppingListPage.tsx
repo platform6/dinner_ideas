@@ -22,7 +22,7 @@ import {
 import { useCurrentPlan } from '@/features/weekly-plan/hooks';
 import { buildShoppingList } from '@/features/shopping-list/aggregate';
 import { nameKey, reorderGroupsByLocation } from '@/features/shopping-list/reorder';
-import { formatShoppingListText } from '@/features/shopping-list/format';
+import { formatAmounts, formatShoppingListText } from '@/features/shopping-list/format';
 import { useShoppingListDinners } from '@/features/shopping-list/hooks';
 import { useDinnersPerWeek } from '@/features/settings/hooks';
 import { AssignSheet } from '@/features/store-config/components/AssignSheet';
@@ -40,8 +40,12 @@ import type { ResolvedItem } from '@/features/store-config/types';
 import { categoryIcon, uiIcons } from '@/shared/components/icons';
 import { StickyPhoneFooter } from '@/shared/components/StickyPhoneFooter';
 
-function itemKey(category: string, name: string, unit: string) {
-  return `${category}-${name}-${unit}`;
+/**
+ * A line's check-state key. No unit: since intent 023 a line can hold several (FR-2), and its name
+ * is already unique, because it comes from the merge key.
+ */
+function itemKey(category: string, name: string) {
+  return `${category}-${name}`;
 }
 
 export function ShoppingListPage() {
@@ -325,7 +329,7 @@ export function ShoppingListPage() {
                   </HStack>
                   <Stack gap={1.5}>
                     {group.items.map((item) => {
-                      const key = itemKey(group.category, item.name, item.unit);
+                      const key = itemKey(group.category, item.name);
                       const isChecked = checkedItems.has(key);
                       // No stops means nowhere to move it to; no registry match means nothing to
                       // place. Either way the row renders exactly as it did before this unit.
@@ -367,7 +371,7 @@ export function ShoppingListPage() {
                                 minW="56px"
                                 textDecoration={isChecked ? 'line-through' : 'none'}
                               >
-                                {item.quantity} {item.unit}
+                                {formatAmounts(item.amounts)}
                               </Text>
                               <Text
                                 as="span"

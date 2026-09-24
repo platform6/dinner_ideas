@@ -14,7 +14,12 @@ const REVIEWED = '2026-09-05T00:00:00Z';
 function group(category: string, ...names: string[]): ShoppingListGroup {
   return {
     category,
-    items: names.map((name) => ({ name, unit: 'ea', quantity: 1, category })),
+    items: names.map((name) => ({
+      name,
+      amounts: [{ unit: 'ea', quantity: 1 }],
+      category,
+      sourceNames: [name],
+    })),
   };
 }
 

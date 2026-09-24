@@ -2,11 +2,11 @@
 id: 002-one-amount-per-unit
 unit: 001-line-merging
 intent: 023-shopping-list-consolidation
-status: draft
+status: complete
 priority: must
 created: '2026-09-24T14:56:10Z'
 assigned_bolt: 080-line-merging
-implemented: false
+implemented: true
 ---
 
 # Story: 002-one-amount-per-unit
@@ -22,6 +22,7 @@ implemented: false
 - [ ] 1 lb + 1 lb → "2 lb chicken thighs"
 - [ ] 2 lb + 4 (no unit) → "2 lb + 4 chicken thighs"
 - [ ] 1 tbsp + 2 tsp → "1 tbsp + 2 tsp", with no conversion
+- [ ] 4.5 cups + 4.5 cup → "9 cups": a unit's singular and plural are one unit (added in bolt 080)
 - [ ] Amounts appear in the order each unit first appears
 - [ ] **Given** the same dinners in shuffled order, **Then** the list is identical: lines, labels and amount order (NFR-3)
 - [ ] Copy to clipboard produces the same amounts text as the screen

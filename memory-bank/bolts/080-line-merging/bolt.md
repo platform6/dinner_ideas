@@ -3,16 +3,25 @@ id: 080-line-merging
 unit: 001-line-merging
 intent: 023-shopping-list-consolidation
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-prep-notes-dont-split-a-line
   - 002-one-amount-per-unit
   - 003-plain-label
 created: '2026-09-24T14:56:10Z'
-started: null
-completed: null
+started: '2026-09-24T15:00:52Z'
+completed: '2026-09-24T16:55:26Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-09-24T15:01:54Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-09-24T15:46:31Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-09-24T16:55:26Z'
+    artifact: test-walkthrough.md
 requires_bolts: []
 enables_bolts:
   - 081-merged-line-aisle
