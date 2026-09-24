@@ -97,19 +97,40 @@ export function AssignSheet({
     <Drawer isOpen={isOpen} onClose={onClose} placement="bottom" finalFocusRef={finalFocusRef}>
       <DrawerOverlay bg="rgba(35,32,25,0.32)" />
       <DrawerContent borderTopRadius="card" bg="paper.base" maxH="85vh">
-        <DrawerBody px={4} py={4}>
+        {/*
+          The bottom padding clears the screen edge, and the device's own inset on top of that, so
+          the last action is never flush with it (intent 024, FR-4). `env()` is 0 on a desktop
+          browser, so this is a phone-only allowance.
+        */}
+        <DrawerBody px={4} pt={4} pb={{ base: 'calc(1.5rem + env(safe-area-inset-bottom))', md: 4 }}>
           <Stack gap={5}>
-            <Stack gap={0.5}>
-              <Text textStyle="meta" color="ink.400">
-                Where do you find it
-              </Text>
-              <Heading as="h2" fontFamily="heading" fontWeight={500} fontSize="lg" color="ink.900">
-                {item.itemName}
-              </Heading>
-              <Text textStyle="faint" color="ink.500">
-                {resolutionLine(item)}
-              </Text>
-            </Stack>
+            <HStack align="start" gap={2}>
+              <Stack gap={0.5} flex="1" minW={0}>
+                <Text textStyle="meta" color="ink.400">
+                  Where do you find it
+                </Text>
+                <Heading as="h2" fontFamily="heading" fontWeight={500} fontSize="lg" color="ink.900">
+                  {item.itemName}
+                </Heading>
+                <Text textStyle="faint" color="ink.500">
+                  {resolutionLine(item)}
+                </Text>
+              </Stack>
+              {/*
+                Escape and a tap outside already closed this sheet; this is the version you can
+                see (intent 024, FR-4). An IconButton rather than Chakra's DrawerCloseButton,
+                because this theme sizes `CloseButton` at 16px — too small to hit, and shared with
+                two other screens.
+              */}
+              <IconButton
+                size="sm"
+                variant="ghost"
+                aria-label="Close"
+                icon={<uiIcons.remove size={16} strokeWidth={2} />}
+                onClick={onClose}
+                flexShrink={0}
+              />
+            </HStack>
 
             {/*
               When nothing clears the cutoff this block is simply absent — no "no suggestions
@@ -196,11 +217,20 @@ export function AssignSheet({
               })}
             </Stack>
 
-            {/* Offered only for an explicit placement — there is nothing to remove otherwise. */}
+            {/*
+              Offered only for an explicit placement — there is nothing to remove otherwise.
+
+              Pinned to the bottom of the sheet (intent 024, FR-4): with a full walking path the
+              picker is taller than the sheet, so as the last thing in the scroll this sat below the
+              fold — measured 70px past it at 390×667. Sticky keeps it reachable without scrolling,
+              which is what the story asked for; the list above it still scrolls.
+            */}
             {item.state === 'placed' && (
-              <Button variant="outline" color="ink.400" onClick={onUnplace} isDisabled={isSaving}>
-                Take it off the path
-              </Button>
+              <Box position="sticky" bottom={0} bg="paper.base" pt={2} mt={-2}>
+                <Button w="100%" variant="outline" color="ink.400" onClick={onUnplace} isDisabled={isSaving}>
+                  Take it off the path
+                </Button>
+              </Box>
             )}
           </Stack>
         </DrawerBody>

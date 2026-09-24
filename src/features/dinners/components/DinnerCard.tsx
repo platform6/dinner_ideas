@@ -215,7 +215,9 @@ function PickPill({ dinner, selection }: { dinner: CatalogDinner; selection: Sel
         as="span"
         gap={1.5}
         px={3}
-        h="34px"
+        // The catalog's primary action, so it meets the 44px minimum on a phone (intent 024, FR-1).
+        // Hard-coded here rather than inherited: the pill is a styled `Checkbox`, not a `Button`.
+        h={['44px', null, '34px']}
         borderRadius="chip"
         borderWidth="1px"
         fontSize="0.75rem"

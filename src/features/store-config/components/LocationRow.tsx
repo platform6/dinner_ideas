@@ -93,48 +93,71 @@ export function LocationRow({
 
   return (
     <Box bg="paper.base" borderWidth="1px" borderColor="line.subtle" borderRadius="card" overflow="hidden">
-      <HStack
+      {/*
+        Phone: two lines, so the aisle name is not squeezed by the controls (intent 024, FR-3) —
+        name and preview first, then the count, the buttons and the chevron on their own line.
+        From md up this is the single row it has always been.
+      */}
+      <Stack
+        direction={{ base: 'column', md: 'row' }}
         gap={2.5}
         px={3}
         py={2.5}
-        align="center"
+        align={{ base: 'stretch', md: 'center' }}
         cursor={isRenaming ? 'default' : 'pointer'}
         onClick={() => {
           if (!isRenaming) setIsExpanded((open) => !open);
         }}
       >
-        {/* Reserved drag-handle column — empty in v1, keeps the geometry stable for v2. */}
-        <Box w="13px" flexShrink={0} aria-hidden />
+        <HStack gap={2.5} flex="1" minW={0}>
+          {/* Reserved drag-handle column — empty in v1, keeps the geometry stable for v2. */}
+          <Box w="13px" flexShrink={0} aria-hidden />
 
-        <LocationTypeChip name={location.name} />
+          <LocationTypeChip name={location.name} />
 
-        {isRenaming ? (
-          <Input
-            flex="1"
-            size="sm"
-            value={draftName}
-            aria-label={`Rename ${location.name}`}
-            autoFocus
-            onClick={(event) => event.stopPropagation()}
-            onChange={(event) => setDraftName(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') saveRename();
-              if (event.key === 'Escape') setIsRenaming(false);
-            }}
-          />
-        ) : (
-          <Stack gap={0} flex="1" minW={0}>
-            <Text fontFamily="heading" fontWeight={500} fontSize="md" color="ink.900" noOfLines={1}>
-              {location.name}
-            </Text>
-            <Text textStyle="meta" color="ink.500" noOfLines={1}>
-              {previewText(items)}
-            </Text>
-          </Stack>
-        )}
+          {isRenaming ? (
+            <Input
+              flex="1"
+              size="sm"
+              value={draftName}
+              aria-label={`Rename ${location.name}`}
+              autoFocus
+              onClick={(event) => event.stopPropagation()}
+              onChange={(event) => setDraftName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') saveRename();
+                if (event.key === 'Escape') setIsRenaming(false);
+              }}
+            />
+          ) : (
+            <Stack gap={0} flex="1" minW={0}>
+              {/*
+                One line at md+, where the row is horizontal and a wrap would change its height;
+                on a phone the name has the line to itself and may wrap (intent 024, FR-3).
+              */}
+              <Text
+                fontFamily="heading"
+                fontWeight={500}
+                fontSize="md"
+                color="ink.900"
+                noOfLines={{ base: undefined, md: 1 }}
+              >
+                {location.name}
+              </Text>
+              <Text textStyle="meta" color="ink.500" noOfLines={1}>
+                {previewText(items)}
+              </Text>
+            </Stack>
+          )}
+        </HStack>
 
         {!isRenaming && (
-          <HStack gap={1.5} flexShrink={0} onClick={(event) => event.stopPropagation()}>
+          <HStack
+            gap={1.5}
+            flexShrink={0}
+            justify={{ base: 'flex-end', md: 'initial' }}
+            onClick={(event) => event.stopPropagation()}
+          >
             <Text textStyle="meta" color="ink.500" px={1.5} aria-hidden>
               {items.length}
             </Text>
@@ -170,7 +193,7 @@ export function LocationRow({
             </Box>
           </HStack>
         )}
-      </HStack>
+      </Stack>
 
       {isRenaming && (
         <HStack gap={2} px={3} pb={3} pl="54px" justify="space-between">

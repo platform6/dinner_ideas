@@ -2,8 +2,8 @@
 
 ## Overview
 
-- **Total stories**: 178
-- **Completed**: 177
+- **Total stories**: 183
+- **Completed**: 182
 - **Planned**: 1
 - **In Progress**: 0
 - **Deferred**: 0
@@ -316,7 +316,7 @@
 
 ## Stories by Status
 
-- **Completed**: 177
+- **Completed**: 182
 - **Planned**: 1
 - **In Progress**: 0
 - **Deferred**: 0
@@ -350,7 +350,7 @@
 
 ---
 
-### 019-ui-correctness-fixes — ✅ BUILT (bolts 073–076 complete; not yet deployed — no migrations)
+### 019-ui-correctness-fixes — 🚀 SHIPPED v0.16.0 (bolts 073–076 complete; live + verified on prod 2026-09-17, PR #24)
 
 **Unit: 001-copy-corrections** — bolt `073` ✅ COMPLETE — counts and names agree with the app
 
@@ -370,5 +370,23 @@
 
 - [x] **001-footer-never-hides-content** (mobile-overlap-fixes): The end of the list and focused items sit above the sticky footer - Should - ✅ COMPLETE
 - [x] **002-card-menu-clears-title** (mobile-overlap-fixes): "More actions" never covers the dinner's name - Should - ✅ COMPLETE
+
+---
+
+### 024-mobile-ergonomics — ✅ BUILT (bolts 077–079 complete; not yet deployed — no migrations)
+
+**Unit: 001-touch-target-size** — bolt `077` ✅ COMPLETE — the theme's small control becomes 44px on a phone
+
+- [x] **001-sm-is-44-on-a-phone** (touch-target-size): 44px below md, 34px at md+; md/lg unchanged; also select, tab, menu item, tag, pick pill - Must - ✅ COMPLETE
+- [x] **002-no-screen-reflows-badly** (touch-target-size): Swept on a phone and at 1018px; /plan + /shopping-list deferred to the release smoke test - Must - ✅ COMPLETE
+
+**Unit: 002-dense-row-layouts** — bolt `078` ✅ COMPLETE — two rows stop crowding what matters
+
+- [x] **001-remove-step-is-not-a-mis-tap** (dense-row-layouts): Remove leaves the reorder arrows; all three reach 44px - Must - ✅ COMPLETE
+- [x] **002-store-row-shows-its-name** (dense-row-layouts): The aisle name gets the row; actions move below - Must - ✅ COMPLETE
+
+**Unit: 003-aisle-sheet-close** — bolt `079` ✅ COMPLETE — cuttable, but built
+
+- [x] **001-sheet-closes-visibly** (aisle-sheet-close): A close control big enough to hit; the last action pinned clear of the edge - Should - ✅ COMPLETE
 
 ---

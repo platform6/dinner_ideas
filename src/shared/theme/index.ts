@@ -178,9 +178,11 @@ const components = {
       // Focus ring is defined once, globally, in styles.global (theme-patch.ts §5).
     },
     sizes: {
-      // Every tappable control is >= 44px tall on phone.
+      // Intent 024: every tappable control is at least 44px on a phone, and denser from `md` up,
+      // where a pointer is precise. `sm` is the app's default control size (78 uses), so this one
+      // entry is what makes the rule true; before it, `sm` was 34px everywhere.
       md: { h: '44px', minW: '44px', fontSize: '0.875rem', px: 4 },
-      sm: { h: '34px', minW: '34px', fontSize: '0.75rem', px: 3 },
+      sm: { h: ['44px', null, '34px'], minW: ['44px', null, '34px'], fontSize: '0.75rem', px: 3 },
       lg: { h: '52px', fontSize: '0.9375rem', px: 5, borderRadius: 'field' },
     },
     variants: {
@@ -279,11 +281,28 @@ const components = {
         field: {
           borderColor: 'line.DEFAULT',
           borderRadius: 'chip',
-          h: '38px',
+          // 44px on a phone (intent 024, FR-1); the denser 38px stays from `md` up. A select's
+          // height comes from its variant, not from `size`, so it is set here rather than in sizes.
+          h: ['44px', null, '38px'],
           fontSize: 'meta',
           _focusVisible: { borderColor: 'brand.300', boxShadow: 'none' },
         },
       },
+    },
+  },
+  Tag: {
+    baseStyle: {
+      // Every tag in the app is a button: the entry form's vocabulary chips toggle a tag on the
+      // draft (`TagEditor`). So they are tap targets, and 44px on a phone (intent 024, FR-1).
+      // `minW` too: a short tag name ("kim") is otherwise a 38px-wide target.
+      container: { minH: ['44px', null, 'auto'], minW: ['44px', null, 'auto'] },
+    },
+  },
+  Tabs: {
+    baseStyle: {
+      // The entry form's "Type it in" / "Paste a recipe" tabs are tap targets, and Chakra's own
+      // `sm` tab is about 32px (intent 024, FR-1). Denser again from `md` up.
+      tab: { minH: ['44px', null, 'auto'] },
     },
   },
   Menu: {
@@ -303,6 +322,10 @@ const components = {
         color: 'ink.700',
         px: 3,
         py: 2,
+        // A menu item is a tap target: "Not interested" and "Remove…" live here (intent 024, FR-1).
+        minH: ['44px', null, 'auto'],
+        display: 'flex',
+        alignItems: 'center',
         bg: 'transparent',
         _hover: { bg: 'paper.subtle', color: 'ink.900' },
         _focus: { bg: 'paper.subtle', color: 'ink.900' },

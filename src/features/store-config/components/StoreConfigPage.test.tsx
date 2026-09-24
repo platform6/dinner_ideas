@@ -199,6 +199,60 @@ describe('StoreConfigPage — the walking path', () => {
 
     await waitFor(() => expect(renameLocation).toHaveBeenCalledWith('loc-3', 'Aisle 6'));
   });
+
+  describe('a stop row on a phone (intent 024, FR-3)', () => {
+    /** The row's outer stack: the ancestor of the name that holds the action group too. */
+    function rowOf(name: string): HTMLElement {
+      const moveButton = screen.getByRole('button', { name: new RegExp(`move ${name} earlier`, 'i') });
+      let node: HTMLElement | null = screen.getByText(name);
+      while (node && !node.contains(moveButton)) node = node.parentElement;
+      if (!node) throw new Error(`no row found around ${name}`);
+      return node;
+    }
+
+    it('should stack the name above the controls, and keep one row from md up', async () => {
+      renderPage();
+      await screen.findByText('Produce');
+      const row = rowOf('Produce');
+
+      // jsdom applies the base rule only, so this is the phone layout.
+      expect(getComputedStyle(row).flexDirection).toBe('column');
+      // The md+ arrangement lives behind the query jsdom never applies, so read the CSS.
+      const css = [...document.querySelectorAll('style')].map((s) => s.textContent ?? '').join('\n');
+      expect(css).toMatch(/@media screen and \(min-width: 48em\)[^@]*flex-direction:\s*row/);
+    });
+
+    it('should let a long aisle name wrap on a phone rather than be cut short', async () => {
+      renderPage();
+      const name = await screen.findByText('Produce');
+
+      // Chakra's `noOfLines` sets a `--chakra-line-clamp` variable that the clamp reads. On a
+      // phone the name sets none, so it wraps; the md+ value sits behind the usual media query.
+      const clampOf = (el: HTMLElement) =>
+        getComputedStyle(el).getPropertyValue('--chakra-line-clamp').trim();
+
+      expect(clampOf(name)).toBe('');
+      // The preview keeps its single line at every width.
+      expect(clampOf(screen.getByText(/apples, kale/i))).toBe('1');
+      const css = [...document.querySelectorAll('style')].map((s) => s.textContent ?? '').join('\n');
+      expect(css).toMatch(/@media screen and \(min-width: 48em\)[^@]*--chakra-line-clamp:\s*1/);
+    });
+
+    it('should keep the count, the three buttons and the chevron together, after the name', async () => {
+      renderPage();
+      await screen.findByText('Produce');
+      const row = rowOf('Produce');
+      const group = screen.getByRole('button', { name: /move produce earlier/i }).parentElement;
+
+      expect(group).not.toBeNull();
+      expect(row.contains(group!)).toBe(true);
+      for (const label of [/move produce later/i, /rename produce/i]) {
+        expect(group!.contains(screen.getByRole('button', { name: label }))).toBe(true);
+      }
+      // The name is not inside the action group, which is what gives it the first line.
+      expect(group!.contains(screen.getByText('Produce'))).toBe(false);
+    });
+  });
 });
 
 describe('StoreConfigPage — removing a stop', () => {
