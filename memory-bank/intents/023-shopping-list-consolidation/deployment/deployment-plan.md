@@ -4,9 +4,9 @@ release: v0.18.0-6179850
 commit: 6179850
 units: [001-line-merging, 002-merged-line-aisle, 003-empty-aisle-toggle]
 created: '2026-10-18T20:05:42Z'
-updated: '2026-10-18T20:13:01Z'
-status: production-live
-current_checkpoint: 3
+updated: '2026-10-18T20:14:01Z'
+status: production-live-verified
+current_checkpoint: 4
 follows: v0.17.0-ba15bc0
 environments:
   dev:
@@ -15,7 +15,7 @@ environments:
   staging:
     status: 'n/a: product owner decision 2026-10-18T20:09:01Z. Static site, no schema change, rollback is a revert.'
   production:
-    status: 'live 2026-10-18: artifact verified; smoke test pending'
+    status: 'live 2026-10-18: artifact verified; smoke test passed (product owner, 2026-10-18)'
     target: 'Netlify main only'
     db: 'n/a: no migration in this release (`git diff origin/main..dev -- supabase/` empty)'
     fe: 'MERGED 2026-10-18T20:11:25Z: PR #26, origin/main 5cf28c4. Netlify served index-CnkZZmdO.js for five checks, then index-CSU5_rAt.js at 20:12:50Z; the live file is byte-identical to the local build (sha256 d3c84431…a5e00005c) and contains "Hide empty aisles".'
@@ -83,4 +83,12 @@ contains `Hide empty aisles`. Before the merge, the v0.17.0 bundle had no `empty
 
 1. ~~**Checkpoint 1**: approve the build, and confirm skipping staging~~ **Done 2026-10-18T20:09:01Z.**
 2. ~~**Checkpoint 3**: approve the production deploy (push, PR, merge)~~ **Done 2026-10-18.**
-3. **After the deploy**: run the smoke test
+3. ~~**After the deploy**: run the smoke test~~ **Done 2026-10-18.**
+
+## Smoke results (2026-10-18)
+
+**Passed**, reported by the product owner after the release.
+
+That closes this release's open risks: a wrong merge would have been a quiet error, and no move was
+ever tried on real data during construction. Step 4 scanned for the first; step 3 moved a merged
+line on production. No monitoring to set up: a static site with no new server-side surface.
