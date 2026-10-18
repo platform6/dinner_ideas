@@ -410,7 +410,7 @@
 
 ---
 
-### 025-hide-photo-slots — 🚀 SHIPPED v0.19.0 (bolt 083 complete; live on prod 2026-10-18, PR #27; smoke test pending)
+### 025-hide-photo-slots — 🚀 SHIPPED v0.19.0 (bolt 083 complete; live + verified on prod 2026-10-18, PR #27)
 
 **Unit: 001-photo-slots-off** — bolt `083` ✅ COMPLETE — the slots stay in the design, off until photos exist
 

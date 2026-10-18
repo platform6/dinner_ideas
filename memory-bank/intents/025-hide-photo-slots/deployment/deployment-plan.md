@@ -4,8 +4,8 @@ release: v0.19.0-481670c
 commit: 481670c
 units: [001-photo-slots-off]
 created: '2026-10-18T20:26:52Z'
-updated: '2026-10-18T20:29:51Z'
-status: production-live-smoke-pending
+updated: '2026-10-18T20:34:51Z'
+status: production-live-verified
 current_checkpoint: 4
 follows: v0.18.0-6179850
 environments:
@@ -15,7 +15,7 @@ environments:
   staging:
     status: 'n/a: product owner decision 2026-10-18T20:27:36Z. Static site, no schema change, rollback is a revert.'
   production:
-    status: 'live 2026-10-18: artifact verified; smoke test pending'
+    status: 'live 2026-10-18: artifact verified; smoke test passed (product owner, 2026-10-18)'
     target: 'Netlify main only'
     db: 'n/a: no migration in this release (`git diff origin/main..dev -- supabase/` empty)'
     fe: 'MERGED 2026-10-18T20:29:04Z: PR #27, origin/main fd0a869. Netlify served index-CSU5_rAt.js for four checks, then index-CpcKcNbX.js at 20:29:51Z; the live file is byte-identical to the local build (sha256 49fd75e9…bc6460999f0) and contains meta-cuisine-icon.'
@@ -78,4 +78,12 @@ contains `meta-cuisine-icon`, which v0.18.0's bundle doesn't.
 
 1. ~~**Checkpoint 1**: approve the build, and confirm skipping staging~~ **Done 2026-10-18T20:27:36Z.**
 2. ~~**Checkpoint 3**: approve the production deploy (push, PR, merge)~~ **Done 2026-10-18.**
-3. **After the deploy**: run the smoke test
+3. ~~**After the deploy**: run the smoke test~~ **Done 2026-10-18.**
+
+## Smoke results (2026-10-18)
+
+**Passed**, reported by the product owner after the release.
+
+That covers the browser check deferred from bolt 083: the title and meta sit correctly with the
+slots gone, at phone width (catalog, Cook tab) and desktop width (This week, catalog). No
+monitoring to set up: a static site with no new server-side surface.

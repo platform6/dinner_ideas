@@ -51,8 +51,7 @@ Compared `dist/assets/index-CpcKcNbX.js` with the live v0.18.0 bundle (`index-CS
 - **856/856 vitest**, 51 files (up from 848 at v0.18.0); `tsc -b` clean;
   `eslint src --max-warnings=0` clean
 - pgTAP unchanged and not re-run, because this release has no SQL
-- **No browser check yet.** It was deferred by the product owner because Chrome wasn't connected,
-  so it's part of the smoke test
+- **Browser check**: deferred from bolt 083 into the smoke test, which passed
 
 ## Risk
 
@@ -66,4 +65,4 @@ with no data to undo.
 
 - **dev**: verified: 856/856 vitest, `tsc -b`, eslint, `vite build`
 - **staging**: n/a: product owner decision at Checkpoint 1
-- **production**: live 2026-10-18, PR #27, `origin/main` fd0a869; artifact verified byte-identical; smoke test pending
+- **production**: live 2026-10-18, PR #27, `origin/main` fd0a869; artifact verified byte-identical; smoke test passed
