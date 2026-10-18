@@ -373,7 +373,7 @@
 
 ---
 
-### 023-shopping-list-consolidation — ✅ BUILT (bolts 080–082 complete; not yet deployed — no migrations)
+### 023-shopping-list-consolidation — 🚀 SHIPPED v0.18.0 (bolts 080–082 complete; live on prod 2026-10-18, PR #26; smoke test pending)
 
 **Unit: 001-line-merging** — bolt `080` ✅ COMPLETE — one line per grocery; ships only with 081
 
