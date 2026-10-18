@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { nameKey, reorderGroupsByLocation } from '@/features/shopping-list/reorder';
-import type { ShoppingListGroup } from '@/features/shopping-list/types';
+import { indexByNameKey, lineItem, nameKey, reorderGroupsByLocation } from '@/features/shopping-list/reorder';
+import type { ShoppingListGroup, ShoppingListItem } from '@/features/shopping-list/types';
 import type { ResolvedItem } from '@/features/store-config/types';
 
 /**
@@ -226,5 +226,91 @@ describe('nameKey', () => {
     // affordance silently stops appearing — neither fails loudly, so it is asserted here.
     const item = resolved('Kale', 1);
     expect(nameKey('  kale ')).toBe(item.nameKey);
+  });
+});
+
+describe('lineItem (intent 023, FR-4)', () => {
+  /** A merged line: its label, plus the raw names that went into it. */
+  function line(name: string, ...sourceNames: string[]): ShoppingListItem {
+    return { name, amounts: [{ unit: 'lb', quantity: 1 }], category: 'Protein', sourceNames };
+  }
+
+  function placed(name: string, position: number): ResolvedItem {
+    return { ...resolved(name, position, 'Protein'), state: 'placed', viaCategory: null };
+  }
+
+  it('should pick the item named exactly as the label when there is one (rule 1)', () => {
+    const items = indexByNameKey([
+      resolved('chicken thighs', 2, 'Protein'),
+      placed('chicken thighs, cubed', 4),
+    ]);
+
+    // Deliberate: the exact name wins even though only the variant is explicitly placed. The
+    // product owner approved this at Checkpoint 3 of intent 023.
+    expect(lineItem(line('chicken thighs', 'chicken thighs', 'chicken thighs, cubed'), items)?.itemName).toBe(
+      'chicken thighs',
+    );
+  });
+
+  it('should fall back to the first explicitly placed source (rule 2)', () => {
+    const items = indexByNameKey([
+      resolved('chicken thighs, diced', 2, 'Protein'),
+      placed('chicken thighs, cubed', 4),
+    ]);
+
+    expect(
+      lineItem(line('chicken thighs', 'chicken thighs, diced', 'chicken thighs, cubed'), items)?.itemName,
+    ).toBe('chicken thighs, cubed');
+  });
+
+  it('should fall back to the first source with an item when none is placed (rule 3)', () => {
+    const items = indexByNameKey([
+      resolved('onion, sliced', 1, 'Produce'),
+      resolved('onion, diced', 1, 'Produce'),
+    ]);
+
+    expect(lineItem(line('onion', 'onion, chopped', 'onion, diced', 'onion, sliced'), items)?.itemName).toBe(
+      'onion, diced',
+    );
+  });
+
+  it('should return nothing for a line with no registry item at all', () => {
+    expect(lineItem(line('saffron', 'saffron, crushed'), indexByNameKey([]))).toBeUndefined();
+  });
+
+  it('should match sources by the registry name key, not the raw spelling', () => {
+    const items = indexByNameKey([placed('chicken thighs, cubed', 4)]);
+
+    expect(lineItem(line('Chicken Thighs', '  Chicken Thighs, CUBED '), items)?.itemName).toBe(
+      'chicken thighs, cubed',
+    );
+  });
+
+  it('should keep picking the same item after that item is moved from the list', () => {
+    // Rule 3 picked "onion, diced". Moving it makes it placed; rule 2 must now pick it again, not
+    // jump to a different variant, or the move would look like it failed.
+    const before = indexByNameKey([
+      resolved('onion, diced', 1, 'Produce'),
+      resolved('onion, sliced', 1, 'Produce'),
+    ]);
+    const after = indexByNameKey([
+      { ...resolved('onion, diced', 3, 'Produce'), state: 'placed', viaCategory: null },
+      resolved('onion, sliced', 1, 'Produce'),
+    ]);
+    const onion = line('onion', 'onion, diced', 'onion, sliced');
+
+    expect(lineItem(onion, before)?.itemName).toBe('onion, diced');
+    expect(lineItem(onion, after)?.itemName).toBe('onion, diced');
+  });
+
+  it('should sort a merged line into the aisle its placed variant is in', () => {
+    // "chicken thighs, cubed" is in Aisle 4; there is no "chicken thighs" item.
+    const groups: ShoppingListGroup[] = [
+      group('Produce', 'kale'),
+      { category: 'Protein', items: [line('chicken thighs', 'chicken thighs', 'chicken thighs, cubed')] },
+    ];
+    const items = [resolved('kale', 6, 'Produce'), placed('chicken thighs, cubed', 4)];
+
+    expect(categoriesOf(reorderGroupsByLocation(groups, items))).toEqual(['Protein', 'Produce']);
   });
 });

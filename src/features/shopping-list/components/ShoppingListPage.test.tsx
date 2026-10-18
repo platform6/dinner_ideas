@@ -607,6 +607,70 @@ describe('ShoppingListPage — moving an item (intent 013, unit 003)', () => {
     // left to misapply itself to an unrelated re-sort later.
     expect(scrollBy).not.toHaveBeenCalled();
   });
+
+  /**
+   * Intent 023, FR-4: "cheddar" and "cheddar, grated" merge into one "cheddar" line. Only the
+   * variant has a registry item, placed at the back wall; there is no "cheddar" item at all.
+   */
+  describe('a merged line (intent 023, FR-4)', () => {
+    function mergedDinner(id: string, cheddarName: string): DinnerWithIngredients {
+      return {
+        ...twoCategoryDinner(id),
+        dinner_ingredients: [
+          { id: `${id}-a`, dinner_id: id, name: 'onion', unit: 'each', quantity: 1, category: 'Produce' },
+          { id: `${id}-b`, dinner_id: id, name: cheddarName, unit: 'g', quantity: 50, category: 'Dairy' },
+        ],
+      };
+    }
+
+    const variantAtBack = [
+      resolvedItem('onion', 'Produce', 'loc-1', 1),
+      resolvedItem('cheddar, grated', 'Dairy', 'loc-2', 2, 'placed'),
+    ];
+    const variantAtEntrance = [
+      resolvedItem('onion', 'Produce', 'loc-1', 1),
+      resolvedItem('cheddar, grated', 'Dairy', 'loc-1', 1, 'placed'),
+    ];
+
+    beforeEach(() => {
+      vi.mocked(fetchDinnersByIds).mockResolvedValue([
+        mergedDinner('1', 'cheddar, grated'),
+        mergedDinner('2', 'cheddar'),
+        mergedDinner('3', 'cheddar'),
+      ]);
+      vi.mocked(fetchResolvedItems).mockResolvedValue(variantAtBack);
+    });
+
+    it('should sort into its placed variant’s aisle and open that variant’s sheet', async () => {
+      const user = userEvent.setup();
+      renderPage();
+
+      await screen.findByRole('button', { name: 'Move cheddar' });
+      expect(screen.getAllByRole('checkbox', { name: /cheddar/i })).toHaveLength(1);
+      expect(listedItems()).toEqual(['onion', 'cheddar']);
+
+      await user.click(screen.getByRole('button', { name: 'Move cheddar' }));
+      // The sheet names the item being moved (approved at bolt 081's plan checkpoint).
+      expect(
+        await screen.findByRole('button', { name: 'Put cheddar, grated in Entrance' }),
+      ).toBeInTheDocument();
+    });
+
+    it('should move that variant, re-sort, and keep the line checked', async () => {
+      vi.mocked(fetchResolvedItems).mockResolvedValueOnce(variantAtBack).mockResolvedValue(variantAtEntrance);
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByRole('checkbox', { name: /cheddar/i }));
+      await user.click(screen.getByRole('button', { name: 'Move cheddar' }));
+      await user.click(await screen.findByRole('button', { name: 'Put cheddar, grated in Entrance' }));
+
+      await waitFor(() => expect(placeItem).toHaveBeenCalledWith(store, 'item-cheddar, grated', 'loc-1'));
+      await waitFor(() => expect(listedItems()).toEqual(['cheddar', 'onion']));
+      expect(screen.getByRole('checkbox', { name: /cheddar/i })).toBeChecked();
+      expect(screen.getByRole('checkbox', { name: /onion/i })).not.toBeChecked();
+    });
+  });
 });
 
 /** Intent 015 (bolt 065): the gate and its copy follow households.dinners_per_week. */

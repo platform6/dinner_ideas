@@ -21,7 +21,7 @@ import {
 
 import { useCurrentPlan } from '@/features/weekly-plan/hooks';
 import { buildShoppingList } from '@/features/shopping-list/aggregate';
-import { nameKey, reorderGroupsByLocation } from '@/features/shopping-list/reorder';
+import { indexByNameKey, lineItem, reorderGroupsByLocation } from '@/features/shopping-list/reorder';
 import { formatAmounts, formatShoppingListText } from '@/features/shopping-list/format';
 import { useShoppingListDinners } from '@/features/shopping-list/hooks';
 import { useDinnersPerWeek } from '@/features/settings/hooks';
@@ -102,15 +102,11 @@ export function ShoppingListPage() {
   const stops = useMemo(() => locations.data ?? [], [locations.data]);
 
   /**
-   * Aggregated line → registry item, by the SAME identity rule the sort uses (`items.name_key`).
-   * Imported rather than re-derived: two copies of that normalisation is the drift `reorder.ts`
-   * warns about, just spread across two files.
+   * Registry items by name key, for `lineItem`: the SAME rule the sort uses to decide which item a
+   * line stands for. Imported rather than re-derived, so a merged line opens the sheet for the item
+   * it is sorted by (intent 023, FR-4).
    */
-  const itemByNameKey = useMemo(() => {
-    const byKey = new Map<string, ResolvedItem>();
-    for (const item of allItems) byKey.set(item.nameKey, item);
-    return byKey;
-  }, [allItems]);
+  const itemsByNameKey = useMemo(() => indexByNameKey(allItems), [allItems]);
 
   const assigningItem = allItems.find((item) => item.itemId === assigning?.itemId) ?? null;
 
@@ -333,7 +329,7 @@ export function ShoppingListPage() {
                       const isChecked = checkedItems.has(key);
                       // No stops means nowhere to move it to; no registry match means nothing to
                       // place. Either way the row renders exactly as it did before this unit.
-                      const target = canMove ? itemByNameKey.get(nameKey(item.name)) : undefined;
+                      const target = canMove ? lineItem(item, itemsByNameKey) : undefined;
                       return (
                         <HStack
                           key={key}

@@ -2,11 +2,11 @@
 id: 001-merged-line-finds-its-aisle
 unit: 002-merged-line-aisle
 intent: 023-shopping-list-consolidation
-status: draft
+status: complete
 priority: must
 created: '2026-09-24T14:56:10Z'
 assigned_bolt: 081-merged-line-aisle
-implemented: false
+implemented: true
 ---
 
 # Story: 001-merged-line-finds-its-aisle

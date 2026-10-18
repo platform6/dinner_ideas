@@ -4,7 +4,7 @@ intent: 023-shopping-list-consolidation
 phase: inception
 unit_type: frontend
 default_bolt_type: simple-construction-bolt
-status: stories-defined
+status: complete
 created: '2026-09-24T14:56:10Z'
 updated: '2026-09-24T14:56:10Z'
 ---
