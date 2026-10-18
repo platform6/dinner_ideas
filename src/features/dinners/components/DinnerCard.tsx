@@ -31,6 +31,7 @@ import type { CatalogDinner } from '@/features/dinners/types';
 import { RemoveDinnerDialog } from '@/features/dinners/components/RemoveDinnerDialog';
 import { cardMenuDistance } from '@/features/dinners/components/card-menu-offset';
 import { categoryIcon, cuisineIcon, metaIcons, stepIcon, uiIcons } from '@/shared/components/icons';
+import { SHOW_PHOTO_SLOTS } from '@/shared/components/photo-slots';
 
 interface SelectionProps {
   isSelected: boolean;
@@ -276,9 +277,19 @@ export function DinnerCard({ dinner, onSuppress, isMutating, selection, lastChos
     >
       <HStack ref={headerRef} justify="space-between" align="start" mb={2} gap={2}>
         <HStack align="start" gap={3}>
-          <Center w="76px" h="76px" borderRadius="control" bg="paper.sunken" color="ink.300" flexShrink={0}>
-            <CuisineIcon size={30} strokeWidth={1.5} />
-          </Center>
+          {SHOW_PHOTO_SLOTS && (
+            <Center
+              data-testid="photo-slot"
+              w="76px"
+              h="76px"
+              borderRadius="control"
+              bg="paper.sunken"
+              color="ink.300"
+              flexShrink={0}
+            >
+              <CuisineIcon size={30} strokeWidth={1.5} />
+            </Center>
+          )}
           <Box>
             <Heading textStyle="cardTitle">{dinner.name}</Heading>
             <HStack gap={2} mt={1} textStyle="meta">

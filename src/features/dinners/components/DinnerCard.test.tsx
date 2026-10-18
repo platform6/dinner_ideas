@@ -3,7 +3,7 @@ import { ChakraProvider } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DinnerCard } from '@/features/dinners/components/DinnerCard';
 import {
@@ -17,6 +17,15 @@ import type { CatalogDinner, DinnerFullDetails } from '@/features/dinners/types'
 import { theme } from '@/shared/theme';
 
 vi.mock('@/features/dinners/api');
+
+// Intent 025: `SHOW_PHOTO_SLOTS` is a build-time constant. A getter over a hoisted flag lets each
+// test choose its value, read when the component renders.
+const photoSlots = vi.hoisted(() => ({ show: false }));
+vi.mock('@/shared/components/photo-slots', () => ({
+  get SHOW_PHOTO_SLOTS() {
+    return photoSlots.show;
+  },
+}));
 
 const mockedFetchDetails = vi.mocked(fetchDinnerFullDetails);
 const mockedAddTag = vi.mocked(addTagToDinner);
@@ -341,5 +350,26 @@ describe('DinnerCard removal (intent 018, bolt 072)', () => {
 
     expect(onSuppress).toHaveBeenCalledWith('d1');
     expect(vi.mocked(removeDinner)).not.toHaveBeenCalled();
+  });
+});
+
+describe('DinnerCard photo slot (intent 025)', () => {
+  afterEach(() => {
+    photoSlots.show = false;
+  });
+
+  it('should leave the 76px photo tile out while photo slots are off, keeping the meta-row cuisine', () => {
+    renderCard();
+
+    expect(screen.queryByTestId('photo-slot')).not.toBeInTheDocument();
+    expect(screen.getByText('Mexican')).toBeInTheDocument();
+  });
+
+  it('should render the photo tile again when photo slots are on', () => {
+    photoSlots.show = true;
+    renderCard();
+
+    expect(screen.getByTestId('photo-slot')).toBeInTheDocument();
+    expect(screen.getByText('Mexican')).toBeInTheDocument();
   });
 });

@@ -28,6 +28,7 @@ import { formatWeekRange } from '@/features/weekly-plan/date';
 import { LockWeekControl } from '@/features/weekly-plan/components/LockWeekControl';
 import { useDinnersPerWeek } from '@/features/settings/hooks';
 import { uiIcons } from '@/shared/components/icons';
+import { SHOW_PHOTO_SLOTS } from '@/shared/components/photo-slots';
 
 /**
  * Copy that states the household's dinner count (intent 019, FR-1). Both render only once the
@@ -257,7 +258,9 @@ export function PlanPage() {
                     {badge}
                     {removeButton}
                   </HStack>
-                  <Box h="76px" bg="paper.sunken" borderRadius="control" />
+                  {SHOW_PHOTO_SLOTS && (
+                    <Box data-testid="photo-slot" h="76px" bg="paper.sunken" borderRadius="control" />
+                  )}
                   <Box>
                     {name}
                     {meta}

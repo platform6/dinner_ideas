@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CookingViewPage } from '@/features/cooking-view/components/CookingViewPage';
 import { fetchDinnersWithStepsByIds } from '@/features/dinners/api';
@@ -14,6 +14,15 @@ import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/ty
 vi.mock('@/features/dinners/api');
 vi.mock('@/features/weekly-plan/api');
 vi.mock('@/features/settings/api');
+
+// Intent 025: `SHOW_PHOTO_SLOTS` is a build-time constant. A getter over a hoisted flag lets each
+// test choose its value, read when the component renders.
+const photoSlots = vi.hoisted(() => ({ show: false }));
+vi.mock('@/shared/components/photo-slots', () => ({
+  get SHOW_PHOTO_SLOTS() {
+    return photoSlots.show;
+  },
+}));
 
 function selection(overrides: Partial<SelectionWithDinner>): SelectionWithDinner {
   return {
@@ -204,5 +213,61 @@ describe('CookingViewPage', () => {
     await user.click(screen.getByRole('button', { name: 'Expand Tacos' }));
 
     expect(await screen.findByText('Brown the turkey.')).toBeInTheDocument();
+  });
+});
+
+describe('CookingViewPage photo slot (intent 025)', () => {
+  function renderPage() {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <CookingViewPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(fetchWeekStartDay).mockResolvedValue(0);
+    vi.mocked(fetchCurrentPlan).mockResolvedValue(plan({ weekly_plan_selections: threeSelections }));
+    vi.mocked(fetchDinnersWithStepsByIds).mockResolvedValue([
+      dinnerWithSteps({ id: '1', name: 'Tacos' }),
+      dinnerWithSteps({ id: '2', name: 'Pasta' }),
+      dinnerWithSteps({ id: '3', name: 'Curry' }),
+    ]);
+  });
+
+  afterEach(() => {
+    photoSlots.show = false;
+  });
+
+  it('should drop the thumb and lead each meta row with the cuisine icon while photo slots are off', async () => {
+    renderPage();
+
+    await screen.findByText('Tacos');
+    expect(screen.queryByTestId('photo-slot')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('meta-cuisine-icon')).toHaveLength(3);
+  });
+
+  it('should bring the thumb back, and not show the icon twice, when photo slots are on', async () => {
+    photoSlots.show = true;
+    renderPage();
+
+    await screen.findByText('Tacos');
+    expect(screen.getAllByTestId('photo-slot')).toHaveLength(3);
+    expect(screen.queryByTestId('meta-cuisine-icon')).not.toBeInTheDocument();
+  });
+
+  it.each([false, true])('should still expand a dinner with photo slots %s', async (show) => {
+    photoSlots.show = show;
+    const user = userEvent.setup();
+    renderPage();
+
+    const toggle = await screen.findByRole('button', { name: 'Expand Tacos' });
+    await user.click(toggle);
+
+    expect(screen.getByRole('button', { name: 'Collapse Tacos' })).toHaveAttribute('aria-expanded', 'true');
   });
 });

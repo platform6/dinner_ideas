@@ -3,8 +3,8 @@
 ## Overview
 
 - **Total stories**: 191
-- **Completed**: 188
-- **Planned**: 3
+- **Completed**: 190
+- **Planned**: 1
 - **In Progress**: 0
 - **Deferred**: 0
 - **Last updated**: 2026-10-18
@@ -316,8 +316,8 @@
 
 ## Stories by Status
 
-- **Completed**: 188
-- **Planned**: 3
+- **Completed**: 190
+- **Planned**: 1
 - **In Progress**: 0
 - **Deferred**: 0
 
@@ -410,11 +410,11 @@
 
 ---
 
-### 025-hide-photo-slots — 📋 PLANNED (bolt 083)
+### 025-hide-photo-slots — ✅ BUILT (bolt 083 complete; not yet deployed — no migrations)
 
-**Unit: 001-photo-slots-off** — bolt `083` 📋 PLANNED — the slots stay in the design, off until photos exist
+**Unit: 001-photo-slots-off** — bolt `083` ✅ COMPLETE — the slots stay in the design, off until photos exist
 
-- [ ] **001-photo-slots-switched-off** (photo-slots-off): The three photo slots aren't rendered while `SHOW_PHOTO_SLOTS` is false; true restores them - Must - 📋 PLANNED
-- [ ] **002-cooking-view-keeps-its-icon** (photo-slots-off): The cuisine icon moves into the cooking view's meta row - Must - 📋 PLANNED
+- [x] **001-photo-slots-switched-off** (photo-slots-off): The three photo slots aren't rendered while `SHOW_PHOTO_SLOTS` is false; true restores them - Must - ✅ COMPLETE
+- [x] **002-cooking-view-keeps-its-icon** (photo-slots-off): The cuisine icon moves into the cooking view's meta row - Must - ✅ COMPLETE
 
 ---

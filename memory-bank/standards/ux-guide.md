@@ -25,3 +25,19 @@ Mobile-first, using Chakra's responsive style-prop syntax (e.g. `p={{ base: 4, m
 ## Decision Relationships
 
 - Adopting Chakra UI supersedes the Tailwind CSS choice discussed earlier in tech-stack facilitation — Chakra's own styling engine replaces it rather than running alongside it.
+
+## Photo slots
+
+Intent 002 laid out three photo slots ahead of real photos. No dinner has an image field yet, so all
+three are switched off by `SHOW_PHOTO_SLOTS` (`src/shared/components/photo-slots.ts`, `false`, intent 025).
+They are part of the design, not removed. Turning the constant on restores them as listed:
+
+| Where                                         | Slot                                          | Holds              |
+| --------------------------------------------- | --------------------------------------------- | ------------------ |
+| Catalog dinner card (`DinnerCard`)            | 76×76px `paper.sunken` tile, `control` radius | Cuisine icon, 30px |
+| Cooking view row (`CookingViewPage`)          | 44×44px `paper.sunken` thumb                  | Cuisine icon, 20px |
+| This week three-across card (`PlanPage`, md+) | Full-width, 76px tall `paper.sunken` tile     | Nothing            |
+
+While the slots are off, the cooking view shows a 13px cuisine icon at the start of its meta row
+instead, because the thumb was its only cuisine icon. The catalog card already has one in its meta
+row. The hidden dinners page's 38px icon tile is not a photo slot.
