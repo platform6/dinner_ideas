@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PlanPage } from '@/features/weekly-plan/components/PlanPage';
 import { theme } from '@/shared/theme';
@@ -19,6 +19,15 @@ import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/ty
 
 vi.mock('@/features/weekly-plan/api');
 vi.mock('@/features/settings/api');
+
+// Intent 025: `SHOW_PHOTO_SLOTS` is a build-time constant. A getter over a hoisted flag lets each
+// test choose its value, read when the component renders.
+const photoSlots = vi.hoisted(() => ({ show: false }));
+vi.mock('@/shared/components/photo-slots', () => ({
+  get SHOW_PHOTO_SLOTS() {
+    return photoSlots.show;
+  },
+}));
 
 function selection(overrides: Partial<SelectionWithDinner>): SelectionWithDinner {
   return {
@@ -339,5 +348,69 @@ describe('PlanPage', () => {
     await user.click(screen.getByRole('button', { name: /previous week/i }));
 
     expect(await screen.findByText('No plan this week.')).toBeInTheDocument();
+  });
+});
+
+describe('PlanPage photo slot (intent 025)', () => {
+  const threeSelections = [
+    selection({ id: 'sel-1', dinner_id: 'tacos', dinners: { ...selection({}).dinners, name: 'Tacos' } }),
+    selection({ id: 'sel-2', dinner_id: 'pasta', dinners: { ...selection({}).dinners, name: 'Pasta' } }),
+    selection({ id: 'sel-3', dinner_id: 'curry', dinners: { ...selection({}).dinners, name: 'Curry' } }),
+  ];
+
+  /** The slot is only in the three-across (md+) card, so these run at a desktop width. */
+  function renderAtDesktop() {
+    vi.stubGlobal('matchMedia', (query: string) => {
+      const min = /min-width:\s*([\d.]+)em/.exec(query);
+      const max = /max-width:\s*([\d.]+)em/.exec(query);
+      const matches = (!min || 1280 >= Number(min[1]) * 16) && (!max || 1280 <= Number(max[1]) * 16);
+      return {
+        matches,
+        media: query,
+        onchange: null,
+        addListener: () => {},
+        removeListener: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        dispatchEvent: () => false,
+      };
+    });
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return render(
+      <ChakraProvider theme={theme}>
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter>
+            <PlanPage />
+          </MemoryRouter>
+        </QueryClientProvider>
+      </ChakraProvider>,
+    );
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(fetchWeekStartDay).mockResolvedValue(0);
+    vi.mocked(fetchDinnersPerWeek).mockResolvedValue(3);
+    vi.mocked(fetchCurrentPlan).mockResolvedValue(plan({ weekly_plan_selections: threeSelections }));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    photoSlots.show = false;
+  });
+
+  it('should leave the empty photo tile out of the three-across cards while photo slots are off', async () => {
+    renderAtDesktop();
+
+    expect(await screen.findByText('Tacos')).toBeInTheDocument();
+    expect(screen.queryByTestId('photo-slot')).not.toBeInTheDocument();
+  });
+
+  it('should render one photo tile per three-across card when photo slots are on', async () => {
+    photoSlots.show = true;
+    renderAtDesktop();
+
+    expect(await screen.findByText('Tacos')).toBeInTheDocument();
+    expect(screen.getAllByTestId('photo-slot')).toHaveLength(3);
   });
 });

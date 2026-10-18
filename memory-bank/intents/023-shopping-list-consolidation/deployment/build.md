@@ -76,4 +76,4 @@ with no data to undo.
 - **dev**: verified: 848/848 vitest, `tsc -b`, eslint, `vite build`; each bolt checked in a
   browser against the household's data, read-only
 - **staging**: n/a: product owner decision at Checkpoint 1
-- **production**: not deployed
+- **production**: live 2026-10-18, PR #26, `origin/main` 5cf28c4; artifact verified byte-identical; smoke test passed

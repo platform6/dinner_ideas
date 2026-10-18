@@ -17,6 +17,7 @@ import { useCurrentPlan } from '@/features/weekly-plan/hooks';
 import { useDinnersWithSteps } from '@/features/cooking-view/hooks';
 import { useDinnersPerWeek } from '@/features/settings/hooks';
 import { cuisineIcon, metaIcons, stepIcon, uiIcons } from '@/shared/components/icons';
+import { SHOW_PHOTO_SLOTS } from '@/shared/components/photo-slots';
 
 export function CookingViewPage() {
   const currentPlan = useCurrentPlan();
@@ -113,19 +114,26 @@ export function CookingViewPage() {
               onClick={() => toggle(dinner.id)}
             >
               <HStack gap={3}>
-                <Center
-                  w="44px"
-                  h="44px"
-                  borderRadius="control"
-                  bg="paper.sunken"
-                  color="ink.300"
-                  flexShrink={0}
-                >
-                  <CuisineIcon size={20} strokeWidth={1.5} />
-                </Center>
+                {SHOW_PHOTO_SLOTS && (
+                  <Center
+                    data-testid="photo-slot"
+                    w="44px"
+                    h="44px"
+                    borderRadius="control"
+                    bg="paper.sunken"
+                    color="ink.300"
+                    flexShrink={0}
+                  >
+                    <CuisineIcon size={20} strokeWidth={1.5} />
+                  </Center>
+                )}
                 <Box>
                   <Heading textStyle="cardTitle">{dinner.name}</Heading>
                   <HStack textStyle="meta" gap={1}>
+                    {/* The thumb was this row's only cuisine icon, so it moves here while slots are off. */}
+                    {!SHOW_PHOTO_SLOTS && (
+                      <CuisineIcon data-testid="meta-cuisine-icon" size={13} strokeWidth={1.8} />
+                    )}
                     <metaIcons.cookTime size={13} strokeWidth={1.8} />
                     <Text as="span">
                       {dinner.cook_time_minutes} min · {stepCount} step{stepCount === 1 ? '' : 's'}
