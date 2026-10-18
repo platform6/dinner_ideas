@@ -4,9 +4,9 @@ release: v0.19.0-481670c
 commit: 481670c
 units: [001-photo-slots-off]
 created: '2026-10-18T20:26:52Z'
-updated: '2026-10-18T20:27:36Z'
-status: awaiting-checkpoint-3
-current_checkpoint: 3
+updated: '2026-10-18T20:29:51Z'
+status: production-live-smoke-pending
+current_checkpoint: 4
 follows: v0.18.0-6179850
 environments:
   dev:
@@ -15,10 +15,10 @@ environments:
   staging:
     status: 'n/a: product owner decision 2026-10-18T20:27:36Z. Static site, no schema change, rollback is a revert.'
   production:
-    status: 'not deployed'
+    status: 'live 2026-10-18: artifact verified; smoke test pending'
     target: 'Netlify main only'
     db: 'n/a: no migration in this release (`git diff origin/main..dev -- supabase/` empty)'
-    fe: 'pending'
+    fe: 'MERGED 2026-10-18T20:29:04Z: PR #27, origin/main fd0a869. Netlify served index-CSU5_rAt.js for four checks, then index-CpcKcNbX.js at 20:29:51Z; the live file is byte-identical to the local build (sha256 49fd75e9…bc6460999f0) and contains meta-cuisine-icon.'
     edge_function: 'n/a: claude-proxy unchanged'
 ---
 
@@ -46,7 +46,7 @@ Current production is **v0.18.0** (`origin/main` @ `5cf28c4`, PR #26, live 2026-
 ## Staging
 
 **n/a**, by the product owner's decision at Checkpoint 1. As for v0.16.0 to v0.18.0: a static site, no schema change, and rollback is a
-revert with no data to undo
+revert with no data to undo.
 
 ## Rollback
 
@@ -65,8 +65,17 @@ This also covers the browser check deferred from bolt 083.
 | 4   | Desktop: This week                     | Three-across cards go from the badge row straight to name and meta, with no empty grey block      |
 | 5   | Desktop: catalog                       | Same as #1, with the grid columns unchanged                                                       |
 
+## What happened (2026-10-18)
+
+Pushed `dev` (`git log origin/dev..dev` empty) and opened PR #27. Waited for Netlify's deploy
+preview to pass, then merged at 20:29:04Z (`fd0a869`).
+
+The live page referenced v0.18.0's bundle (`index-CSU5_rAt.js`) for about 45 seconds, then this
+release's (`index-CpcKcNbX.js`). The downloaded file is byte-identical to the local build and
+contains `meta-cuisine-icon`, which v0.18.0's bundle doesn't.
+
 ## Decisions the product owner still needs to make
 
 1. ~~**Checkpoint 1**: approve the build, and confirm skipping staging~~ **Done 2026-10-18T20:27:36Z.**
-2. **Checkpoint 3**: approve the production deploy (push, PR, merge)
+2. ~~**Checkpoint 3**: approve the production deploy (push, PR, merge)~~ **Done 2026-10-18.**
 3. **After the deploy**: run the smoke test
