@@ -2,11 +2,11 @@
 id: 001-empty-aisles-tucked-away
 unit: 003-empty-aisle-toggle
 intent: 023-shopping-list-consolidation
-status: draft
+status: complete
 priority: should
 created: '2026-09-24T14:56:10Z'
 assigned_bolt: 082-empty-aisle-toggle
-implemented: false
+implemented: true
 ---
 
 # Story: 001-empty-aisles-tucked-away
