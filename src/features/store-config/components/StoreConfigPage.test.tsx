@@ -1,6 +1,6 @@
 import { ChakraProvider } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -705,5 +705,235 @@ describe('StoreConfigPage — the review queue (intent 013)', () => {
     renderPage();
 
     expect(await screen.findByText('Nothing new to check')).toBeInTheDocument();
+  });
+});
+
+/**
+ * Intent 023, unit 003: aisles with nothing at them are tucked behind a toggle. "Aisle 1" and
+ * "Aisle 8" hold nothing; "Aisle 3" holds no groceries but the Protein category, so it is not
+ * empty. "Aisle 8" sits at the very end, which is what makes Bakery the last stop on screen.
+ */
+describe('StoreConfigPage — empty aisles tucked away (intent 023)', () => {
+  const pathWithEmpties: Location[] = [
+    location({ id: 'loc-1', name: 'Produce', position: 1 }),
+    location({ id: 'loc-e1', name: 'Aisle 1', position: 2, type: 'aisle' }),
+    location({ id: 'loc-2', name: 'Aisle 3', position: 3, type: 'aisle' }),
+    location({ id: 'loc-3', name: 'Bakery', position: 4 }),
+    location({ id: 'loc-e2', name: 'Aisle 8', position: 5, type: 'aisle' }),
+  ];
+
+  /** Stop names in the order they render, read off each row's rename button. */
+  function stopsOnScreen() {
+    return screen
+      .getAllByRole('button', { name: /^Rename / })
+      .map((button) => button.getAttribute('aria-label')?.replace(/^Rename /, ''));
+  }
+
+  beforeEach(() => {
+    vi.mocked(fetchLocations).mockResolvedValue(pathWithEmpties);
+  });
+
+  it('should hide an aisle with nothing at it, and show one holding only a category', async () => {
+    renderPage();
+
+    await screen.findByRole('button', { name: 'Show 2 empty aisles' });
+    expect(stopsOnScreen()).toEqual(['Produce', 'Aisle 3', 'Bakery']);
+    expect(screen.queryByText('Aisle 1')).not.toBeInTheDocument();
+    // Aisle 3 is shown, and still says plainly that no grocery is there.
+    expect(screen.getByText('Nothing here yet')).toBeInTheDocument();
+  });
+
+  it('should hide nothing until it knows which categories sit where', async () => {
+    // Placements still loading: Aisle 3, holding only a category, must not blink out meanwhile.
+    vi.mocked(fetchCategoryPlacements).mockReturnValue(new Promise(() => {}));
+    renderPage();
+
+    await screen.findByText('Bakery');
+    expect(stopsOnScreen()).toEqual(['Produce', 'Aisle 1', 'Aisle 3', 'Bakery', 'Aisle 8']);
+    expect(screen.queryByRole('button', { name: /empty aisle/i })).not.toBeInTheDocument();
+  });
+
+  it('should say "1 empty aisle" in the singular, and offer no toggle when nothing is empty', async () => {
+    vi.mocked(fetchLocations).mockResolvedValue(pathWithEmpties.slice(0, 4));
+    renderPage();
+
+    expect(await screen.findByRole('button', { name: 'Show 1 empty aisle' })).toBeInTheDocument();
+
+    cleanup();
+    vi.mocked(fetchLocations).mockResolvedValue(path);
+    renderPage();
+
+    await screen.findByText('Bakery');
+    expect(screen.queryByRole('button', { name: /empty aisle/i })).not.toBeInTheDocument();
+  });
+
+  it('should reveal the empty aisles in their place on the path, and tuck them away again', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    const toggle = await screen.findByRole('button', { name: 'Show 2 empty aisles' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await user.click(toggle);
+
+    expect(stopsOnScreen()).toEqual(['Produce', 'Aisle 1', 'Aisle 3', 'Bakery', 'Aisle 8']);
+    const hide = screen.getByRole('button', { name: 'Hide empty aisles' });
+    expect(hide).toHaveAttribute('aria-expanded', 'true');
+
+    await user.click(hide);
+    expect(stopsOnScreen()).toEqual(['Produce', 'Aisle 3', 'Bakery']);
+  });
+
+  it('should start with them tucked away on every visit', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole('button', { name: 'Show 2 empty aisles' }));
+    expect(screen.getByText('Aisle 1')).toBeInTheDocument();
+
+    cleanup();
+    renderPage();
+
+    expect(await screen.findByRole('button', { name: 'Show 2 empty aisles' })).toBeInTheDocument();
+    expect(screen.queryByText('Aisle 1')).not.toBeInTheDocument();
+  });
+
+  it('should keep an aisle added this visit on screen while it is still empty', async () => {
+    const user = userEvent.setup();
+    const added = location({ id: 'loc-new', name: 'Aisle 9', position: 6, type: 'aisle' });
+    vi.mocked(addLocation).mockResolvedValue(added);
+    renderPage();
+    await screen.findByRole('button', { name: 'Show 2 empty aisles' });
+    vi.mocked(fetchLocations).mockResolvedValue([...pathWithEmpties, added]);
+
+    await user.click(screen.getByRole('button', { name: /add an aisle or section/i }));
+    await user.type(screen.getByRole('textbox', { name: /name of the new stop/i }), 'Aisle 9');
+    await user.click(screen.getByRole('button', { name: /^add$/i }));
+
+    // Appended after every stop, the hidden Aisle 8 included.
+    await waitFor(() => expect(addLocation).toHaveBeenCalledWith(store, 'Aisle 9', 6));
+    expect(await screen.findByText('Aisle 9')).toBeInTheDocument();
+    expect(stopsOnScreen()).toEqual(['Produce', 'Aisle 3', 'Bakery', 'Aisle 9']);
+    expect(screen.getByRole('button', { name: 'Show 2 empty aisles' })).toBeInTheDocument();
+  });
+
+  it('should keep the first stop on screen when it is made from the first-run panel', async () => {
+    const user = userEvent.setup();
+    const first = location({ id: 'loc-first', name: 'Produce', position: 1 });
+    vi.mocked(fetchLocations).mockResolvedValue([]);
+    vi.mocked(fetchCategoryPlacements).mockResolvedValue(
+      categoryPlacements.map((entry) => ({
+        ...entry,
+        locationId: null,
+        locationName: null,
+        locationPosition: null,
+      })),
+    );
+    vi.mocked(fetchResolvedItems).mockResolvedValue([]);
+    vi.mocked(addLocation).mockResolvedValue(first);
+    renderPage();
+
+    const start = await screen.findByRole('button', { name: /add the first stop/i });
+    vi.mocked(fetchLocations).mockResolvedValue([first]);
+    await user.click(start);
+
+    expect(await screen.findByRole('button', { name: 'Rename Produce' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /empty aisle/i })).not.toBeInTheDocument();
+  });
+
+  it('should keep an aisle that empties during the visit on screen until the next visit', async () => {
+    const user = userEvent.setup();
+    const withPeas = [
+      resolved({ itemId: 'i1', itemName: 'kale', locationId: 'loc-1' }),
+      resolved({ itemId: 'i3', itemName: 'sourdough', locationId: 'loc-3' }),
+      resolved({ itemId: 'i9', itemName: 'peas', category: 'Pantry', state: 'placed', locationId: 'loc-e1' }),
+    ];
+    vi.mocked(fetchResolvedItems).mockResolvedValue(withPeas);
+    renderPage();
+
+    // Aisle 1 holds peas, so only Aisle 8 is tucked away.
+    await screen.findByRole('button', { name: 'Show 1 empty aisle' });
+    expect(screen.getByText('Aisle 1')).toBeInTheDocument();
+
+    // Peas leave Aisle 1; any path change refetches what each stop holds.
+    vi.mocked(fetchResolvedItems).mockResolvedValue(withPeas.slice(0, 2));
+    await user.click(screen.getByRole('button', { name: /move bakery earlier/i }));
+    await waitFor(() => expect(fetchResolvedItems).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.queryByText('peas')).not.toBeInTheDocument());
+
+    // Empty now, but still on screen, and not counted with the tucked-away ones.
+    expect(screen.getByText('Aisle 1')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show 1 empty aisle' })).toBeInTheDocument();
+
+    cleanup();
+    renderPage();
+
+    expect(await screen.findByRole('button', { name: 'Show 2 empty aisles' })).toBeInTheDocument();
+    expect(screen.queryByText('Aisle 1')).not.toBeInTheDocument();
+  });
+
+  it('should move earlier past a hidden aisle, landing before the previous aisle on screen', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: /move aisle 3 earlier/i }));
+
+    // Produce is at 1. Taking its position puts Aisle 3 before it; hidden Aisle 1 shifts after.
+    await waitFor(() => expect(reorderLocation).toHaveBeenCalledWith('loc-2', 1));
+    // Counted in the list as shown: first on screen.
+    expect(await screen.findByText('Aisle 3 moved to position 1')).toBeInTheDocument();
+  });
+
+  it('should move later past a hidden aisle, landing after the next aisle on screen', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: /move produce later/i }));
+
+    await waitFor(() => expect(reorderLocation).toHaveBeenCalledWith('loc-1', 3));
+    expect(await screen.findByText('Produce moved to position 2')).toBeInTheDocument();
+  });
+
+  it('should judge the ends of the path by what is on screen', async () => {
+    renderPage();
+
+    // Aisle 8 comes after Bakery, but it is hidden: Bakery is the last stop shown.
+    expect(await screen.findByRole('button', { name: /move bakery later/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /move produce earlier/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /move aisle 3 earlier/i })).toBeEnabled();
+  });
+
+  it('should rename, reorder and remove a revealed empty aisle as it does any other', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole('button', { name: 'Show 2 empty aisles' }));
+
+    // With every aisle shown, neighbours are the whole path's again.
+    expect(screen.getByRole('button', { name: /move bakery later/i })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: /move produce later/i }));
+    await waitFor(() => expect(reorderLocation).toHaveBeenCalledWith('loc-1', 2));
+    await user.click(screen.getByRole('button', { name: /move aisle 1 earlier/i }));
+    await waitFor(() => expect(reorderLocation).toHaveBeenCalledWith('loc-e1', 1));
+
+    await user.click(screen.getByRole('button', { name: /rename aisle 1/i }));
+    const field = screen.getByRole('textbox', { name: /rename aisle 1/i });
+    await user.clear(field);
+    await user.type(field, 'Aisle 2');
+    await user.click(screen.getByRole('button', { name: /^save$/i }));
+    await waitFor(() => expect(renameLocation).toHaveBeenCalledWith('loc-e1', 'Aisle 2'));
+
+    await user.click(screen.getByRole('button', { name: /rename aisle 8/i }));
+    await user.click(screen.getByRole('button', { name: /^remove$/i }));
+    await waitFor(() => expect(deleteLocation).toHaveBeenCalledWith('loc-e2'));
+  });
+
+  it('should still list every aisle in "Where do you find it", hidden ones included', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByText('Produce'));
+    await user.click(screen.getByRole('button', { name: /where do you find apples/i }));
+    await screen.findByRole('dialog');
+
+    expect(screen.getByRole('button', { name: /put apples in aisle 1/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /put apples in aisle 8/i })).toBeInTheDocument();
   });
 });

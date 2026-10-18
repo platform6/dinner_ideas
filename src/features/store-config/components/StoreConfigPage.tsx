@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
-import { Alert, AlertIcon, Center, HStack, Heading, Spinner, Stack, Text } from '@chakra-ui/react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, AlertIcon, Button, Center, HStack, Heading, Spinner, Stack, Text } from '@chakra-ui/react';
 
 import { AddStopRow } from '@/features/store-config/components/AddStopRow';
 import { AssignSheet } from '@/features/store-config/components/AssignSheet';
@@ -26,7 +26,12 @@ import {
   useUnplaceItem,
   useUnsetCategoryPlacement,
 } from '@/features/store-config/hooks';
-import type { CategoryPlacementView, IngredientCategory, ResolvedItem } from '@/features/store-config/types';
+import type {
+  CategoryPlacementView,
+  IngredientCategory,
+  Location,
+  ResolvedItem,
+} from '@/features/store-config/types';
 
 /**
  * The "Walking path" page (FR-11): ONE ordered list of stops, sections and aisles as visual
@@ -66,6 +71,9 @@ export function StoreConfigPage() {
   const [assigningItemId, setAssigningItemId] = useState<string | null>(null);
   const [focusCategory, setFocusCategory] = useState<IngredientCategory | null>(null);
   const assignTriggerRef = useRef<HTMLButtonElement | null>(null);
+  // Not remembered: every visit starts with the empty aisles tucked away (intent 023, unit 003).
+  const [showEmpty, setShowEmpty] = useState(false);
+  const [keptIds, setKeptIds] = useState<ReadonlySet<string>>(() => new Set());
 
   const allItems = useMemo(() => resolved.data ?? [], [resolved.data]);
 
@@ -93,6 +101,26 @@ export function StoreConfigPage() {
     for (const items of grouped.values()) items.sort((a, b) => a.itemName.localeCompare(b.itemName));
     return grouped;
   }, [allItems]);
+
+  /**
+   * Stops that hold something: a grocery resolves to it, or a category points at it. A category
+   * with no groceries yet still counts — the household put it there on purpose.
+   */
+  const heldIds = useMemo(
+    () => new Set([...itemsByLocation.keys(), ...categoriesByLocation.keys()]),
+    [itemsByLocation, categoriesByLocation],
+  );
+
+  /**
+   * A stop that has held something this visit stays on screen after it empties, so a row never
+   * vanishes right after the user acts on it. It is tucked away from the next visit.
+   */
+  useEffect(() => {
+    setKeptIds((kept) => {
+      const added = [...heldIds].filter((id) => !kept.has(id));
+      return added.length === 0 ? kept : new Set([...kept, ...added]);
+    });
+  }, [heldIds]);
 
   /**
    * The review queue: things nobody has looked at, whatever their placement state.
@@ -132,6 +160,12 @@ export function StoreConfigPage() {
   }
 
   const stops = locations.data ?? [];
+  // Until the category placements arrive, a stop holding only a category would look empty, so
+  // nothing is hidden yet.
+  const isShown = (stop: Location) =>
+    !categoryPlacements.data || heldIds.has(stop.id) || keptIds.has(stop.id);
+  const emptyCount = stops.filter((stop) => !isShown(stop)).length;
+  const visibleStops = showEmpty ? stops : stops.filter(isShown);
   const isBusy = reorderLocation.isPending || deleteLocation.isPending || renameLocation.isPending;
   const isSaving = placeItem.isPending || unplaceItem.isPending;
   const isMovingCategory = setCategoryPlacement.isPending || unsetCategoryPlacement.isPending;
@@ -168,14 +202,27 @@ export function StoreConfigPage() {
     setRemovalCount(null);
   }
 
+  /** A stop added this visit stays on screen while it is still empty. */
+  function addStop(name: string, position: number) {
+    addLocation.mutate(
+      { name, position },
+      { onSuccess: (created) => setKeptIds((kept) => new Set([...kept, created.id])) },
+    );
+  }
+
+  /**
+   * Moves past the neighbour the user can SEE. Taking its position puts the stop just before it
+   * (or just after, moving later); `reorder_location` shifts any hidden stops in between out of
+   * the way. The announced position counts the list as shown.
+   */
   function move(index: number, direction: -1 | 1) {
-    const stop = stops[index];
-    const neighbour = stops[index + direction];
+    const stop = visibleStops[index];
+    const neighbour = visibleStops[index + direction];
     if (!stop || !neighbour) return;
 
     reorderLocation.mutate(
       { locationId: stop.id, newPosition: neighbour.position },
-      { onSuccess: () => setAnnouncement(`${stop.name} moved to position ${neighbour.position}`) },
+      { onSuccess: () => setAnnouncement(`${stop.name} moved to position ${index + direction + 1}`) },
     );
   }
 
@@ -202,16 +249,16 @@ export function StoreConfigPage() {
       </Stack>
 
       {stops.length === 0 ? (
-        <FirstRunPanel onAddFirstStop={() => addLocation.mutate({ name: 'Produce', position: 1 })} />
+        <FirstRunPanel onAddFirstStop={() => addStop('Produce', 1)} />
       ) : (
         <Stack gap={2}>
-          {stops.map((stop, index) => (
+          {visibleStops.map((stop, index) => (
             <LocationRow
               key={stop.id}
               location={stop}
               items={itemsByLocation.get(stop.id) ?? []}
               isFirst={index === 0}
-              isLast={index === stops.length - 1}
+              isLast={index === visibleStops.length - 1}
               isBusy={isBusy}
               onMoveEarlier={() => move(index, -1)}
               onMoveLater={() => move(index, 1)}
@@ -227,10 +274,22 @@ export function StoreConfigPage() {
             />
           ))}
 
-          <AddStopRow
-            isAdding={addLocation.isPending}
-            onAdd={(name) => addLocation.mutate({ name, position: stops.length + 1 })}
-          />
+          {emptyCount > 0 && (
+            <Button
+              size="sm"
+              variant="ghost"
+              alignSelf="flex-start"
+              aria-expanded={showEmpty}
+              onClick={() => setShowEmpty((shown) => !shown)}
+            >
+              {showEmpty
+                ? 'Hide empty aisles'
+                : `Show ${emptyCount} empty ${emptyCount === 1 ? 'aisle' : 'aisles'}`}
+            </Button>
+          )}
+
+          {/* Appends after every stop, hidden ones included: position is the whole path's. */}
+          <AddStopRow isAdding={addLocation.isPending} onAdd={(name) => addStop(name, stops.length + 1)} />
         </Stack>
       )}
 

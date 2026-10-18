@@ -2,12 +2,12 @@
 
 ## Overview
 
-- **Total stories**: 183
-- **Completed**: 182
-- **Planned**: 1
+- **Total stories**: 191
+- **Completed**: 188
+- **Planned**: 3
 - **In Progress**: 0
 - **Deferred**: 0
-- **Last updated**: 2026-09-17
+- **Last updated**: 2026-10-18
 
 ---
 
@@ -316,8 +316,8 @@
 
 ## Stories by Status
 
-- **Completed**: 182
-- **Planned**: 1
+- **Completed**: 188
+- **Planned**: 3
 - **In Progress**: 0
 - **Deferred**: 0
 
@@ -373,7 +373,26 @@
 
 ---
 
-### 024-mobile-ergonomics — ✅ BUILT (bolts 077–079 complete; not yet deployed — no migrations)
+### 023-shopping-list-consolidation — ✅ BUILT (bolts 080–082 complete; not yet deployed — no migrations)
+
+**Unit: 001-line-merging** — bolt `080` ✅ COMPLETE — one line per grocery; ships only with 081
+
+- [x] **001-prep-notes-dont-split-a-line** (line-merging): A note after the comma doesn't split a line; a leading prep word ("diced tomatoes") is kept - Must - ✅ COMPLETE
+- [x] **002-one-amount-per-unit** (line-merging): Each unit's total side by side, no conversion; cup/cups are one unit - Must - ✅ COMPLETE
+- [x] **003-plain-label** (line-merging): The line reads "chicken thighs", not "chicken thighs, cubed" - Must - ✅ COMPLETE
+
+**Unit: 002-merged-line-aisle** — bolt `081` ✅ COMPLETE — merging never loses an aisle
+
+- [x] **001-merged-line-finds-its-aisle** (merged-line-aisle): Exact name, else placed source, else first source - Must - ✅ COMPLETE
+- [x] **002-sheet-and-checks-follow-the-line** (merged-line-aisle): Aisle sheet and check marks work on a merged line - Must - ✅ COMPLETE
+
+**Unit: 003-empty-aisle-toggle** — bolt `082` ✅ COMPLETE — cuttable
+
+- [x] **001-empty-aisles-tucked-away** (empty-aisle-toggle): Empty aisles hidden behind "Show N empty aisles" - Should - ✅ COMPLETE
+
+---
+
+### 024-mobile-ergonomics — 🚀 SHIPPED v0.17.0 (bolts 077–079 complete; live + verified on prod 2026-09-24, PR #25)
 
 **Unit: 001-touch-target-size** — bolt `077` ✅ COMPLETE — the theme's small control becomes 44px on a phone
 
@@ -388,5 +407,14 @@
 **Unit: 003-aisle-sheet-close** — bolt `079` ✅ COMPLETE — cuttable, but built
 
 - [x] **001-sheet-closes-visibly** (aisle-sheet-close): A close control big enough to hit; the last action pinned clear of the edge - Should - ✅ COMPLETE
+
+---
+
+### 025-hide-photo-slots — 📋 PLANNED (bolt 083)
+
+**Unit: 001-photo-slots-off** — bolt `083` 📋 PLANNED — the slots stay in the design, off until photos exist
+
+- [ ] **001-photo-slots-switched-off** (photo-slots-off): The three photo slots aren't rendered while `SHOW_PHOTO_SLOTS` is false; true restores them - Must - 📋 PLANNED
+- [ ] **002-cooking-view-keeps-its-icon** (photo-slots-off): The cuisine icon moves into the cooking view's meta row - Must - 📋 PLANNED
 
 ---

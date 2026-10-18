@@ -1,5 +1,5 @@
 import type { ResolvedItem } from '@/features/store-config/types';
-import type { ShoppingListGroup } from '@/features/shopping-list/types';
+import type { ShoppingListGroup, ShoppingListItem } from '@/features/shopping-list/types';
 
 /**
  * Normalizes an ingredient name to the registry's dedup key so an aggregated
@@ -16,6 +16,37 @@ import type { ShoppingListGroup } from '@/features/shopping-list/types';
  */
 export function nameKey(name: string): string {
   return name.trim().toLowerCase();
+}
+
+/** Registry items by `nameKey`, built once per render for `lineItem`. */
+export function indexByNameKey(resolvedItems: ResolvedItem[]): Map<string, ResolvedItem> {
+  return new Map(resolvedItems.map((item) => [item.nameKey, item]));
+}
+
+/**
+ * The registry item a shopping-list line stands for: where it sorts, and what its move sheet edits.
+ *
+ * Since intent 023 a line can merge several raw names ("chicken breast" + "chicken breast, cubed"),
+ * each its own registry item with its own placement. FR-4 picks one, so merging never loses an aisle:
+ *
+ * 1. the item named exactly as the line's label
+ * 2. otherwise, the first source name whose item is explicitly `placed`
+ * 3. otherwise, the first source name with an item at all
+ *
+ * The choice is stable across a move from the list: the item moved becomes `placed`, and each rule
+ * then picks it again. The sort and the page both call this, so the rule exists once.
+ */
+export function lineItem(
+  line: ShoppingListItem,
+  itemsByNameKey: Map<string, ResolvedItem>,
+): ResolvedItem | undefined {
+  const exact = itemsByNameKey.get(nameKey(line.name));
+  if (exact) return exact;
+
+  const sources = line.sourceNames
+    .map((name) => itemsByNameKey.get(nameKey(name)))
+    .filter((item): item is ResolvedItem => item !== undefined);
+  return sources.find((item) => item.state === 'placed') ?? sources[0];
 }
 
 /**
@@ -39,15 +70,12 @@ export function reorderGroupsByLocation(
   groups: ShoppingListGroup[],
   resolvedItems: ResolvedItem[],
 ): ShoppingListGroup[] {
-  const positionByNameKey = new Map<string, number>();
-  for (const item of resolvedItems) {
-    if (item.locationPosition !== null) positionByNameKey.set(item.nameKey, item.locationPosition);
-  }
+  const itemsByNameKey = indexByNameKey(resolvedItems);
 
   function groupPosition(group: ShoppingListGroup): number | undefined {
     let earliest: number | undefined;
     for (const item of group.items) {
-      const position = positionByNameKey.get(nameKey(item.name));
+      const position = lineItem(item, itemsByNameKey)?.locationPosition ?? undefined;
       if (position !== undefined && (earliest === undefined || position < earliest)) {
         earliest = position;
       }

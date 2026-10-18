@@ -256,6 +256,46 @@ describe('ShoppingListPage', () => {
     await waitFor(() => expect(mockedWriteText).toHaveBeenCalled());
     expect(await screen.findByText(/^copied!$/i)).toBeInTheDocument();
   });
+
+  it('should show a prep-note variant as one line with both amounts, and copy the same text (intent 023)', async () => {
+    const [tacos, pasta, curry] = threeDinners;
+    mockedFetchDinnersByIds.mockResolvedValue([
+      {
+        ...tacos,
+        dinner_ingredients: [
+          { id: '1-a', dinner_id: '1', name: 'Chicken thighs', unit: 'lb', quantity: 2, category: 'Protein' },
+        ],
+      },
+      {
+        ...pasta,
+        dinner_ingredients: [
+          {
+            id: '2-a',
+            dinner_id: '2',
+            name: 'chicken thighs, cubed',
+            unit: '',
+            quantity: 4,
+            category: 'Protein',
+          },
+        ],
+      },
+      curry,
+    ]);
+    mockedFetchCurrentPlan.mockResolvedValue(plan({ weekly_plan_selections: threeSelections }));
+    const user = setupUser();
+    renderPage();
+
+    await screen.findByText('Protein');
+    expect(screen.getAllByRole('checkbox', { name: /chicken thighs/i })).toHaveLength(1);
+    expect(screen.getByText('2 lb + 4')).toBeInTheDocument();
+    expect(screen.getByText('Chicken thighs')).toBeInTheDocument();
+    expect(screen.queryByText(/cubed/)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /copy shopping list/i }));
+    await waitFor(() =>
+      expect(mockedWriteText).toHaveBeenCalledWith(expect.stringContaining('- 2 lb + 4 Chicken thighs')),
+    );
+  });
 });
 
 /**
@@ -566,6 +606,70 @@ describe('ShoppingListPage — moving an item (intent 013, unit 003)', () => {
     // Nothing moved, so nothing to correct — and, importantly, the anchor is cleared rather than
     // left to misapply itself to an unrelated re-sort later.
     expect(scrollBy).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Intent 023, FR-4: "cheddar" and "cheddar, grated" merge into one "cheddar" line. Only the
+   * variant has a registry item, placed at the back wall; there is no "cheddar" item at all.
+   */
+  describe('a merged line (intent 023, FR-4)', () => {
+    function mergedDinner(id: string, cheddarName: string): DinnerWithIngredients {
+      return {
+        ...twoCategoryDinner(id),
+        dinner_ingredients: [
+          { id: `${id}-a`, dinner_id: id, name: 'onion', unit: 'each', quantity: 1, category: 'Produce' },
+          { id: `${id}-b`, dinner_id: id, name: cheddarName, unit: 'g', quantity: 50, category: 'Dairy' },
+        ],
+      };
+    }
+
+    const variantAtBack = [
+      resolvedItem('onion', 'Produce', 'loc-1', 1),
+      resolvedItem('cheddar, grated', 'Dairy', 'loc-2', 2, 'placed'),
+    ];
+    const variantAtEntrance = [
+      resolvedItem('onion', 'Produce', 'loc-1', 1),
+      resolvedItem('cheddar, grated', 'Dairy', 'loc-1', 1, 'placed'),
+    ];
+
+    beforeEach(() => {
+      vi.mocked(fetchDinnersByIds).mockResolvedValue([
+        mergedDinner('1', 'cheddar, grated'),
+        mergedDinner('2', 'cheddar'),
+        mergedDinner('3', 'cheddar'),
+      ]);
+      vi.mocked(fetchResolvedItems).mockResolvedValue(variantAtBack);
+    });
+
+    it('should sort into its placed variant’s aisle and open that variant’s sheet', async () => {
+      const user = userEvent.setup();
+      renderPage();
+
+      await screen.findByRole('button', { name: 'Move cheddar' });
+      expect(screen.getAllByRole('checkbox', { name: /cheddar/i })).toHaveLength(1);
+      expect(listedItems()).toEqual(['onion', 'cheddar']);
+
+      await user.click(screen.getByRole('button', { name: 'Move cheddar' }));
+      // The sheet names the item being moved (approved at bolt 081's plan checkpoint).
+      expect(
+        await screen.findByRole('button', { name: 'Put cheddar, grated in Entrance' }),
+      ).toBeInTheDocument();
+    });
+
+    it('should move that variant, re-sort, and keep the line checked', async () => {
+      vi.mocked(fetchResolvedItems).mockResolvedValueOnce(variantAtBack).mockResolvedValue(variantAtEntrance);
+      const user = userEvent.setup();
+      renderPage();
+
+      await user.click(await screen.findByRole('checkbox', { name: /cheddar/i }));
+      await user.click(screen.getByRole('button', { name: 'Move cheddar' }));
+      await user.click(await screen.findByRole('button', { name: 'Put cheddar, grated in Entrance' }));
+
+      await waitFor(() => expect(placeItem).toHaveBeenCalledWith(store, 'item-cheddar, grated', 'loc-1'));
+      await waitFor(() => expect(listedItems()).toEqual(['cheddar', 'onion']));
+      expect(screen.getByRole('checkbox', { name: /cheddar/i })).toBeChecked();
+      expect(screen.getByRole('checkbox', { name: /onion/i })).not.toBeChecked();
+    });
   });
 });
 
