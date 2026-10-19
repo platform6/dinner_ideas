@@ -2,12 +2,12 @@
 
 ## Overview
 
-- **Total stories**: 194
-- **Completed**: 193
+- **Total stories**: 195
+- **Completed**: 194
 - **Planned**: 1
 - **In Progress**: 0
 - **Deferred**: 0
-- **Last updated**: 2026-10-18
+- **Last updated**: 2026-10-19
 
 ---
 
@@ -316,7 +316,7 @@
 
 ## Stories by Status
 
-- **Completed**: 193
+- **Completed**: 194
 - **Planned**: 1
 - **In Progress**: 0
 - **Deferred**: 0
@@ -419,12 +419,20 @@
 
 ---
 
-### 026-ingredients-in-week-and-cook — ✅ BUILT (bolt 084 complete; not yet deployed — no migrations)
+### 026-ingredients-in-week-and-cook — 🚀 SHIPPED v0.20.0 (bolt 084 complete; live on prod 2026-10-19, PR #28; smoke test pending)
 
 **Unit: 001-picked-dinner-details** — bolt `084` ✅ COMPLETE — ingredients (and on This week, steps) where the household plans and cooks
 
 - [x] **001-shared-ingredient-and-step-lists** (picked-dinner-details): The catalog's ingredient and step lists become shared components - Should - ✅ COMPLETE
 - [x] **002-this-week-expands** (picked-dinner-details): A picked dinner on This week opens to its ingredients and steps; desktop opens all three together - Must - ✅ COMPLETE
 - [x] **003-cook-shows-ingredients** (picked-dinner-details): A Cook tab row opens to its ingredients above its steps - Must - ✅ COMPLETE
+
+---
+
+### 027-tap-row-to-expand — ✅ BUILT (bolt 085 complete; not yet deployed — no migrations)
+
+**Unit: 001-tap-bar-to-open** — bolt `085` ✅ COMPLETE — tap a picked dinner's bar on This week to open it
+
+- [x] **001-tap-the-bar** (tap-bar-to-open): Tapping a picked dinner's bar opens or closes it, as the expand icon does; expand now sits before a red remove - Must - ✅ COMPLETE
 
 ---
