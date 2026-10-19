@@ -2,12 +2,12 @@
 
 ## Overview
 
-- **Total stories**: 194
+- **Total stories**: 195
 - **Completed**: 193
-- **Planned**: 1
+- **Planned**: 2
 - **In Progress**: 0
 - **Deferred**: 0
-- **Last updated**: 2026-10-18
+- **Last updated**: 2026-10-19
 
 ---
 
@@ -317,7 +317,7 @@
 ## Stories by Status
 
 - **Completed**: 193
-- **Planned**: 1
+- **Planned**: 2
 - **In Progress**: 0
 - **Deferred**: 0
 
@@ -426,5 +426,13 @@
 - [x] **001-shared-ingredient-and-step-lists** (picked-dinner-details): The catalog's ingredient and step lists become shared components - Should - ✅ COMPLETE
 - [x] **002-this-week-expands** (picked-dinner-details): A picked dinner on This week opens to its ingredients and steps; desktop opens all three together - Must - ✅ COMPLETE
 - [x] **003-cook-shows-ingredients** (picked-dinner-details): A Cook tab row opens to its ingredients above its steps - Must - ✅ COMPLETE
+
+---
+
+### 027-tap-row-to-expand — 📝 PLANNED (bolt 085)
+
+**Unit: 001-tap-bar-to-open** — bolt `085` — tap a picked dinner's bar on This week to open it
+
+- [ ] **001-tap-the-bar** (tap-bar-to-open): Tapping a picked dinner's bar opens or closes it, as the expand icon does - Must - [ ] PLANNED
 
 ---
