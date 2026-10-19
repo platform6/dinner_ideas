@@ -4,7 +4,7 @@ intent: 027-tap-row-to-expand
 phase: inception
 unit_type: frontend
 default_bolt_type: simple-construction-bolt
-status: stories-defined
+status: complete
 created: '2026-10-19T10:20:41Z'
 updated: '2026-10-19T10:20:41Z'
 ---

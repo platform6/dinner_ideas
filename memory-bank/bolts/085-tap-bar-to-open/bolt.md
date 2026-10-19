@@ -3,14 +3,23 @@ id: 085-tap-bar-to-open
 unit: 001-tap-bar-to-open
 intent: 027-tap-row-to-expand
 type: simple-construction-bolt
-status: planned
+status: complete
 stories:
   - 001-tap-the-bar
 created: '2026-10-19T10:20:41Z'
-started: null
-completed: null
+started: '2026-10-19T11:12:05Z'
+completed: '2026-10-19T12:58:17Z'
 current_stage: null
-stages_completed: []
+stages_completed:
+  - name: plan
+    completed: '2026-10-19T11:42:24Z'
+    artifact: implementation-plan.md
+  - name: implement
+    completed: '2026-10-19T12:02:55Z'
+    artifact: implementation-walkthrough.md
+  - name: test
+    completed: '2026-10-19T12:58:17Z'
+    artifact: test-walkthrough.md
 requires_bolts: []
 enables_bolts: []
 requires_units: []

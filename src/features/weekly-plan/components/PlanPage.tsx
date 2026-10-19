@@ -233,17 +233,20 @@ export function PlanPage() {
                 h="36px"
                 minW="36px"
                 variant="outline"
+                color="heart.500"
                 aria-label={`Remove ${selection.dinners.name}`}
                 icon={<uiIcons.remove size={15} strokeWidth={2} />}
                 isLoading={
                   toggleSelection.isPending && toggleSelection.variables?.dinnerId === selection.dinner_id
                 }
-                onClick={() =>
+                onClick={(e) => {
+                  // The bar around it toggles the dinner; removing shouldn't.
+                  e.stopPropagation();
                   toggleSelection.mutate({
                     dinnerId: selection.dinner_id,
                     currentPlan: currentPlan.data ?? null,
-                  })
-                }
+                  });
+                }}
               />
             );
             const badge = (
@@ -271,6 +274,14 @@ export function PlanPage() {
               </Text>
             );
             const isExpanded = threeAcross ? allExpanded : expandedIds.has(selection.id);
+            const toggle = () => (threeAcross ? setAllExpanded((open) => !open) : toggleRow(selection.id));
+            // The bar toggles on click too, as a mouse and touch convenience. This button stays
+            // the keyboard and screen-reader control, so the bar takes no role or tab stop.
+            const barProps = { cursor: 'pointer', onClick: toggle };
+            const cardHoverProps = {
+              transition: 'border-color 0.12s ease',
+              _hover: isExpanded ? undefined : { borderColor: 'line.brand' },
+            };
             // A sibling of the remove button, never a wrapper, so neither triggers the other.
             const expandButton = (
               <IconButton
@@ -287,36 +298,42 @@ export function PlanPage() {
                     <uiIcons.expand size={18} strokeWidth={2} />
                   )
                 }
-                onClick={() => (threeAcross ? setAllExpanded((open) => !open) : toggleRow(selection.id))}
+                onClick={(e) => {
+                  // Stop here, or the bar toggles it straight back.
+                  e.stopPropagation();
+                  toggle();
+                }}
               />
             );
             const details = isExpanded && <PickedDinnerDetails dinnerId={selection.dinner_id} />;
 
             if (threeAcross) {
               return (
-                <Stack key={selection.id} layerStyle="cardSelected" p={3.5} gap={2.5}>
-                  <HStack justify="space-between" align="flex-start">
-                    {badge}
-                    <HStack gap={1}>
-                      {removeButton}
-                      {expandButton}
+                <Stack key={selection.id} layerStyle="cardSelected" p={3.5} gap={2.5} {...cardHoverProps}>
+                  <Stack gap={2.5} {...barProps}>
+                    <HStack justify="space-between" align="flex-start">
+                      {badge}
+                      <HStack gap={1}>
+                        {expandButton}
+                        {removeButton}
+                      </HStack>
                     </HStack>
-                  </HStack>
-                  {SHOW_PHOTO_SLOTS && (
-                    <Box data-testid="photo-slot" h="76px" bg="paper.sunken" borderRadius="control" />
-                  )}
-                  <Box>
-                    {name}
-                    {meta}
-                  </Box>
+                    {SHOW_PHOTO_SLOTS && (
+                      <Box data-testid="photo-slot" h="76px" bg="paper.sunken" borderRadius="control" />
+                    )}
+                    <Box>
+                      {name}
+                      {meta}
+                    </Box>
+                  </Stack>
                   {details}
                 </Stack>
               );
             }
 
             return (
-              <Box key={selection.id} layerStyle="cardSelected">
-                <HStack justify="space-between" gap={2}>
+              <Box key={selection.id} layerStyle="cardSelected" {...cardHoverProps}>
+                <HStack justify="space-between" gap={2} {...barProps}>
                   <HStack gap={3} minW={0}>
                     {badge}
                     <Box minW={0}>
@@ -325,8 +342,8 @@ export function PlanPage() {
                     </Box>
                   </HStack>
                   <HStack gap={1} flexShrink={0}>
-                    {removeButton}
                     {expandButton}
+                    {removeButton}
                   </HStack>
                 </HStack>
                 {details && <Box mt={3}>{details}</Box>}

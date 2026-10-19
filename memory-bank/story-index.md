@@ -3,8 +3,8 @@
 ## Overview
 
 - **Total stories**: 195
-- **Completed**: 193
-- **Planned**: 2
+- **Completed**: 194
+- **Planned**: 1
 - **In Progress**: 0
 - **Deferred**: 0
 - **Last updated**: 2026-10-19
@@ -316,8 +316,8 @@
 
 ## Stories by Status
 
-- **Completed**: 193
-- **Planned**: 2
+- **Completed**: 194
+- **Planned**: 1
 - **In Progress**: 0
 - **Deferred**: 0
 
@@ -429,10 +429,10 @@
 
 ---
 
-### 027-tap-row-to-expand — 📝 PLANNED (bolt 085)
+### 027-tap-row-to-expand — ✅ BUILT (bolt 085 complete; not yet deployed — no migrations)
 
-**Unit: 001-tap-bar-to-open** — bolt `085` — tap a picked dinner's bar on This week to open it
+**Unit: 001-tap-bar-to-open** — bolt `085` ✅ COMPLETE — tap a picked dinner's bar on This week to open it
 
-- [ ] **001-tap-the-bar** (tap-bar-to-open): Tapping a picked dinner's bar opens or closes it, as the expand icon does - Must - [ ] PLANNED
+- [x] **001-tap-the-bar** (tap-bar-to-open): Tapping a picked dinner's bar opens or closes it, as the expand icon does; expand now sits before a red remove - Must - ✅ COMPLETE
 
 ---

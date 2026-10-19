@@ -1,7 +1,7 @@
 ---
 intent: 027-tap-row-to-expand
 phase: inception
-status: units-defined
+status: complete
 created: '2026-10-19T10:20:41Z'
 updated: '2026-10-19T10:20:41Z'
 ---
@@ -74,6 +74,17 @@ The product owner approved the proposal as offered:
   - `cursor: pointer` over the bar
   - While collapsed, the card's border turns `line.brand` on hover, as on the Cook tab
 - **Priority**: Should
+
+### FR-4: Expand before remove, with a red remove icon
+
+- **Description**: Added during bolt 085 at the product owner's request (2026-10-19). The two
+  buttons swap places, so remove sits at the outer edge, and remove's icon turns red.
+- **Acceptance Criteria**:
+  - Phone rows and desktop cards: the expand icon comes first, then remove
+  - Remove's icon is `heart.500`, the app's existing destructive red (the catalog's Remove menu
+    item). The button's outline is unchanged
+  - Past and locked weeks, which have no remove button, keep the expand icon at the edge
+- **Priority**: Must
 
 ## Non-Functional Requirements
 

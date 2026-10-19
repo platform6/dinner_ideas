@@ -654,4 +654,114 @@ describe('PlanPage picked dinner details (intent 026)', () => {
       }
     });
   });
+
+  describe('tapping the bar (intent 027)', () => {
+    it('should open and close a phone row from its name, leaving the others alone', async () => {
+      const user = userEvent.setup();
+      renderAt(390);
+
+      await user.click(await screen.findByText('Tacos'));
+
+      expect(await screen.findByText('Cook the tacos.')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Collapse Tacos' })).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByRole('button', { name: 'Expand Pasta' })).toHaveAttribute('aria-expanded', 'false');
+
+      await user.click(screen.getByText('Tacos'));
+
+      expect(screen.queryByText('Cook the tacos.')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Expand Tacos' })).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('should open all three desktop cards from one card’s name, and close them again', async () => {
+      const user = userEvent.setup();
+      renderAt(1280);
+
+      await user.click(await screen.findByText('Curry'));
+
+      for (const name of ['tacos', 'pasta', 'curry']) {
+        expect(await screen.findByText(`Cook the ${name}.`)).toBeInTheDocument();
+      }
+
+      await user.click(screen.getByText('Tacos'));
+
+      expect(screen.queryByText(/^Cook the /)).not.toBeInTheDocument();
+    });
+
+    it('should leave every row collapsed when remove is tapped', async () => {
+      const user = userEvent.setup();
+      renderAt(390);
+
+      await user.click(await screen.findByRole('button', { name: 'Remove Pasta' }));
+
+      expect(vi.mocked(removeSelection)).toHaveBeenCalledTimes(1);
+      for (const name of ['Tacos', 'Pasta', 'Curry']) {
+        expect(screen.getByRole('button', { name: `Expand ${name}` })).toHaveAttribute(
+          'aria-expanded',
+          'false',
+        );
+      }
+      expect(mockedFetchDetails).not.toHaveBeenCalled();
+    });
+
+    it.each([390, 1280])('should stay open when its details are tapped (%ipx)', async (width) => {
+      const user = userEvent.setup();
+      renderAt(width);
+
+      await user.click(await screen.findByText('Tacos'));
+      await user.click(await screen.findByText('2 cup tacos base'));
+      await user.click(screen.getByText('Cook the tacos.'));
+
+      expect(screen.getByText('Cook the tacos.')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Collapse Tacos' })).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('should open a past week’s dinner from its bar', async () => {
+      const user = userEvent.setup();
+      vi.mocked(fetchPlanByStartDate).mockResolvedValue(
+        plan({
+          start_date: '2026-08-17',
+          locked_at: '2026-08-20T12:00:00Z',
+          weekly_plan_selections: [
+            selection({
+              id: 'old-1',
+              dinner_id: 'stew',
+              dinners: { ...selection({}).dinners, name: 'Stew' },
+            }),
+          ],
+        }),
+      );
+      renderAt(390);
+
+      await screen.findByText('Tacos');
+      await user.click(screen.getByRole('button', { name: /previous week/i }));
+      await user.click(await screen.findByText('Stew'));
+
+      expect(await screen.findByText('Cook the stew.')).toBeInTheDocument();
+    });
+
+    it('should add no tab stop: only the buttons are focusable in a row', async () => {
+      renderAt(390);
+
+      const name = await screen.findByText('Tacos');
+      let bar: HTMLElement | null = name;
+      while (bar && !bar.contains(screen.getByRole('button', { name: 'Expand Tacos' }))) {
+        bar = bar.parentElement;
+      }
+      expect(bar).not.toBeNull();
+      expect(bar).not.toHaveAttribute('tabindex');
+      expect(bar).not.toHaveAttribute('role');
+    });
+
+    it.each([390, 1280])(
+      'should put expand before remove, so remove sits at the edge (%ipx)',
+      async (width) => {
+        renderAt(width);
+
+        const expand = await screen.findByRole('button', { name: 'Expand Tacos' });
+        const remove = screen.getByRole('button', { name: 'Remove Tacos' });
+
+        expect(expand.compareDocumentPosition(remove) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      },
+    );
+  });
 });

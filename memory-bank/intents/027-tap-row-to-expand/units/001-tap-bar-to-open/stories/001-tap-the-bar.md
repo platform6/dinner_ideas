@@ -2,11 +2,11 @@
 id: 001-tap-the-bar
 unit: 001-tap-bar-to-open
 intent: 027-tap-row-to-expand
-status: planned
+status: complete
 priority: must
 created: '2026-10-19T10:20:41Z'
 assigned_bolt: 085-tap-bar-to-open
-implemented: false
+implemented: true
 ---
 
 # Story: 001-tap-the-bar
@@ -30,6 +30,8 @@ implemented: false
 - [ ] The bar has `cursor: pointer`. While collapsed, the card's border turns `line.brand` on hover
 - [ ] The expand icon's `aria-expanded` and `Expand` / `Collapse {name}` label are unchanged, and
       the bar adds no tab stop
+- [ ] Added during the bolt (FR-4): the expand icon comes before remove on phone and desktop, and
+      remove's icon is `heart.500`
 
 ## Technical Notes
 
