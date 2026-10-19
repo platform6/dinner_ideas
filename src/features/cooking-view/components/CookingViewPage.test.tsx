@@ -8,7 +8,7 @@ import { CookingViewPage } from '@/features/cooking-view/components/CookingViewP
 import { fetchDinnersWithStepsByIds } from '@/features/dinners/api';
 import { fetchCurrentPlan } from '@/features/weekly-plan/api';
 import { fetchWeekStartDay } from '@/features/settings/api';
-import type { DinnerWithSteps } from '@/features/dinners/types';
+import type { DinnerWithStepsAndIngredients } from '@/features/dinners/types';
 import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/types';
 
 vi.mock('@/features/dinners/api');
@@ -55,7 +55,7 @@ function plan(overrides: Partial<CurrentPlan>): CurrentPlan {
   };
 }
 
-function dinnerWithSteps(overrides: Partial<DinnerWithSteps>): DinnerWithSteps {
+function dinnerWithSteps(overrides: Partial<DinnerWithStepsAndIngredients>): DinnerWithStepsAndIngredients {
   return {
     id: 'id',
     household_id: 'hh-test',
@@ -66,6 +66,7 @@ function dinnerWithSteps(overrides: Partial<DinnerWithSteps>): DinnerWithSteps {
     instructions: '',
     created_at: '2026-01-01T00:00:00Z',
     dinner_steps: [],
+    dinner_ingredients: [],
     ...overrides,
   };
 }
@@ -269,5 +270,74 @@ describe('CookingViewPage photo slot (intent 025)', () => {
     await user.click(toggle);
 
     expect(screen.getByRole('button', { name: 'Collapse Tacos' })).toHaveAttribute('aria-expanded', 'true');
+  });
+});
+
+describe('CookingViewPage ingredients (intent 026)', () => {
+  function renderPage() {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <CookingViewPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(fetchWeekStartDay).mockResolvedValue(0);
+    vi.mocked(fetchCurrentPlan).mockResolvedValue(plan({ weekly_plan_selections: threeSelections }));
+    vi.mocked(fetchDinnersWithStepsByIds).mockResolvedValue([
+      dinnerWithSteps({
+        id: '1',
+        name: 'Tacos',
+        dinner_steps: [{ id: 's1', dinner_id: '1', step_number: 1, instruction: 'Brown the turkey.' }],
+        dinner_ingredients: [
+          { id: 'i1', dinner_id: '1', name: 'Tortillas', quantity: 6, unit: 'each', category: 'Bakery' },
+        ],
+      }),
+      dinnerWithSteps({ id: '2', name: 'Pasta' }),
+      dinnerWithSteps({ id: '3', name: 'Curry' }),
+    ]);
+  });
+
+  it('should keep ingredients hidden until a row is expanded, from the one request', async () => {
+    renderPage();
+
+    await screen.findByText('Tacos');
+    expect(screen.queryByText('6 each Tortillas')).not.toBeInTheDocument();
+    expect(screen.queryByText('Ingredients')).not.toBeInTheDocument();
+    expect(vi.mocked(fetchDinnersWithStepsByIds)).toHaveBeenCalledTimes(1);
+  });
+
+  it('should list the ingredients above the steps once expanded', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: 'Expand Tacos' }));
+
+    const labels = [
+      screen.getByText('Ingredients'),
+      screen.getByText('6 each Tortillas'),
+      screen.getByText('Steps'),
+    ];
+    const step = screen.getByText('Brown the turkey.');
+    for (const earlier of labels) {
+      expect(earlier.compareDocumentPosition(step) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+    expect(labels[0].compareDocumentPosition(labels[1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(labels[1].compareDocumentPosition(labels[2]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('should say so for a dinner with no ingredients, and keep the steps note unchanged', async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole('button', { name: 'Expand Pasta' }));
+
+    expect(screen.getByText('No ingredients recorded.')).toBeInTheDocument();
+    expect(screen.getByText('No steps available for this dinner yet.')).toBeInTheDocument();
   });
 });

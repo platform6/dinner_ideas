@@ -16,9 +16,12 @@ import {
 import { fetchDinnersPerWeek, fetchWeekStartDay } from '@/features/settings/api';
 import { currentPlanningWeekStart, formatWeekRange } from '@/features/weekly-plan/date';
 import type { CurrentPlan, SelectionWithDinner } from '@/features/weekly-plan/types';
+import { fetchDinnerFullDetails } from '@/features/dinners/api';
+import type { DinnerFullDetails } from '@/features/dinners/types';
 
 vi.mock('@/features/weekly-plan/api');
 vi.mock('@/features/settings/api');
+vi.mock('@/features/dinners/api');
 
 // Intent 025: `SHOW_PHOTO_SLOTS` is a build-time constant. A getter over a hoisted flag lets each
 // test choose its value, read when the component renders.
@@ -412,5 +415,243 @@ describe('PlanPage photo slot (intent 025)', () => {
 
     expect(await screen.findByText('Tacos')).toBeInTheDocument();
     expect(screen.getAllByTestId('photo-slot')).toHaveLength(3);
+  });
+});
+
+describe('PlanPage picked dinner details (intent 026)', () => {
+  const mockedFetchDetails = vi.mocked(fetchDinnerFullDetails);
+  const threeSelections = [
+    selection({ id: 'sel-1', dinner_id: 'tacos', dinners: { ...selection({}).dinners, name: 'Tacos' } }),
+    selection({ id: 'sel-2', dinner_id: 'pasta', dinners: { ...selection({}).dinners, name: 'Pasta' } }),
+    selection({ id: 'sel-3', dinner_id: 'curry', dinners: { ...selection({}).dinners, name: 'Curry' } }),
+  ];
+
+  function details(dinnerId: string): DinnerFullDetails {
+    return {
+      dinner_steps: [
+        { id: `${dinnerId}-s1`, dinner_id: dinnerId, step_number: 1, instruction: `Cook the ${dinnerId}.` },
+      ],
+      dinner_ingredients: [
+        {
+          id: `${dinnerId}-i1`,
+          dinner_id: dinnerId,
+          name: `${dinnerId} base`,
+          quantity: 2,
+          unit: 'cup',
+          category: 'Pantry',
+        },
+      ],
+      tags: [{ id: 't1', name: 'kid-friendly' }],
+    };
+  }
+
+  /** Width in px for Chakra's breakpoint queries: 1280 gives the three-across cards, 390 the phone rows. */
+  function renderAt(width: number) {
+    vi.stubGlobal('matchMedia', (query: string) => {
+      const min = /min-width:\s*([\d.]+)em/.exec(query);
+      const max = /max-width:\s*([\d.]+)em/.exec(query);
+      const matches = (!min || width >= Number(min[1]) * 16) && (!max || width <= Number(max[1]) * 16);
+      return {
+        matches,
+        media: query,
+        onchange: null,
+        addListener: () => {},
+        removeListener: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        dispatchEvent: () => false,
+      };
+    });
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return render(
+      <ChakraProvider theme={theme}>
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter>
+            <PlanPage />
+          </MemoryRouter>
+        </QueryClientProvider>
+      </ChakraProvider>,
+    );
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(fetchWeekStartDay).mockResolvedValue(0);
+    vi.mocked(fetchDinnersPerWeek).mockResolvedValue(3);
+    vi.mocked(fetchCurrentPlan).mockResolvedValue(plan({ weekly_plan_selections: threeSelections }));
+    vi.mocked(removeSelection).mockResolvedValue(undefined);
+    mockedFetchDetails.mockImplementation((dinnerId) => Promise.resolve(details(dinnerId)));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  describe('on a phone', () => {
+    it('should start every dinner collapsed, without fetching any details', async () => {
+      renderAt(390);
+
+      await screen.findByText('Tacos');
+      for (const name of ['Tacos', 'Pasta', 'Curry']) {
+        expect(screen.getByRole('button', { name: `Expand ${name}` })).toHaveAttribute(
+          'aria-expanded',
+          'false',
+        );
+      }
+      expect(screen.queryByText('Ingredients')).not.toBeInTheDocument();
+      expect(mockedFetchDetails).not.toHaveBeenCalled();
+    });
+
+    it('should show ingredients, then steps, and no tags, for the opened dinner only', async () => {
+      const user = userEvent.setup();
+      renderAt(390);
+
+      await user.click(await screen.findByRole('button', { name: 'Expand Tacos' }));
+
+      const ingredient = await screen.findByText('2 cup tacos base');
+      const step = screen.getByText('Cook the tacos.');
+      expect(ingredient.compareDocumentPosition(step) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(screen.getByText('Ingredients')).toBeInTheDocument();
+      expect(screen.getByText('Steps')).toBeInTheDocument();
+      expect(screen.queryByText('kid-friendly')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Collapse Tacos' })).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByRole('button', { name: 'Expand Pasta' })).toHaveAttribute('aria-expanded', 'false');
+      expect(mockedFetchDetails).toHaveBeenCalledTimes(1);
+      expect(mockedFetchDetails).toHaveBeenCalledWith('tacos');
+    });
+
+    it('should open and close each row independently, with several open at once', async () => {
+      const user = userEvent.setup();
+      renderAt(390);
+
+      await user.click(await screen.findByRole('button', { name: 'Expand Tacos' }));
+      await user.click(screen.getByRole('button', { name: 'Expand Pasta' }));
+
+      expect(await screen.findByText('Cook the tacos.')).toBeInTheDocument();
+      expect(await screen.findByText('Cook the pasta.')).toBeInTheDocument();
+      expect(screen.queryByText('Cook the curry.')).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Collapse Tacos' }));
+
+      expect(screen.queryByText('Cook the tacos.')).not.toBeInTheDocument();
+      expect(screen.getByText('Cook the pasta.')).toBeInTheDocument();
+    });
+
+    it('should keep expand and remove from triggering each other', async () => {
+      const user = userEvent.setup();
+      renderAt(390);
+
+      await user.click(await screen.findByRole('button', { name: 'Expand Tacos' }));
+      expect(vi.mocked(removeSelection)).not.toHaveBeenCalled();
+
+      await user.click(screen.getByRole('button', { name: 'Remove Pasta' }));
+      expect(vi.mocked(removeSelection)).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole('button', { name: 'Expand Pasta' })).toHaveAttribute('aria-expanded', 'false');
+      expect(mockedFetchDetails).not.toHaveBeenCalledWith('pasta');
+    });
+
+    it('should say so when a dinner has no ingredients or steps', async () => {
+      const user = userEvent.setup();
+      mockedFetchDetails.mockResolvedValue({ dinner_steps: [], dinner_ingredients: [], tags: [] });
+      renderAt(390);
+
+      await user.click(await screen.findByRole('button', { name: 'Expand Tacos' }));
+
+      expect(await screen.findByText('No ingredients recorded.')).toBeInTheDocument();
+      expect(screen.getByText('No steps recorded.')).toBeInTheDocument();
+    });
+
+    it('should show a spinner while loading, then an error without breaking the page', async () => {
+      const user = userEvent.setup();
+      let fail: (error: Error) => void = () => {};
+      mockedFetchDetails.mockReturnValue(
+        new Promise((_resolve, reject) => {
+          fail = reject;
+        }),
+      );
+      renderAt(390);
+
+      await user.click(await screen.findByRole('button', { name: 'Expand Tacos' }));
+      expect(screen.getByText('Loading...')).toBeInTheDocument();
+
+      fail(new Error('network'));
+
+      expect(await screen.findByText('Couldn’t load details for this dinner.')).toBeInTheDocument();
+      expect(screen.getByText('Pasta')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Expand Pasta' })).toBeEnabled();
+    });
+
+    it('should expand a dinner on a past, locked week', async () => {
+      const user = userEvent.setup();
+      vi.mocked(fetchPlanByStartDate).mockResolvedValue(
+        plan({
+          start_date: '2026-08-17',
+          locked_at: '2026-08-20T12:00:00Z',
+          weekly_plan_selections: [
+            selection({
+              id: 'old-1',
+              dinner_id: 'stew',
+              dinners: { ...selection({}).dinners, name: 'Stew' },
+            }),
+          ],
+        }),
+      );
+      renderAt(390);
+
+      await screen.findByText('Tacos');
+      await user.click(screen.getByRole('button', { name: /previous week/i }));
+      await user.click(await screen.findByRole('button', { name: 'Expand Stew' }));
+
+      expect(await screen.findByText('Cook the stew.')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /remove/i })).not.toBeInTheDocument();
+    });
+
+    it('should collapse everything when the week changes', async () => {
+      const user = userEvent.setup();
+      vi.mocked(fetchPlanByStartDate).mockResolvedValue(null);
+      renderAt(390);
+
+      await user.click(await screen.findByRole('button', { name: 'Expand Tacos' }));
+      expect(await screen.findByText('Cook the tacos.')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /previous week/i }));
+      await screen.findByText('No plan this week.');
+      await user.click(screen.getByRole('button', { name: /next week/i }));
+
+      expect(await screen.findByRole('button', { name: 'Expand Tacos' })).toHaveAttribute(
+        'aria-expanded',
+        'false',
+      );
+      expect(screen.queryByText('Cook the tacos.')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('on a desktop', () => {
+    it('should open all three cards from one, and close them all from another', async () => {
+      const user = userEvent.setup();
+      renderAt(1280);
+
+      await user.click(await screen.findByRole('button', { name: 'Expand Pasta' }));
+
+      for (const name of ['tacos', 'pasta', 'curry']) {
+        expect(await screen.findByText(`Cook the ${name}.`)).toBeInTheDocument();
+      }
+      for (const name of ['Tacos', 'Pasta', 'Curry']) {
+        expect(screen.getByRole('button', { name: `Collapse ${name}` })).toHaveAttribute(
+          'aria-expanded',
+          'true',
+        );
+      }
+
+      await user.click(screen.getByRole('button', { name: 'Collapse Curry' }));
+
+      expect(screen.queryByText(/^Cook the /)).not.toBeInTheDocument();
+      for (const name of ['Tacos', 'Pasta', 'Curry']) {
+        expect(screen.getByRole('button', { name: `Expand ${name}` })).toHaveAttribute(
+          'aria-expanded',
+          'false',
+        );
+      }
+    });
   });
 });

@@ -11,16 +11,13 @@ import {
   HStack,
   Heading,
   Input,
-  ListItem,
   Menu,
   MenuButton,
   MenuItem,
   MenuList,
-  OrderedList,
   Spinner,
   Stack,
   Text,
-  UnorderedList,
   Wrap,
   WrapItem,
 } from '@chakra-ui/react';
@@ -30,7 +27,9 @@ import { isRosieApproved } from '@/features/dinners/tags';
 import type { CatalogDinner } from '@/features/dinners/types';
 import { RemoveDinnerDialog } from '@/features/dinners/components/RemoveDinnerDialog';
 import { cardMenuDistance } from '@/features/dinners/components/card-menu-offset';
-import { categoryIcon, cuisineIcon, metaIcons, stepIcon, uiIcons } from '@/shared/components/icons';
+import { IngredientList } from '@/features/dinners/components/IngredientList';
+import { StepList } from '@/features/dinners/components/StepList';
+import { cuisineIcon, metaIcons, uiIcons } from '@/shared/components/icons';
 import { SHOW_PHOTO_SLOTS } from '@/shared/components/photo-slots';
 
 interface SelectionProps {
@@ -92,53 +91,14 @@ function DinnerCardDetails({ dinnerId }: { dinnerId: string }) {
         <Text textStyle="sectionLabel" mb={1.5}>
           Ingredients
         </Text>
-        {dinner_ingredients.length === 0 ? (
-          <Text textStyle="faint">No ingredients recorded.</Text>
-        ) : (
-          <UnorderedList styleType="none" ms={0} spacing={1}>
-            {dinner_ingredients.map((ingredient) => {
-              const CategoryIcon = categoryIcon(ingredient.category);
-              return (
-                <ListItem key={ingredient.id}>
-                  <HStack gap={2} fontSize="0.8125rem" color="ink.700">
-                    <CategoryIcon size={14} strokeWidth={1.8} color="var(--chakra-colors-ink-400)" />
-                    <Text as="span">
-                      {ingredient.quantity} {ingredient.unit} {ingredient.name}
-                    </Text>
-                  </HStack>
-                </ListItem>
-              );
-            })}
-          </UnorderedList>
-        )}
+        <IngredientList ingredients={dinner_ingredients} />
       </Box>
 
       <Box>
         <Text textStyle="sectionLabel" mb={1.5}>
           Steps
         </Text>
-        {dinner_steps.length === 0 ? (
-          <Text textStyle="faint">No steps recorded.</Text>
-        ) : (
-          <OrderedList styleType="none" ms={0} spacing={1.5}>
-            {dinner_steps.map((step) => {
-              const StepIcon = stepIcon(step.instruction);
-              return (
-                <ListItem key={step.id}>
-                  <HStack align="start" gap={2} fontSize="0.8125rem" color="ink.700">
-                    <StepIcon
-                      size={14}
-                      strokeWidth={1.8}
-                      color="var(--chakra-colors-brand-500)"
-                      style={{ marginTop: '2px', flexShrink: 0 }}
-                    />
-                    <Text as="span">{step.instruction}</Text>
-                  </HStack>
-                </ListItem>
-              );
-            })}
-          </OrderedList>
-        )}
+        <StepList steps={dinner_steps} />
       </Box>
 
       <Box>

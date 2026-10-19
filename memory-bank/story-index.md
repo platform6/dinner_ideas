@@ -2,8 +2,8 @@
 
 ## Overview
 
-- **Total stories**: 191
-- **Completed**: 190
+- **Total stories**: 194
+- **Completed**: 193
 - **Planned**: 1
 - **In Progress**: 0
 - **Deferred**: 0
@@ -316,7 +316,7 @@
 
 ## Stories by Status
 
-- **Completed**: 190
+- **Completed**: 193
 - **Planned**: 1
 - **In Progress**: 0
 - **Deferred**: 0
@@ -410,11 +410,21 @@
 
 ---
 
-### 025-hide-photo-slots — ✅ BUILT (bolt 083 complete; not yet deployed — no migrations)
+### 025-hide-photo-slots — 🚀 SHIPPED v0.19.0 (bolt 083 complete; live + verified on prod 2026-10-18, PR #27)
 
 **Unit: 001-photo-slots-off** — bolt `083` ✅ COMPLETE — the slots stay in the design, off until photos exist
 
 - [x] **001-photo-slots-switched-off** (photo-slots-off): The three photo slots aren't rendered while `SHOW_PHOTO_SLOTS` is false; true restores them - Must - ✅ COMPLETE
 - [x] **002-cooking-view-keeps-its-icon** (photo-slots-off): The cuisine icon moves into the cooking view's meta row - Must - ✅ COMPLETE
+
+---
+
+### 026-ingredients-in-week-and-cook — ✅ BUILT (bolt 084 complete; not yet deployed — no migrations)
+
+**Unit: 001-picked-dinner-details** — bolt `084` ✅ COMPLETE — ingredients (and on This week, steps) where the household plans and cooks
+
+- [x] **001-shared-ingredient-and-step-lists** (picked-dinner-details): The catalog's ingredient and step lists become shared components - Should - ✅ COMPLETE
+- [x] **002-this-week-expands** (picked-dinner-details): A picked dinner on This week opens to its ingredients and steps; desktop opens all three together - Must - ✅ COMPLETE
+- [x] **003-cook-shows-ingredients** (picked-dinner-details): A Cook tab row opens to its ingredients above its steps - Must - ✅ COMPLETE
 
 ---

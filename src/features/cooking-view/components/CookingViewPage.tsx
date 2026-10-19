@@ -16,6 +16,7 @@ import {
 import { useCurrentPlan } from '@/features/weekly-plan/hooks';
 import { useDinnersWithSteps } from '@/features/cooking-view/hooks';
 import { useDinnersPerWeek } from '@/features/settings/hooks';
+import { IngredientList } from '@/features/dinners/components/IngredientList';
 import { cuisineIcon, metaIcons, stepIcon, uiIcons } from '@/shared/components/icons';
 import { SHOW_PHOTO_SLOTS } from '@/shared/components/photo-slots';
 
@@ -148,35 +149,49 @@ export function CookingViewPage() {
               )}
             </Box>
 
-            {isExpanded &&
-              (stepCount === 0 ? (
-                <Text textStyle="faint" mt={3}>
-                  No steps available for this dinner yet.
-                </Text>
-              ) : (
-                <Stack gap={2} mt={3}>
-                  {dinner.dinner_steps.map((step) => {
-                    const StepIcon = stepIcon(step.instruction);
-                    return (
-                      <HStack key={step.id} bg="paper.base" borderRadius="control" p={2} gap={2.5}>
-                        <Center
-                          w="30px"
-                          h="30px"
-                          borderRadius="control"
-                          bg="paper.subtle"
-                          color="brand.500"
-                          flexShrink={0}
-                        >
-                          <StepIcon size={15} strokeWidth={1.8} />
-                        </Center>
-                        <Text fontSize="0.8125rem" color="ink.700">
-                          {step.instruction}
-                        </Text>
-                      </HStack>
-                    );
-                  })}
-                </Stack>
-              ))}
+            {isExpanded && (
+              <Stack gap={3} mt={3}>
+                {/* Intent 026: what to gather comes before how to cook it. */}
+                <Box>
+                  <Text textStyle="sectionLabel" mb={1.5}>
+                    Ingredients
+                  </Text>
+                  <IngredientList ingredients={dinner.dinner_ingredients} />
+                </Box>
+
+                <Box>
+                  <Text textStyle="sectionLabel" mb={1.5}>
+                    Steps
+                  </Text>
+                  {stepCount === 0 ? (
+                    <Text textStyle="faint">No steps available for this dinner yet.</Text>
+                  ) : (
+                    <Stack gap={2}>
+                      {dinner.dinner_steps.map((step) => {
+                        const StepIcon = stepIcon(step.instruction);
+                        return (
+                          <HStack key={step.id} bg="paper.base" borderRadius="control" p={2} gap={2.5}>
+                            <Center
+                              w="30px"
+                              h="30px"
+                              borderRadius="control"
+                              bg="paper.subtle"
+                              color="brand.500"
+                              flexShrink={0}
+                            >
+                              <StepIcon size={15} strokeWidth={1.8} />
+                            </Center>
+                            <Text fontSize="0.8125rem" color="ink.700">
+                              {step.instruction}
+                            </Text>
+                          </HStack>
+                        );
+                      })}
+                    </Stack>
+                  )}
+                </Box>
+              </Stack>
+            )}
           </Box>
         );
       })}

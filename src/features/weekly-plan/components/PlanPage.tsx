@@ -26,6 +26,7 @@ import {
 } from '@/features/weekly-plan/hooks';
 import { formatWeekRange } from '@/features/weekly-plan/date';
 import { LockWeekControl } from '@/features/weekly-plan/components/LockWeekControl';
+import { PickedDinnerDetails } from '@/features/weekly-plan/components/PickedDinnerDetails';
 import { useDinnersPerWeek } from '@/features/settings/hooks';
 import { uiIcons } from '@/shared/components/icons';
 import { SHOW_PHOTO_SLOTS } from '@/shared/components/photo-slots';
@@ -49,6 +50,10 @@ function allPickedText(dinnersPerWeek: number): string {
 
 export function PlanPage() {
   const [offset, setOffset] = useState(0);
+  // Intent 026: phone rows open one at a time (several may be open); the desktop cards open and
+  // close together. Both reset when the week changes.
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [allExpanded, setAllExpanded] = useState(false);
   const week = useWeekByOffset(offset);
   const toggleSelection = useToggleSelection();
   const lockPlan = useLockPlan();
@@ -63,6 +68,21 @@ export function PlanPage() {
   const plan = week.data;
   const isLocked = plan?.locked_at != null;
   const selections = plan?.weekly_plan_selections ?? [];
+
+  function changeWeek(delta: number) {
+    setOffset((o) => o + delta);
+    setExpandedIds(new Set());
+    setAllExpanded(false);
+  }
+
+  function toggleRow(id: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   async function handleLock() {
     if (!plan) return;
@@ -109,7 +129,7 @@ export function PlanPage() {
             icon={<uiIcons.back size={16} strokeWidth={2} />}
             variant="ghost"
             size="sm"
-            onClick={() => setOffset((o) => o - 1)}
+            onClick={() => changeWeek(-1)}
           />
           <IconButton
             aria-label="Next week"
@@ -117,7 +137,7 @@ export function PlanPage() {
             variant="ghost"
             size="sm"
             isDisabled={isCurrentWeek}
-            onClick={() => setOffset((o) => o + 1)}
+            onClick={() => changeWeek(1)}
           />
           {!isCurrentWeek && isLocked && (
             <Badge variant="count">
@@ -250,13 +270,37 @@ export function PlanPage() {
                 {selection.dinners.cuisine_type} · {selection.dinners.cook_time_minutes} min
               </Text>
             );
+            const isExpanded = threeAcross ? allExpanded : expandedIds.has(selection.id);
+            // A sibling of the remove button, never a wrapper, so neither triggers the other.
+            const expandButton = (
+              <IconButton
+                w="36px"
+                h="36px"
+                minW="36px"
+                variant="ghost"
+                aria-expanded={isExpanded}
+                aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${selection.dinners.name}`}
+                icon={
+                  isExpanded ? (
+                    <uiIcons.collapse size={18} strokeWidth={2} />
+                  ) : (
+                    <uiIcons.expand size={18} strokeWidth={2} />
+                  )
+                }
+                onClick={() => (threeAcross ? setAllExpanded((open) => !open) : toggleRow(selection.id))}
+              />
+            );
+            const details = isExpanded && <PickedDinnerDetails dinnerId={selection.dinner_id} />;
 
             if (threeAcross) {
               return (
                 <Stack key={selection.id} layerStyle="cardSelected" p={3.5} gap={2.5}>
                   <HStack justify="space-between" align="flex-start">
                     {badge}
-                    {removeButton}
+                    <HStack gap={1}>
+                      {removeButton}
+                      {expandButton}
+                    </HStack>
                   </HStack>
                   {SHOW_PHOTO_SLOTS && (
                     <Box data-testid="photo-slot" h="76px" bg="paper.sunken" borderRadius="control" />
@@ -265,21 +309,28 @@ export function PlanPage() {
                     {name}
                     {meta}
                   </Box>
+                  {details}
                 </Stack>
               );
             }
 
             return (
-              <HStack key={selection.id} justify="space-between" layerStyle="cardSelected">
-                <HStack gap={3}>
-                  {badge}
-                  <Box>
-                    {name}
-                    {meta}
-                  </Box>
+              <Box key={selection.id} layerStyle="cardSelected">
+                <HStack justify="space-between" gap={2}>
+                  <HStack gap={3} minW={0}>
+                    {badge}
+                    <Box minW={0}>
+                      {name}
+                      {meta}
+                    </Box>
+                  </HStack>
+                  <HStack gap={1} flexShrink={0}>
+                    {removeButton}
+                    {expandButton}
+                  </HStack>
                 </HStack>
-                {removeButton}
-              </HStack>
+                {details && <Box mt={3}>{details}</Box>}
+              </Box>
             );
           })}
         </SimpleGrid>
