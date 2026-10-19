@@ -4,7 +4,7 @@ import type {
   CatalogDinner,
   DinnerFullDetails,
   DinnerWithIngredients,
-  DinnerWithSteps,
+  DinnerWithStepsAndIngredients,
   Tag,
 } from '@/features/dinners/types';
 
@@ -62,18 +62,19 @@ export async function fetchDinnersByIds(ids: string[]): Promise<DinnerWithIngred
 
 /**
  * Fetches specific dinners by id with their ordered cooking steps embedded (from
- * `007-dinner-catalog`). Separate from `fetchDinnersByIds` (which embeds ingredients) so the
- * shopping list and cooking view each fetch only what they need.
+ * `007-dinner-catalog`), and their ingredients for the cooking view's expanded rows (intent 026).
+ * Separate from `fetchDinnersByIds` (ingredients only) so the shopping list fetches only what it
+ * needs.
  */
-export async function fetchDinnersWithStepsByIds(ids: string[]): Promise<DinnerWithSteps[]> {
+export async function fetchDinnersWithStepsByIds(ids: string[]): Promise<DinnerWithStepsAndIngredients[]> {
   const { data, error } = await supabase
     .from('dinners')
-    .select('*, dinner_steps(*)')
+    .select('*, dinner_steps(*), dinner_ingredients(*)')
     .in('id', ids)
     .order('step_number', { referencedTable: 'dinner_steps' });
 
   if (error) throw error;
-  return data as DinnerWithSteps[];
+  return data as DinnerWithStepsAndIngredients[];
 }
 
 /**

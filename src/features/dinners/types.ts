@@ -13,6 +13,11 @@ export interface DinnerWithSteps extends Dinner {
   dinner_steps: DinnerStep[];
 }
 
+/** What the Cook tab reads: a picked dinner with its ordered steps and its ingredients (intent 026). */
+export interface DinnerWithStepsAndIngredients extends DinnerWithSteps {
+  dinner_ingredients: DinnerIngredient[];
+}
+
 /** A dinner as shown in the catalog list: ingredients (for aggregation elsewhere) plus its tag names (FR-9). */
 export interface CatalogDinner extends DinnerWithIngredients {
   tags: string[];
