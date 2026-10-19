@@ -67,4 +67,5 @@ data to undo.
 
 - **dev**: verified: 872/872 vitest, `tsc -b`, eslint, `vite build`
 - **staging**: n/a, skipped by the product owner at Checkpoint 1 (2026-10-19)
-- **production**: not deployed
+- **production**: deployed 2026-10-19 (PR #28, `fb65073`); live bundle byte-identical; smoke
+  test pending

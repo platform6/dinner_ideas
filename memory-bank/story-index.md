@@ -419,7 +419,7 @@
 
 ---
 
-### 026-ingredients-in-week-and-cook — ✅ BUILT (bolt 084 complete; not yet deployed — no migrations)
+### 026-ingredients-in-week-and-cook — 🚀 SHIPPED v0.20.0 (bolt 084 complete; live on prod 2026-10-19, PR #28; smoke test pending)
 
 **Unit: 001-picked-dinner-details** — bolt `084` ✅ COMPLETE — ingredients (and on This week, steps) where the household plans and cooks
 

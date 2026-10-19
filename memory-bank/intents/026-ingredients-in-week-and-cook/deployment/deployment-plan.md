@@ -4,8 +4,8 @@ release: v0.20.0-a1a0ebb
 commit: a1a0ebb
 units: [001-picked-dinner-details]
 created: '2026-10-19T00:36:10Z'
-updated: '2026-10-19T10:03:51Z'
-status: awaiting-checkpoint-3
+updated: '2026-10-19T10:07:28Z'
+status: shipped-awaiting-smoke
 current_checkpoint: 3
 follows: v0.19.0-481670c
 environments:
@@ -15,10 +15,10 @@ environments:
   staging:
     status: 'n/a: skipped by product owner at Checkpoint 1 (2026-10-19)'
   production:
-    status: 'not deployed'
+    status: 'deployed; artifact verified; smoke test pending'
     target: 'Netlify main only'
     db: 'n/a: no migration in this release (`git diff origin/main..dev -- supabase/` empty)'
-    fe: 'not merged'
+    fe: 'PR #28 merged as fb65073; live index-DIpbxKYM.js byte-identical to the local build (2026-10-19T10:07:28Z)'
     edge_function: 'n/a: claude-proxy unchanged'
 ---
 
@@ -50,6 +50,16 @@ Current production is **v0.19.0** (`origin/main` @ `fd0a869`, PR #27, live 2026-
 with no data to undo. Skipped by the product owner at Checkpoint 1 (2026-10-19), with the build
 approved.
 
+## Deployed
+
+- **Checkpoint 3** approved by the product owner on 2026-10-19
+- `dev` pushed; PR #28 (`dev` → `main`, 4 commits) merged as `fb65073`
+- Live site switched from `index-CpcKcNbX.js` to `index-DIpbxKYM.js` within about a minute
+- Live bundle sha256 `7b854558…a414d9cdea4ecf725`, **byte-identical** to the local build
+- Marker `"*, dinner_steps(*), dinner_ingredients(*)"` present once; `meta-cuisine-icon` still
+  present
+- Smoke test: pending (product owner)
+
 ## Rollback
 
 Revert the merge commit on `main`. Production returns to v0.19.0 exactly, and there is no data to
@@ -72,5 +82,6 @@ This also covers the browser check deferred from bolt 084.
 ## Decisions the product owner still needs to make
 
 1. ~~**Checkpoint 1**: approve the build, and confirm skipping staging~~ (approved 2026-10-19)
-2. **Checkpoint 3**: approve the production deploy (push, PR, merge)
+2. ~~**Checkpoint 3**: approve the production deploy (push, PR, merge)~~ (approved and shipped
+   2026-10-19)
 3. **After the deploy**: run the smoke test
